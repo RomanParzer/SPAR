@@ -219,7 +219,7 @@ plot.spar.cv <- function(spar_res,
     pred <- predict(spar_res,xfit,opt_par,nummod,lambda)
     res <- ggplot2::ggplot(data = data.frame(fitted=pred,residuals=yfit-pred),ggplot2::aes(x=fitted,y=residuals)) +
       ggplot2::geom_point() +
-      ggplot2::geom_smooth(size=0.5,alpha=0.2,method = 'loess',formula='y ~ x') +
+      # ggplot2::geom_smooth(size=0.5,alpha=0.2,method = 'loess',formula='y ~ x') +
       ggplot2::geom_hline(yintercept = 0,linetype=2,size=0.5)
   } else if (plot_type=="MSE") {
     if (plot_along=="lambda") {

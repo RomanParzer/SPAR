@@ -1,4 +1,4 @@
-# # # create illustration data set from Example 2.1 in PArzer, Vana-Guer, Filzmoser (2023)
+# # # create illustration data set from Example 2.1 in Parzer, Vana-Guer, Filzmoser (2023)
 n <- 200
 p <- 2000
 ntest <- 100
