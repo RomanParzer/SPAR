@@ -30,12 +30,13 @@
 #' \dontrun{
 #' data("example_data")
 #' spar_res <- spar.cv(example_data$x,example_data$y,nummods=c(5,10,15,20,25,30))
-#' coef <- coef(spar_res)
+#' spar_res
+#' coefs <- coef(spar_res)
 #' pred <- predict(spar_res,example_data$x)
 #' plot(spar_res)
 #' plot(spar_res,"MSE","nummod")
 #' plot(spar_res,"numAct","lambda")}
-#' @seealso [spar],[coef.spar.cv],[predict.spar.cv],[plot.spar.cv]
+#' @seealso [spar],[coef.spar.cv],[predict.spar.cv],[plot.spar.cv],[print.spar.cv]
 #' @export
 
 spar.cv <- function(x,
@@ -166,7 +167,6 @@ coef.spar.cv <- function(spar_res,
 #' @param coef optional; result of coef.spar.cv, can be used if coef.spar.cv has already been called.
 #' @return Vector of predictions
 #' @export
-
 predict.spar.cv <- function(spar_res,
                             xnew,
                             opt_par = c("1se","best"),
@@ -198,7 +198,6 @@ predict.spar.cv <- function(spar_res,
 #' @return ggplot2 object
 #' @import ggplot2
 #' @export
-
 plot.spar.cv <- function(spar_res,
                          plot_type = c("MSE","numAct","res-vs-fitted"),
                          plot_along = c("lambda","nummod"),
@@ -330,4 +329,25 @@ plot.spar.cv <- function(spar_res,
     res <- NULL
   }
   return(res)
+}
+
+
+#' print.spar.cv
+#'
+#' Print summary of spar.cv result
+#' @param spar_res result of spar.cv function of class "spar.cv".
+#' @return text summary
+#' @export
+print.spar.cv <- function(spar_res) {
+  mycoef_best <- coef(spar_res,opt_par = "best")
+  mycoef_1se <- coef(spar_res,opt_par = "1se")
+  cat(sprintf("SPAR.cv object:\nSmallest CV-MSE %.1f reached for nummod=%d, lambda=%.3f leading to %d / %d active predictors.\n",
+              min(spar_res$val_sum$mMSE),mycoef_best$nummod,mycoef_best$lambda,sum(mycoef_best$beta!=0),length(mycoef_best$beta)))
+  cat("Summary of those non-zero coefficients:\n")
+  print(summary(mycoef_best$beta[mycoef_best$beta!=0]))
+  cat(sprintf("\nSparsest coefficient within one standard error of best CV-MSE reached for nummod=%d, lambda=%.3f \nleading to %d / %d active predictors with CV-MSE %.1f.\n",
+              mycoef_1se$nummod,mycoef_1se$lambda,sum(mycoef_1se$beta!=0),length(mycoef_1se$beta),
+              spar_res$val_sum$mMSE[spar_res$val_sum$nummod==mycoef_1se$nummod & spar_res$val_sum$lam==mycoef_1se$lambda]))
+  cat("Summary of those non-zero coefficients:\n")
+  print(summary(mycoef_1se$beta[mycoef_1se$beta!=0]))
 }

@@ -3,7 +3,7 @@ SPAR
 
 [![Licence](https://img.shields.io/badge/licence-GPL--3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.en.html)
 
-This R package enables you to apply Sparse Projected Averaged Regression to High-dimensional Data (see Parzer, Vana-Guer and Filzmoser 2023).
+This R package enables you to apply Sparse Projected Averaged Regression to High-dimensional Data (see [Parzer, Vana-Guer and Filzmoser 2023](https://doi.org/10.48550/arXiv.2312.00130)).
 Exported functions are
 
 - `spar`: performs the procedure for given thresholds lambda and numbers of marginal models, and acts as a help-function for the full cross-validated procedure spar.cv.
@@ -24,7 +24,7 @@ The two main functions return objects, for which `coef`, `predict` and `plot` fu
 ```s
 data("example_data")
 spar_res <- spar.cv(example_data$x,example_data$y,nummods=c(5,10,15,20,25,30))
-coef <- coef(spar_res)
+coefs <- coef(spar_res)
 pred <- predict(spar_res,example_data$x)
 plot(spar_res)
 plot(spar_res,"MSE","nummod")

@@ -26,6 +26,7 @@
 #'  \item inds list of index-vectors corresponding to variables kept after screening in each marginal model of length max(numods)
 #'  \item RPMs list of sparse CW projection matrices used in each marginal model of length max(numods)
 #'  \item val_res data.frame with validation results (MSE and number of active variables) for each element of lambdas and nummods
+#'  \item val_set logical flag, whether validation data were provided; if FALSE, training data were used for validation
 #'  \item lambdas vector of lambdas considered for thresholding
 #'  \item nummods vector of numbers of marginal models considered for validation
 #'  \item ycenter empirical mean of initial response vector
@@ -38,16 +39,14 @@
 #' data("example_data")
 #' spar_res <- spar(example_data$x,example_data$y,
 #' example_data$xtest,example_data$ytest,nummods=c(5,10,15,20,25,30))
-#' coef <- coef(spar_res)
+#' spar_res
+#' coefs <- coef(spar_res)
 #' pred <- predict(spar_res,xnew=example_data$x)
 #' plot(spar_res)
 #' plot(spar_res,"MSE","nummod")
 #' plot(spar_res,"numAct","lambda")}
-#' @seealso [spar.cv],[coef.spar],[predict.spar],[plot.spar]
+#' @seealso [spar.cv],[coef.spar],[predict.spar],[plot.spar],[print.spar]
 #' @export
-
-# # # plot(spar_res,"res-",xfit=xtest,yfit=ytest)
-
 spar <- function(x,
                  y,
                  xval = NULL,
@@ -184,7 +183,7 @@ spar <- function(x,
   }
 
   res <- list(betas = betas_std, HOLPcoef = HOLPcoef, inds = inds, RPMs = RPMs,
-       val_res = val_res, lambdas = lambdas, nummods=nummods,
+       val_res = val_res, val_set = val_set, lambdas = lambdas, nummods=nummods,
        ycenter = ycenter, yscale = yscale, xcenter = xcenter, xscale = xscale)
   attr(res,"class") <- "spar"
 
@@ -376,4 +375,18 @@ plot.spar <- function(spar_res,
     res <- NULL
   }
   return(res)
+}
+
+#' print.spar
+#'
+#' Print summary of spar result
+#' @param spar_res result of spar function of class "spar".
+#' @return text summary
+#' @export
+print.spar <- function(spar_res) {
+  mycoef <- coef(spar_res)
+  beta <- mycoef$beta
+  cat(sprintf("SPAR object:\nSmallest MSE reached for nummod=%d, lambda=%.3f leading to %d / %d active predictors.\n",mycoef$nummod,mycoef$lambda,sum(beta!=0),length(beta)))
+  cat("Summary of those non-zero coefficients:\n")
+  print(summary(beta[beta!=0]))
 }
