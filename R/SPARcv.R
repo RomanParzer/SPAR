@@ -16,8 +16,8 @@
 #' \itemize{
 #'  \item betas p x max(nummods) matrix of standardized coefficients from each marginal model
 #'  \item HOLPcoef p-vector of HOLP coefficient used for screening
-#'  \item inds list of index-vectors corresponding to variables kept after screening in each marginal model of length max(numods)
-#'  \item RPMs list of sparse CW projection matrices used in each marginal model of length max(numods)
+#'  \item inds list of index-vectors corresponding to variables kept after screening in each marginal model of length max(nummods)
+#'  \item RPMs list of sparse CW projection matrices used in each marginal model of length max(nummods)
 #'  \item val_sum data.frame with CV results (mean and sd MSE and mean number of active variables) for each element of lambdas and nummods
 #'  \item lambdas vector of lambdas considered for thresholding
 #'  \item nummods vector of numbers of marginal models considered for validation
@@ -48,7 +48,11 @@ spar.cv <- function(x,
                     nummods = c(20),
                     mslow = ceiling(log(ncol(x))),
                     msup = ceiling(nrow(x)/2)) {
+  stopifnot("matrix" %in% class(x) |"data.frame" %in% class(x))
   x <- as.matrix(x)
+  if (class(x[1,1])!="numeric") {
+    stop("There are non-numeric data entries, numerical matrix needed!")
+  }
   p <- ncol(x)
   n <- nrow(x)
 
@@ -75,7 +79,6 @@ spar.cv <- function(x,
   attr(res,"class") <- "spar.cv"
   return(res)
 }
-
 
 #' coef.spar.cv
 #'

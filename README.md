@@ -24,6 +24,7 @@ The two main functions return objects, for which `coef`, `predict` and `plot` fu
 ```s
 data("example_data")
 spar_res <- spar.cv(example_data$x,example_data$y,nummods=c(5,10,15,20,25,30))
+spar_res
 coefs <- coef(spar_res)
 pred <- predict(spar_res,example_data$x)
 plot(spar_res)

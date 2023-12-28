@@ -17,14 +17,14 @@
 #' @param nummods vector of numbers of marginal models to consider for validation; defaults to c(20).
 #' @param mslow lower bound for unifrom random goal dimensions in marginal models; defaults to log(p).
 #' @param msup upper bound for unifrom random goal dimensions in marginal models; defaults to n/2.
-#' @param inds optional list of index-vectors corresponding to variables kept after screening in each marginal model of length max(numods).
-#' @param RPMs optional list of sparse CW projection matrices used in each marginal model of length max(numods), diagonal elements will be overwritten with a coefficient only depending on the given x and y.
+#' @param inds optional list of index-vectors corresponding to variables kept after screening in each marginal model of length max(nummods).
+#' @param RPMs optional list of sparse CW projection matrices used in each marginal model of length max(nummods), diagonal elements will be overwritten with a coefficient only depending on the given x and y.
 #' @returns object of class "spar" with elements
 #' \itemize{
 #'  \item betas p x max(nummods) matrix of standardized coefficients from each marginal model
 #'  \item HOLPcoef p-vector of HOLP coefficient used for screening
-#'  \item inds list of index-vectors corresponding to variables kept after screening in each marginal model of length max(numods)
-#'  \item RPMs list of sparse CW projection matrices used in each marginal model of length max(numods)
+#'  \item inds list of index-vectors corresponding to variables kept after screening in each marginal model of length max(nummods)
+#'  \item RPMs list of sparse CW projection matrices used in each marginal model of length max(nummods)
 #'  \item val_res data.frame with validation results (MSE and number of active variables) for each element of lambdas and nummods
 #'  \item val_set logical flag, whether validation data were provided; if FALSE, training data were used for validation
 #'  \item lambdas vector of lambdas considered for thresholding
@@ -60,7 +60,10 @@ spar <- function(x,
                  inds = NULL,
                  RPMs = NULL) {
 
-  if (mslow > msup) warning("mslow > msup, select appropriate values manually!")
+  stopifnot(mslow <= msup)
+  stopifnot(msup <= nscreen)
+  stopifnot(is.numeric(y))
+
   p <- ncol(x)
   n <- nrow(x)
 
@@ -107,7 +110,6 @@ spar <- function(x,
   }
 
   for (i in 1:max_num_mod) {
-
     if (drawinds) {
       if (nscreen<p) {
         ind_use <- sample(1:p,nscreen,prob=inc_probs)
@@ -123,7 +125,7 @@ spar <- function(x,
     if (drawRPMs) {
       m <- ms[i]
       if (p_use < m) {
-        m <- min(m,p_use)
+        m <- p_use
         RPM <- Matrix::Matrix(diag(1,m),sparse=TRUE)
         RPMs[[i]] <- RPM
       } else {
@@ -183,7 +185,7 @@ spar <- function(x,
   }
 
   res <- list(betas = betas_std, HOLPcoef = HOLPcoef, inds = inds, RPMs = RPMs,
-       val_res = val_res, val_set = val_set, lambdas = lambdas, nummods=nummods,
+       val_res = val_res, val_set = val_set, lambdas = lambdas, nummods = nummods,
        ycenter = ycenter, yscale = yscale, xcenter = xcenter, xscale = xscale)
   attr(res,"class") <- "spar"
 
