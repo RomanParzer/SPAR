@@ -451,34 +451,3 @@ print.spar <- function(spar_res) {
   print(summary(beta[beta!=0]))
 }
 
-# data("example_data")
-#
-# y <- as.numeric(example_data$y > 0)
-# spar_res <- spar(example_data$x,y,nummods=c(30),family = binomial(logit))
-# spar_res
-# coef <- coef(spar_res)
-# pred <- predict(spar_res,example_data$xtest,avg_type="link")
-# pred2 <- predict(spar_res,example_data$xtest,avg_type = "response")
-#
-# sum(abs(pred-pred2))
-# cbind(y,pred,pred2)
-# xnew <- example_data$xtest
-# ytest <- as.numeric(example_data$ytest >0)
-#
-# mean((ytest-pred)^2)
-# mean((ytest-pred2)^2)
-#
-# eta <- as.numeric(xnew%*%coef$beta + coef$intercept)
-# res <- spar_res$family$linkinv(eta)
-#
-# final_coef <- spar_res$betas[,1:coef$nummod,drop=FALSE]
-# final_coef[abs(final_coef)<coef$lambda] <- 0
-#
-# preds <- sapply(1:coef$nummod,function(j){
-#   tmp_coef <- final_coef[,j]
-#   beta <- spar_res$yscale*tmp_coef/spar_res$xscale
-#   intercept <- spar_res$ycenter + spar_res$intercepts[j]  - sum(spar_res$xcenter*beta)
-#   eta <- as.numeric(xnew%*%beta + coef$intercept)
-#   spar_res$family$linkinv(eta)
-# })
-# res2 <- rowMeans(preds)

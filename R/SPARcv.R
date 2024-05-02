@@ -76,7 +76,7 @@ spar.cv <- function(x,
     val_sum <- dplyr::summarise(val_sum,mDev=mean(Dev),sdDev=sd(Dev),mNumAct=mean(numAct))
   )
 
-  res <- list(betas = SPARres$betas, intercepts = spar_res$intercepts, scr_coef = SPARres$scr_coef, inds = SPARres$inds, RPMs = SPARres$RPMs,
+  res <- list(betas = SPARres$betas, intercepts = SPARres$intercepts, scr_coef = SPARres$scr_coef, inds = SPARres$inds, RPMs = SPARres$RPMs,
               val_sum = val_sum, lambdas = SPARres$lambdas, nummods=nummods, family = family,
               ycenter = SPARres$ycenter, yscale = SPARres$yscale, xcenter = SPARres$xcenter, xscale = SPARres$xscale)
   attr(res,"class") <- "spar.cv"
