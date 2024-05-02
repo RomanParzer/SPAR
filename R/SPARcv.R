@@ -157,7 +157,7 @@ coef.spar.cv <- function(spar_res,
   final_coef <- spar_res$betas[,1:nummod,drop=FALSE]
   final_coef[abs(final_coef)<lambda] <- 0
   beta <- spar_res$yscale*Matrix::rowMeans(final_coef)/spar_res$xscale
-  intercept <- spar_res$ycenter + mean(spar_res$intercepts[1:coef$nummod]) - sum(spar_res$xcenter*beta)
+  intercept <- spar_res$ycenter + mean(spar_res$intercepts[1:nummod]) - sum(spar_res$xcenter*beta)
   return(list(intercept=intercept,beta=beta,nummod=nummod,lambda=lambda))
 }
 
