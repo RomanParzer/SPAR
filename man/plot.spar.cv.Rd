@@ -6,7 +6,7 @@
 \usage{
 \method{plot}{spar.cv}(
   spar_res,
-  plot_type = c("MSE", "numAct", "res-vs-fitted"),
+  plot_type = c("Dev", "numAct", "res-vs-fitted"),
   plot_along = c("lambda", "nummod"),
   opt_par = c("1se", "best"),
   nummod = NULL,
@@ -18,16 +18,16 @@
 \arguments{
 \item{spar_res}{result of spar.cv function of class "spar.cv".}
 
-\item{plot_type}{one of c("MSE","numAct","res-vs-fitted").}
+\item{plot_type}{one of c("Dev","numAct","res-vs-fitted").}
 
 \item{plot_along}{one of c("lambda","nummod"); ignored when plot_type="res-vs-fitted".}
 
-\item{opt_par}{one of c("1se","best"), chooses whether to select the best pair of lambdas and nummods according to CV-MSE, or the sparsest solution within one sd of that optimal CV-MSE;
+\item{opt_par}{one of c("1se","best"), chooses whether to select the best pair of lambdas and nummods according to CV-Dev, or the sparsest solution within one sd of that optimal CV-Dev;
 ignored when nummod and lambda, or coef are given}
 
-\item{nummod}{fixed value for nummod when plot_along="lambda" for plot_type="MSE" or "numAct"; same as for predict.spar when plot_type="res-vs-fitted".}
+\item{nummod}{fixed value for nummod when plot_along="lambda" for plot_type="Dev" or "numAct"; same as for predict.spar when plot_type="res-vs-fitted".}
 
-\item{lambda}{fixed value for lambda when plot_along="nummod" for plot_type="MSE" or "numAct"; same as for predict.spar when plot_type="res-vs-fitted".}
+\item{lambda}{fixed value for lambda when plot_along="nummod" for plot_type="Dev" or "numAct"; same as for predict.spar when plot_type="res-vs-fitted".}
 
 \item{xfit}{data used for predictions in "res-vs-fitted".}
 

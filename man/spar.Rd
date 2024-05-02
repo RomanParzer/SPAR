@@ -7,6 +7,7 @@
 spar(
   x,
   y,
+  family = gaussian("identity"),
   xval = NULL,
   yval = NULL,
   nscreen = 2 * nrow(x),
@@ -20,9 +21,11 @@ spar(
 )
 }
 \arguments{
-\item{x}{n x p matrix of predictor variables}
+\item{x}{n x p numeric matrix of predictor variables}
 
 \item{y}{response vector of length n}
+
+\item{family}{'family'-objected used for glm (excwept the quasi), default gaussian("identity")}
 
 \item{xval}{optional matrix of predictor variables observations used for validation of threshold lambda and number of models; x is used if not provided.}
 
@@ -40,22 +43,21 @@ spar(
 
 \item{msup}{upper bound for unifrom random goal dimensions in marginal models; defaults to n/2.}
 
-\item{inds}{optional list of index-vectors corresponding to variables kept after screening in each marginal model of length max(numods).}
+\item{inds}{optional list of index-vectors corresponding to variables kept after screening in each marginal model of length max(nummods).}
 
-\item{RPMs}{optional list of sparse CW projection matrices used in each marginal model of length max(numods), diagonal elements will be overwritten with a coefficient only depending on the given x and y.}
+\item{RPMs}{optional list of sparse CW projection matrices used in each marginal model of length max(nummods), diagonal elements will be overwritten with a coefficient only depending on the given x and y.}
 }
 \value{
 object of class "spar" with elements
 \itemize{
 \item betas p x max(nummods) matrix of standardized coefficients from each marginal model
-\item HOLPcoef p-vector of HOLP coefficient used for screening
-\item inds list of index-vectors corresponding to variables kept after screening in each marginal model of length max(numods)
-\item RPMs list of sparse CW projection matrices used in each marginal model of length max(numods)
-\item val_res data.frame with validation results (MSE and number of active variables) for each element of lambdas and nummods
+\item scr_coef p-vector of HOLP coefficient used for screening
+\item inds list of index-vectors corresponding to variables kept after screening in each marginal model of length max(nummods)
+\item RPMs list of sparse CW projection matrices used in each marginal model of length max(nummods)
+\item val_res data.frame with validation results (Dev and number of active variables) for each element of lambdas and nummods
+\item val_set logical flag, whether validation data were provided; if FALSE, training data were used for validation
 \item lambdas vector of lambdas considered for thresholding
 \item nummods vector of numbers of marginal models considered for validation
-\item ycenter empirical mean of initial response vector
-\item yscale empirical standard deviation of initial response vector
 \item xcenter p-vector of empirical means of initial predictor variables
 \item xscale p-vector of empirical standard deviations of initial predictor variables
 }
@@ -68,13 +70,14 @@ This function performs the procedure for given thresholds lambda and numbers of 
 \dontrun{
 data("example_data")
 spar_res <- spar(example_data$x,example_data$y,
-example_data$xtest,example_data$ytest,nummods=c(5,10,15,20,25,30))
-coef <- coef(spar_res)
+xval=example_data$xtest,yval=example_data$ytest,nummods=c(5,10,15,20,25,30))
+spar_res
+coefs <- coef(spar_res)
 pred <- predict(spar_res,xnew=example_data$x)
 plot(spar_res)
-plot(spar_res,"MSE","nummod")
+plot(spar_res,"Dev","nummod")
 plot(spar_res,"numAct","lambda")}
 }
 \seealso{
-\link{spar.cv},\link{coef.spar},\link{predict.spar},\link{plot.spar}
+\link{spar.cv},\link{coef.spar},\link{predict.spar},\link{plot.spar},\link{print.spar}
 }

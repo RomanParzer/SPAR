@@ -6,7 +6,7 @@
 \usage{
 \method{plot}{spar}(
   spar_res,
-  plot_type = c("MSE", "numAct", "res-vs-fitted"),
+  plot_type = c("Dev", "numAct", "res-vs-fitted"),
   plot_along = c("lambda", "nummod"),
   nummod = NULL,
   lambda = NULL,
@@ -17,13 +17,13 @@
 \arguments{
 \item{spar_res}{result of spar function of class "spar".}
 
-\item{plot_type}{one of c("MSE","numAct","res-vs-fitted").}
+\item{plot_type}{one of c("Dev","numAct","res-vs-fitted").}
 
 \item{plot_along}{one of c("lambda","nummod"); ignored when plot_type="res-vs-fitted".}
 
-\item{nummod}{fixed value for nummod when plot_along="lambda" for plot_type="MSE" or "numAct"; same as for predict.spar when plot_type="res-vs-fitted".}
+\item{nummod}{fixed value for nummod when plot_along="lambda" for plot_type="Dev" or "numAct"; same as for predict.spar when plot_type="res-vs-fitted".}
 
-\item{lambda}{fixed value for lambda when plot_along="nummod" for plot_type="MSE" or "numAct"; same as for predict.spar when plot_type="res-vs-fitted".}
+\item{lambda}{fixed value for lambda when plot_along="nummod" for plot_type="Dev" or "numAct"; same as for predict.spar when plot_type="res-vs-fitted".}
 
 \item{xfit}{data used for predictions in "res-vs-fitted".}
 

@@ -7,7 +7,9 @@
 \method{predict}{spar.cv}(
   spar_res,
   xnew,
-  opt_par = c("1se", "best"),
+  type = c("response", "link"),
+  avg_type = c("link", "response"),
+  opt_par = c("best", "1se"),
   nummod = NULL,
   lambda = NULL,
   coef = NULL
@@ -18,12 +20,16 @@
 
 \item{xnew}{matrix of new predictor variables; must have same number of columns as x.}
 
-\item{opt_par}{one of c("1se","best"), chooses whether to select the best pair of lambdas and nummods according to CV-MSE, or the sparsest solution within one sd of that optimal CV-MSE;
+\item{type}{the type of required predictions; either on response level (default) or on link level}
+
+\item{avg_type}{type of averaging the marginal models; either on link (default) or on response level}
+
+\item{opt_par}{one of c("1se","best"), chooses whether to select the best pair of lambdas and nummods according to CV-Dev, or the sparsest solution within one sd of that optimal CV-Dev;
 ignored when nummod and lambda, or coef are given}
 
-\item{nummod}{number of models used to form coefficients; value with minimal validation MSE is used if not provided.}
+\item{nummod}{number of models used to form coefficients; value with minimal validation Dev is used if not provided.}
 
-\item{lambda}{threshold level used to form coefficients; value with minimal validation MSE is used if not provided.}
+\item{lambda}{threshold level used to form coefficients; value with minimal validation Dev is used if not provided.}
 
 \item{coef}{optional; result of coef.spar.cv, can be used if coef.spar.cv has already been called.}
 }

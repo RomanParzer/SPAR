@@ -211,7 +211,7 @@ spar <- function(x,
     val_res <- rbind(val_res,data.frame(t(tabres)))
   }
 
-  res <- list(betas = betas_std, scr_coef = scr_coef, inds = inds, RPMs = RPMs,
+  res <- list(betas = betas_std, intercepts = intercepts, scr_coef = scr_coef, inds = inds, RPMs = RPMs,
        val_res = val_res, val_set = val_set, lambdas = lambdas, nummods = nummods,
        ycenter = ycenter, yscale = yscale, xcenter = xcenter, xscale = xscale,
        family = family)
@@ -270,7 +270,7 @@ coef.spar <- function(spar_res,
   final_coef <- spar_res$betas[,1:nummod,drop=FALSE]
   final_coef[abs(final_coef)<lambda] <- 0
   beta <- spar_res$yscale*Matrix::rowMeans(final_coef)/spar_res$xscale
-  intercept <- spar_res$ycenter - sum(spar_res$xcenter*beta)
+  intercept <- spar_res$ycenter + mean(spar_res$intercepts[1:nummod]) - sum(spar_res$xcenter*beta)
   return(list(intercept=intercept,beta=beta,nummod=nummod,lambda=lambda))
 }
 
@@ -317,9 +317,10 @@ predict.spar <- function(spar_res,
       final_coef <- spar_res$betas[,1:coef$nummod,drop=FALSE]
       final_coef[abs(final_coef)<coef$lambda] <- 0
 
-      preds <- apply(final_coef,2,function(tmp_coef){
+      preds <- sapply(1:coef$nummod,2,function(j){
+        tmp_coef <- final_coef[,j]
         beta <- spar_res$yscale*tmp_coef/spar_res$xscale
-        intercept <- spar_res$ycenter - sum(spar_res$xcenter*beta)
+        intercept <- spar_res$ycenter + spar_res$intercepts[j]  - sum(spar_res$xcenter*beta)
         eta <- as.numeric(xnew%*%coef$beta + coef$intercept)
         spar_res$family$linkinv(eta)
       })

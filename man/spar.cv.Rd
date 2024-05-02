@@ -7,6 +7,7 @@
 spar.cv(
   x,
   y,
+  family = gaussian("identity"),
   nscreen = 2 * nrow(x),
   nfolds = 10,
   nlambda = 20,
@@ -20,6 +21,8 @@ spar.cv(
 \item{x}{n x p matrix of predictor variables}
 
 \item{y}{response vector of length n}
+
+\item{family}{'family'-objected used for glm (excwept the quasi), default gaussian("identity")}
 
 \item{nscreen}{number of variables kept after screening in each marginal model, multiples of n are suggested; defaults to 2n.}
 
@@ -39,10 +42,10 @@ spar.cv(
 object of class "spar" with elements
 \itemize{
 \item betas p x max(nummods) matrix of standardized coefficients from each marginal model
-\item HOLPcoef p-vector of HOLP coefficient used for screening
-\item inds list of index-vectors corresponding to variables kept after screening in each marginal model of length max(numods)
-\item RPMs list of sparse CW projection matrices used in each marginal model of length max(numods)
-\item val_sum data.frame with CV results (mean and sd MSE and mean number of active variables) for each element of lambdas and nummods
+\item scr_coef p-vector of HOLP coefficient used for screening
+\item inds list of index-vectors corresponding to variables kept after screening in each marginal model of length max(nummods)
+\item RPMs list of sparse CW projection matrices used in each marginal model of length max(nummods)
+\item val_sum data.frame with CV results (mean and sd Dev and mean number of active variables) for each element of lambdas and nummods
 \item lambdas vector of lambdas considered for thresholding
 \item nummods vector of numbers of marginal models considered for validation
 \item ycenter empirical mean of initial response vector
@@ -58,12 +61,13 @@ Apply Sparse Projected Averaged Regression to High-dimensional Data (see Parzer,
 \dontrun{
 data("example_data")
 spar_res <- spar.cv(example_data$x,example_data$y,nummods=c(5,10,15,20,25,30))
-coef <- coef(spar_res)
+spar_res
+coefs <- coef(spar_res)
 pred <- predict(spar_res,example_data$x)
 plot(spar_res)
-plot(spar_res,"MSE","nummod")
+plot(spar_res,"Dev","nummod")
 plot(spar_res,"numAct","lambda")}
 }
 \seealso{
-\link{spar},\link{coef.spar.cv},\link{predict.spar.cv},\link{plot.spar.cv}
+\link{spar},\link{coef.spar.cv},\link{predict.spar.cv},\link{plot.spar.cv},\link{print.spar.cv}
 }
