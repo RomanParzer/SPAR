@@ -206,11 +206,11 @@ predict.spar.cv <- function(spar_res,
       final_coef <- spar_res$betas[,1:coef$nummod,drop=FALSE]
       final_coef[abs(final_coef)<coef$lambda] <- 0
 
-      preds <- sapply(1:coef$nummod,2,function(j){
+      preds <- sapply(1:coef$nummod,function(j){
         tmp_coef <- final_coef[,j]
         beta <- spar_res$yscale*tmp_coef/spar_res$xscale
         intercept <- spar_res$ycenter + spar_res$intercepts[j]  - sum(spar_res$xcenter*beta)
-        eta <- as.numeric(xnew%*%coef$beta + coef$intercept)
+        eta <- as.numeric(xnew%*%beta + coef$intercept)
         spar_res$family$linkinv(eta)
       })
       res <- rowMeans(preds)
