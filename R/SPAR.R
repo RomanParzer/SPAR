@@ -16,6 +16,7 @@
 #' @param nlambda number of different lambdas to consider for thresholding; ignored when lambdas are given; defaults to 20.
 #' @param lambdas optional vector of lambdas to consider for thresholding; if not provided, nlam values ranging from 0 to the maximum ablsolute marginal coefficient are used.
 #' @param nummods vector of numbers of marginal models to consider for validation; defaults to c(20).
+#' @param split_data logical to indicate whether data for calculation of scr_coef and fitting of mar mods should be split 1/4 to 3/4 to avoid overfitting; default FALSE
 #' @param mslow lower bound for unifrom random goal dimensions in marginal models; defaults to log(p).
 #' @param msup upper bound for unifrom random goal dimensions in marginal models; defaults to n/2.
 #' @param inds optional list of index-vectors corresponding to variables kept after screening in each marginal model of length max(nummods).
@@ -55,6 +56,7 @@ spar <- function(x,
                  nlambda = 20,
                  lambdas = NULL,
                  nummods = c(20),
+                 split_data = FALSE,
                  mslow = ceiling(log(ncol(x))),
                  msup = ceiling(nrow(x)/2),
                  inds = NULL,
@@ -65,6 +67,12 @@ spar <- function(x,
 
   p <- ncol(x)
   n <- nrow(x)
+  if (split_data==TRUE) {
+    scr_inds <- sample(1:n,n%/%4)
+    mar_inds <- (1:n)[-scr_inds]
+  } else {
+    mar_inds <- scr_inds <- 1:n
+  }
 
 
   xcenter <- apply(x,2,mean)
@@ -77,23 +85,23 @@ spar <- function(x,
     yscale <- sd(y)
     yz <- scale(y,center = ycenter,scale = yscale)
     if (p < n/2) {
-      scr_coef <- tryCatch( solve(crossprod(z),crossprod(z,yz)),
+      scr_coef <- tryCatch( solve(crossprod(z[scr_inds,]),crossprod(z[scr_inds,],yz[scr_inds])),
                             error=function(error_message) {
-                              return(solve(crossprod(z)+(sqrt(p)+sqrt(n))*diag(p),crossprod(z,yz)))
+                              return(solve(crossprod(z[scr_inds,])+(sqrt(p)+sqrt(n))*diag(p),crossprod(z[scr_inds,],yz[scr_inds])))
                             })
     } else if (p < 2*n) {
-      scr_coef <- crossprod(z,solve(tcrossprod(z)+(sqrt(p)+sqrt(n))*diag(n),yz))
+      scr_coef <- crossprod(z[scr_inds,],solve(tcrossprod(z[scr_inds,])+(sqrt(p)+sqrt(n))*diag(n),yz[scr_inds]))
     } else {
-      solve_res <- tryCatch( solve(tcrossprod(z),yz),
+      solve_res <- tryCatch( solve(tcrossprod(z[scr_inds,]),yz[scr_inds]),
                              error=function(error_message) {
-                               return(solve(tcrossprod(z)+(sqrt(p)+sqrt(n))*diag(n),yz))
+                               return(solve(tcrossprod(z[scr_inds,])+(sqrt(p)+sqrt(n))*diag(n),yz[scr_inds]))
                              })
-      scr_coef <- crossprod(z,solve_res)
+      scr_coef <- crossprod(z[scr_inds,],solve_res)
     }
   } else {
     ycenter <- 0
     yscale <- 1
-    glmnet_res <- glmnet::glmnet(x=z,y=y,family = family,alpha=0)
+    glmnet_res <- glmnet::glmnet(x=z[scr_inds,],y=y[scr_inds],family = family,alpha=0)
     lam <- min(glmnet_res$lambda)
     scr_coef <- coef(glmnet_res,s=lam)[-1]
   }
@@ -146,16 +154,16 @@ spar <- function(x,
       RPM@x <- scr_coef[ind_use]/max_inc_probs
     }
 
-    znew <- Matrix::tcrossprod(z[,ind_use],RPM)
+    znew <- Matrix::tcrossprod(z[mar_inds,ind_use],RPM)
     if (family$family=="gaussian" & family$link=="identity") {
-      mar_coef <- tryCatch( Matrix::solve(Matrix::crossprod(znew),Matrix::crossprod(znew,yz)),
+      mar_coef <- tryCatch( Matrix::solve(Matrix::crossprod(znew),Matrix::crossprod(znew,yz[mar_inds])),
                            error=function(error_message) {
-                             return(Matrix::solve(Matrix::crossprod(znew)+0.01*diag(ncol(znew)),Matrix::crossprod(znew,yz)))
+                             return(Matrix::solve(Matrix::crossprod(znew)+0.01*diag(ncol(znew)),Matrix::crossprod(znew,yz[mar_inds])))
                            })
       intercepts[i] <- 0
       betas_std[ind_use,i] <- Matrix::crossprod(RPM,mar_coef)
     } else {
-      glmnet_res <- glmnet::glmnet(znew,y,family = family,alpha=0)
+      glmnet_res <- glmnet::glmnet(znew,y[mar_inds],family = family,alpha=0)
       mar_coef <- coef(glmnet_res,s=min(glmnet_res$lambda))
       intercepts[i] <- mar_coef[1]
       betas_std[ind_use,i] <- Matrix::crossprod(RPM,mar_coef[-1])
@@ -450,4 +458,3 @@ print.spar <- function(spar_res) {
   cat("Summary of those non-zero coefficients:\n")
   print(summary(beta[beta!=0]))
 }
-

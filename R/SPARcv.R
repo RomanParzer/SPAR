@@ -11,6 +11,7 @@
 #' @param nlambda number of different lambdas to consider for thresholding; ignored when lambdas are given; defaults to 20.
 #' @param lambdas optional vector of lambdas to consider for thresholding; if not provided, nlam values ranging from 0 to the maximum ablsolute marginal coefficient are used.
 #' @param nummods vector of numbers of marginal models to consider for validation; defaults to c(20).
+#' @param split_data logical to indicate whether data for calculation of scr_coef and fitting of mar mods should be split 1/4 to 3/4 to avoid overfitting; default FALSE
 #' @param mslow lower bound for unifrom random goal dimensions in marginal models; defaults to log(p).
 #' @param msup upper bound for unifrom random goal dimensions in marginal models; defaults to n/2.
 #' @returns object of class "spar" with elements
@@ -48,6 +49,7 @@ spar.cv <- function(x,
                     nlambda = 20,
                     lambdas = NULL,
                     nummods = c(20),
+                    split_data = FALSE,
                     mslow = ceiling(log(ncol(x))),
                     msup = ceiling(nrow(x)/2)) {
   stopifnot("matrix" %in% class(x) |"data.frame" %in% class(x))
@@ -58,7 +60,7 @@ spar.cv <- function(x,
   p <- ncol(x)
   n <- nrow(x)
 
-  SPARres <- spar(x,y,family = family, nscreen = nscreen,nlambda = nlambda,mslow=mslow,msup=msup,nummods=nummods)
+  SPARres <- spar(x,y,family = family, nscreen = nscreen,nlambda = nlambda,mslow=mslow,msup=msup,nummods=nummods,split_data=split_data)
 
   val_res <- SPARres$val_res
   folds <- sample(cut(1:n,breaks=nfolds,labels=FALSE))
@@ -67,7 +69,7 @@ spar.cv <- function(x,
     foldSPARres <- spar(x[-fold_ind,],y[-fold_ind],family = family,
                         xval = x[fold_ind,], yval=y[fold_ind],
                                nscreen = nscreen, lambdas = SPARres$lambdas,mslow=mslow,msup=msup,
-                               inds = SPARres$inds, RPMs = SPARres$RPMs,nummods=nummods)
+                               inds = SPARres$inds, RPMs = SPARres$RPMs,nummods=nummods,split_data=split_data)
     val_res <- rbind(val_res,foldSPARres$val_res)
   }
 
