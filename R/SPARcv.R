@@ -69,7 +69,7 @@ spar.cv <- function(x,
     foldSPARres <- spar(x[-fold_ind,],y[-fold_ind],family = family,
                         xval = x[fold_ind,], yval=y[fold_ind],
                         nscreen = nscreen, lambdas = SPARres$lambdas,mslow=mslow,msup=msup,
-                        inds = SPARres$inds, inds_sd0 = which(SPARres$xscale==0),
+                        inds = SPARres$inds, ind_sd0 = which(SPARres$xscale==0),
                         RPMs = SPARres$RPMs,nummods=nummods,split_data=split_data)
     val_res <- rbind(val_res,foldSPARres$val_res)
   }
