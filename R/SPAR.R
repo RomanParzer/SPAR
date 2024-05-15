@@ -74,27 +74,26 @@ spar <- function(x,
     mar_inds <- scr_inds <- 1:n
   }
 
-
   xcenter <- apply(x,2,mean)
   xscale <- apply(x,2,sd)
-  xscale[xscale==0] <- 1
-  z <- scale(x,center = xcenter,scale = xscale)
+  actual_p <- sum(xscale>0)
+  z <- scale(x[,xscale>0],center = xcenter[xscale>0],scale = xscale[xscale>0])
 
   if (family$family=="gaussian" & family$link=="identity") {
     ycenter <- mean(y)
     yscale <- sd(y)
     yz <- scale(y,center = ycenter,scale = yscale)
-    if (p < n/2) {
+    if (actual_p < n/2) {
       scr_coef <- tryCatch( solve(crossprod(z[scr_inds,]),crossprod(z[scr_inds,],yz[scr_inds])),
                             error=function(error_message) {
-                              return(solve(crossprod(z[scr_inds,])+(sqrt(p)+sqrt(n))*diag(p),crossprod(z[scr_inds,],yz[scr_inds])))
+                              return(solve(crossprod(z[scr_inds,])+(sqrt(actual_p)+sqrt(n))*diag(actual_p),crossprod(z[scr_inds,],yz[scr_inds])))
                             })
-    } else if (p < 2*n) {
-      scr_coef <- crossprod(z[scr_inds,],solve(tcrossprod(z[scr_inds,])+(sqrt(p)+sqrt(n))*diag(n),yz[scr_inds]))
+    } else if (actual_p < 2*n) {
+      scr_coef <- crossprod(z[scr_inds,],solve(tcrossprod(z[scr_inds,])+(sqrt(actual_p)+sqrt(n))*diag(n),yz[scr_inds]))
     } else {
       solve_res <- tryCatch( solve(tcrossprod(z[scr_inds,]),yz[scr_inds]),
                              error=function(error_message) {
-                               return(solve(tcrossprod(z[scr_inds,])+(sqrt(p)+sqrt(n))*diag(n),yz[scr_inds]))
+                               return(solve(tcrossprod(z[scr_inds,])+(sqrt(actual_p)+sqrt(n))*diag(n),yz[scr_inds]))
                              })
       scr_coef <- crossprod(z[scr_inds,],solve_res)
     }
@@ -129,9 +128,9 @@ spar <- function(x,
   for (i in 1:max_num_mod) {
     if (drawinds) {
       if (nscreen<p) {
-        ind_use <- sample(1:p,nscreen,prob=inc_probs)
+        ind_use <- sample(1:actual_p,nscreen,prob=inc_probs)
       } else {
-        ind_use <- 1:p
+        ind_use <- 1:actual_p
       }
       inds[[i]] <- ind_use
     } else {
@@ -197,7 +196,8 @@ spar <- function(x,
       tmp_coef[abscoef<thresh] <- 0
 
       avg_coef <- Matrix::rowMeans(tmp_coef)
-      tmp_beta <- yscale*avg_coef/xscale
+      tmp_beta <- numeric(p)
+      tmp_beta <- yscale*avg_coef/(xscale[xscale>0])
       tmp_intercept <- mean(intercepts[1:nummod]) + as.numeric(ycenter - sum(xcenter*tmp_beta) )
       eta_hat <- xval%*%tmp_beta + tmp_intercept
 
@@ -277,7 +277,9 @@ coef.spar <- function(spar_res,
   # calc for chosen parameters
   final_coef <- spar_res$betas[,1:nummod,drop=FALSE]
   final_coef[abs(final_coef)<lambda] <- 0
-  beta <- spar_res$yscale*Matrix::rowMeans(final_coef)/spar_res$xscale
+  p <- length(spar_res$xscale)
+  beta <- numeric(p)
+  beta[spar_res$xscale>0] <- spar_res$yscale*Matrix::rowMeans(final_coef)/(spar_res$xscale[spar_res$xscale>0])
   intercept <- spar_res$ycenter + mean(spar_res$intercepts[1:nummod]) - sum(spar_res$xcenter*beta)
   return(list(intercept=intercept,beta=beta,nummod=nummod,lambda=lambda))
 }
@@ -327,7 +329,8 @@ predict.spar <- function(spar_res,
 
       preds <- sapply(1:coef$nummod,function(j){
         tmp_coef <- final_coef[,j]
-        beta <- spar_res$yscale*tmp_coef/spar_res$xscale
+        beta <- numeric(length(spar_res$xscale))
+        beta[spar_res$xscale>0] <- spar_res$yscale*tmp_coef/(spar_res$xscale[spar_res$xscale>0])
         intercept <- spar_res$ycenter + spar_res$intercepts[j]  - sum(spar_res$xcenter*beta)
         eta <- as.numeric(xnew%*%beta + coef$intercept)
         spar_res$family$linkinv(eta)
