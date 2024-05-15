@@ -197,7 +197,7 @@ spar <- function(x,
 
       avg_coef <- Matrix::rowMeans(tmp_coef)
       tmp_beta <- numeric(p)
-      tmp_beta <- yscale*avg_coef/(xscale[xscale>0])
+      tmp_beta[xscale>0] <- yscale*avg_coef/(xscale[xscale>0])
       tmp_intercept <- mean(intercepts[1:nummod]) + as.numeric(ycenter - sum(xcenter*tmp_beta) )
       eta_hat <- xval%*%tmp_beta + tmp_intercept
 
