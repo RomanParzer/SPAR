@@ -54,7 +54,7 @@ spar.cv <- function(x,
                     msup = ceiling(nrow(x)/2)) {
   stopifnot("matrix" %in% class(x) |"data.frame" %in% class(x))
   x <- as.matrix(x)
-  if (class(x[1,1])!="numeric") {
+  if (!class(x[1,1])%in%c("numeric","integer")) {
     stop("There are non-numeric data entries, numerical matrix needed!")
   }
   p <- ncol(x)
