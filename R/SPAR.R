@@ -111,7 +111,7 @@ spar <- function(x,
 
   max_num_mod <- max(nummods)
   intercepts <- numeric(max_num_mod)
-  betas_std <- Matrix::Matrix(data=c(0),p,max_num_mod,sparse = TRUE)
+  betas_std <- Matrix::Matrix(data=c(0),actual_p,max_num_mod,sparse = TRUE)
 
   drawRPMs <- FALSE
   if (is.null(RPMs)) {
