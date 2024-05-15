@@ -59,7 +59,7 @@ spar <- function(x,
                  split_data = FALSE,
                  mslow = ceiling(log(ncol(x))),
                  msup = ceiling(nrow(x)/2),
-                 inds = NULL,
+                 inds = NULL,ind_sd0 = NULL,
                  RPMs = NULL) {
 
   stopifnot(mslow <= msup)
@@ -134,7 +134,15 @@ spar <- function(x,
       }
       inds[[i]] <- ind_use
     } else {
-      ind_use <- inds[[i]]
+      # i <- 1
+      # inds <- vector("list",4)
+      # inds[[i]] <- c(2,3,4,5)
+      # p <- 10
+      # ind_sd0 <- c(2,4)
+      # xscale <- c(1,0,1,0,1,0,1,1,1,1)
+
+      orp_ind <- setdiff(((1:p)[-ind_sd0])[inds[[i]]],which(xscale==0))
+      ind_use <- inds[[i]][1:length(orp_ind)]
     }
     p_use <- length(ind_use)
 
@@ -304,7 +312,7 @@ predict.spar <- function(spar_res,
                       nummod = NULL,
                       lambda = NULL,
                       coef = NULL) {
-  if (ncol(xnew)!=nrow(spar_res$betas)) {
+  if (ncol(xnew)!=length(spar_res$xscale)) {
     stop("xnew must have same number of columns as initial x!")
   }
   type <- match.arg(type)

@@ -68,8 +68,9 @@ spar.cv <- function(x,
     fold_ind <- which(folds==k)
     foldSPARres <- spar(x[-fold_ind,],y[-fold_ind],family = family,
                         xval = x[fold_ind,], yval=y[fold_ind],
-                               nscreen = nscreen, lambdas = SPARres$lambdas,mslow=mslow,msup=msup,
-                               inds = SPARres$inds, RPMs = SPARres$RPMs,nummods=nummods,split_data=split_data)
+                        nscreen = nscreen, lambdas = SPARres$lambdas,mslow=mslow,msup=msup,
+                        inds = SPARres$inds, inds_sd0 = which(SPARres$xscale==0),
+                        RPMs = SPARres$RPMs,nummods=nummods,split_data=split_data)
     val_res <- rbind(val_res,foldSPARres$val_res)
   }
 
@@ -187,7 +188,7 @@ predict.spar.cv <- function(spar_res,
                             nummod = NULL,
                             lambda = NULL,
                             coef = NULL) {
-  if (ncol(xnew)!=nrow(spar_res$betas)) {
+  if (ncol(xnew)!=length(spar_res$xscale)) {
     stop("xnew must have same number of columns as initial x!")
   }
   type <- match.arg(type)
