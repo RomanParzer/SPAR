@@ -19,7 +19,7 @@
 #' @param split_data logical to indicate whether data for calculation of scr_coef and fitting of mar mods should be split 1/4 to 3/4 to avoid overfitting; default FALSE
 #' @param mslow lower bound for unifrom random goal dimensions in marginal models; defaults to log(p).
 #' @param msup upper bound for unifrom random goal dimensions in marginal models; defaults to n/2.
-#' @param inds optional list of index-vectors corresponding to variables kept after screening in each marginal model of length max(nummods).
+#' @param inds optional list of index-vectors corresponding to variables kept after screening in each marginal model of length max(nummods),dimensions need to fit those of RPMs.
 #' @param RPMs optional list of sparse CW projection matrices used in each marginal model of length max(nummods), diagonal elements will be overwritten with a coefficient only depending on the given x and y.
 #' @returns object of class "spar" with elements
 #' \itemize{
@@ -59,7 +59,7 @@ spar <- function(x,
                  split_data = FALSE,
                  mslow = ceiling(log(ncol(x))),
                  msup = ceiling(nrow(x)/2),
-                 inds = NULL,ind_sd0 = NULL,
+                 inds = NULL,
                  RPMs = NULL) {
 
   stopifnot(mslow <= msup)
@@ -76,8 +76,16 @@ spar <- function(x,
 
   xcenter <- apply(x,2,mean)
   xscale <- apply(x,2,sd)
-  actual_p <- sum(xscale>0)
-  z <- scale(x[,xscale>0],center = xcenter[xscale>0],scale = xscale[xscale>0])
+
+  if (is.null(inds) | is.null(RPMs)) {
+    actual_p <- sum(xscale>0)
+    z <- scale(x[,xscale>0],center = xcenter[xscale>0],scale = xscale[xscale>0])
+  } else {
+    actual_p <- p
+    xscale[xscale==0] <- 1
+    z <- scale(x,center = xcenter,scale = xscale)
+  }
+
 
   if (family$family=="gaussian" & family$link=="identity") {
     ycenter <- mean(y)
@@ -134,15 +142,7 @@ spar <- function(x,
       }
       inds[[i]] <- ind_use
     } else {
-      # i <- 1
-      # inds <- vector("list",4)
-      # inds[[i]] <- c(2,3,4,5)
-      # p <- 10
-      # ind_sd0 <- c(2,4)
-      # xscale <- c(1,0,1,0,1,0,1,1,1,1)
-
-      orp_ind <- setdiff(((1:p)[-ind_sd0])[inds[[i]]],which(xscale==0))
-      ind_use <- inds[[i]][1:length(orp_ind)]
+      ind_use <- inds[[i]]
     }
     p_use <- length(ind_use)
 
