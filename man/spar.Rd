@@ -14,6 +14,8 @@ spar(
   nlambda = 20,
   lambdas = NULL,
   nummods = c(20),
+  split_data = FALSE,
+  type.measure = c("deviance", "mse", "mae", "class", "1-auc"),
   mslow = ceiling(log(ncol(x))),
   msup = ceiling(nrow(x)/2),
   inds = NULL,
@@ -21,11 +23,11 @@ spar(
 )
 }
 \arguments{
-\item{x}{n x p numeric matrix of predictor variables}
+\item{x}{n x p numeric matrix of predictor variables.}
 
-\item{y}{response vector of length n}
+\item{y}{quantitative response vector of length n.}
 
-\item{family}{'family'-objected used for glm (excwept the quasi), default gaussian("identity")}
+\item{family}{'family'-objected used for glm (except the quasi), default gaussian("identity").}
 
 \item{xval}{optional matrix of predictor variables observations used for validation of threshold lambda and number of models; x is used if not provided.}
 
@@ -39,11 +41,16 @@ spar(
 
 \item{nummods}{vector of numbers of marginal models to consider for validation; defaults to c(20).}
 
+\item{split_data}{logical to indicate whether data for calculation of scr_coef and fitting of mar mods should be split 1/4 to 3/4 to avoid overfitting; default FALSE}
+
+\item{type.measure}{loss to use for validation; defaults to "deviance" available for all families. Other options are "mse" or "mae" (between responses and predicted means, for all families),
+"class" (misclassification error) and "1-auc" (one minus area under the ROC curve) both just for "binomial" family.}
+
 \item{mslow}{lower bound for unifrom random goal dimensions in marginal models; defaults to log(p).}
 
 \item{msup}{upper bound for unifrom random goal dimensions in marginal models; defaults to n/2.}
 
-\item{inds}{optional list of index-vectors corresponding to variables kept after screening in each marginal model of length max(nummods).}
+\item{inds}{optional list of index-vectors corresponding to variables kept after screening in each marginal model of length max(nummods),dimensions need to fit those of RPMs.}
 
 \item{RPMs}{optional list of sparse CW projection matrices used in each marginal model of length max(nummods), diagonal elements will be overwritten with a coefficient only depending on the given x and y.}
 }
@@ -54,7 +61,7 @@ object of class "spar" with elements
 \item scr_coef p-vector of HOLP coefficient used for screening
 \item inds list of index-vectors corresponding to variables kept after screening in each marginal model of length max(nummods)
 \item RPMs list of sparse CW projection matrices used in each marginal model of length max(nummods)
-\item val_res data.frame with validation results (Dev and number of active variables) for each element of lambdas and nummods
+\item val_res data.frame with validation results (validation measure and number of active variables) for each element of lambdas and nummods
 \item val_set logical flag, whether validation data were provided; if FALSE, training data were used for validation
 \item lambdas vector of lambdas considered for thresholding
 \item nummods vector of numbers of marginal models considered for validation
@@ -75,8 +82,9 @@ spar_res
 coefs <- coef(spar_res)
 pred <- predict(spar_res,xnew=example_data$x)
 plot(spar_res)
-plot(spar_res,"Dev","nummod")
-plot(spar_res,"numAct","lambda")}
+plot(spar_res,"Val_Meas","nummod")
+plot(spar_res,"Val_numAct","lambda")
+plot(spar_res,"coefs",prange=c(1,400))}
 }
 \seealso{
 \link{spar.cv},\link{coef.spar},\link{predict.spar},\link{plot.spar},\link{print.spar}

@@ -1,6 +1,5 @@
 
 # similar to spar
-
 test_that("Results has right class", {
   x <- data.frame(matrix(rnorm(300), ncol = 30))
   y <- rnorm(10)
@@ -39,6 +38,16 @@ test_that("Validated nummod values are same as the ones for initial SPAR fit", {
   expect_equal(unique(spar_res$val_sum$nummod),as.numeric(spar_res$nummods))
 })
 
+test_that("Columns with zero sd get ceofficient 0", {
+  x <- example_data$x
+  x[,c(1,11,111)] <- 2
+  y <- example_data$y
+
+  spar_res <- spar.cv(x,y,type.measure = "mae")
+  sparcoef <- coef(spar_res)
+  expect_equal(sparcoef$beta[c(1,11,111)],c(0,0,0))
+})
+
 # Tests expecting errors
 
 test_that("Get errors for input x not data.frame or matrix", {
@@ -67,4 +76,12 @@ test_that("Get errors for prediction when xnew has wrong dimensions", {
   xnew <- example_data$xtest
   expect_error(predict(spar_res,xnew=xnew[,-1]))
 })
+
+test_that("Get errors for classification validation measure for non-binomial family", {
+  x <- example_data$x
+  y <- example_data$y
+  expect_error(spar.cv(x,y,type.measure = "1-auc"))
+})
+
+
 

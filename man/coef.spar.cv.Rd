@@ -9,7 +9,7 @@
 \arguments{
 \item{spar_res}{result of spar.cv function of class "spar.cv".}
 
-\item{opt_par}{one of c("1se","best"), chooses whether to select the best pair of lambdas and nummods according to CV-Dev, or the sparsest solution within one sd of that optimal CV-Dev;
+\item{opt_par}{one of c("1se","best"), chooses whether to select the best pair of lambdas and nummods according to CV-Meas, or the sparsest solution within one sd of that optimal CV-Meas;
 ignored when nummod and lambda are given}
 
 \item{nummod}{optional number of models used to form coefficients}

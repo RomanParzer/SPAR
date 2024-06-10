@@ -9,9 +9,9 @@
 \arguments{
 \item{spar_res}{result of spar function of class "spar".}
 
-\item{nummod}{number of models used to form coefficients; value with minimal validation Dev is used if not provided.}
+\item{nummod}{number of models used to form coefficients; value with minimal validation Meas is used if not provided.}
 
-\item{lambda}{threshold level used to form coefficients; value with minimal validation Dev is used if not provided.}
+\item{lambda}{threshold level used to form coefficients; value with minimal validation Meas is used if not provided.}
 }
 \value{
 List of coefficients with elements

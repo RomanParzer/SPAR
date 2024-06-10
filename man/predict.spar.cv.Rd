@@ -24,14 +24,14 @@
 
 \item{avg_type}{type of averaging the marginal models; either on link (default) or on response level}
 
-\item{opt_par}{one of c("1se","best"), chooses whether to select the best pair of lambdas and nummods according to CV-Dev, or the sparsest solution within one sd of that optimal CV-Dev;
+\item{opt_par}{one of c("best","1se"), chooses whether to select the best pair of lambdas and nummods according to CV-Meas, or the sparsest solution within one sd of that optimal CV-Meas;
 ignored when nummod and lambda, or coef are given}
 
-\item{nummod}{number of models used to form coefficients; value with minimal validation Dev is used if not provided.}
+\item{nummod}{number of models used to form coefficients; value with minimal validation Meas is used if not provided.}
 
-\item{lambda}{threshold level used to form coefficients; value with minimal validation Dev is used if not provided.}
+\item{lambda}{threshold level used to form coefficients; value with minimal validation Meas is used if not provided.}
 
-\item{coef}{optional; result of coef.spar.cv, can be used if coef.spar.cv has already been called.}
+\item{coef}{optional; result of \code{\link{coef.spar.cv}}, can be used if \code{\link{coef.spar.cv}} has already been called.}
 }
 \value{
 Vector of predictions

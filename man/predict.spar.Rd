@@ -23,9 +23,9 @@
 
 \item{avg_type}{type of averaging the marginal models; either on link (default) or on response level}
 
-\item{nummod}{number of models used to form coefficients; value with minimal validation Dev is used if not provided.}
+\item{nummod}{number of models used to form coefficients; value with minimal validation Meas is used if not provided.}
 
-\item{lambda}{threshold level used to form coefficients; value with minimal validation Dev is used if not provided.}
+\item{lambda}{threshold level used to form coefficients; value with minimal validation Meas is used if not provided.}
 
 \item{coef}{optional; result of coef.spar, can be used if coef.spar has already been called.}
 }
