@@ -6,32 +6,37 @@
 \usage{
 \method{plot}{spar.cv}(
   spar_res,
-  plot_type = c("MSE", "numAct", "res-vs-fitted"),
+  plot_type = c("Val_Measure", "Val_numAct", "res-vs-fitted", "coefs"),
   plot_along = c("lambda", "nummod"),
-  opt_par = c("1se", "best"),
   nummod = NULL,
   lambda = NULL,
   xfit = NULL,
-  yfit = NULL
+  yfit = NULL,
+  opt_par = c("best", "1-se"),
+  prange = NULL,
+  coef_order = NULL
 )
 }
 \arguments{
 \item{spar_res}{result of spar.cv function of class "spar.cv".}
 
-\item{plot_type}{one of c("MSE","numAct","res-vs-fitted").}
+\item{plot_type}{one of c("Val_Measure","Val_numAct","res-vs-fitted","coefs").}
 
 \item{plot_along}{one of c("lambda","nummod"); ignored when plot_type="res-vs-fitted".}
 
-\item{opt_par}{one of c("1se","best"), chooses whether to select the best pair of lambdas and nummods according to CV-MSE, or the sparsest solution within one sd of that optimal CV-MSE;
-ignored when nummod and lambda, or coef are given}
+\item{nummod}{fixed value for nummod when plot_along="lambda" for plot_type="Val_Measure" or "Val_numAct"; same as for \code{\link{predict.spar.cv}} when plot_type="res-vs-fitted".}
 
-\item{nummod}{fixed value for nummod when plot_along="lambda" for plot_type="MSE" or "numAct"; same as for predict.spar when plot_type="res-vs-fitted".}
-
-\item{lambda}{fixed value for lambda when plot_along="nummod" for plot_type="MSE" or "numAct"; same as for predict.spar when plot_type="res-vs-fitted".}
+\item{lambda}{fixed value for lambda when plot_along="nummod" for plot_type="Val_Measure" or "Val_numAct"; same as for \code{\link{predict.spar.cv}} when plot_type="res-vs-fitted".}
 
 \item{xfit}{data used for predictions in "res-vs-fitted".}
 
 \item{yfit}{data used for predictions in "res-vs-fitted".}
+
+\item{opt_par}{one of c("best","1se"), only needed for plot_type="res-vs-fitted" to set type of predictions, see \code{\link{predict.spar.cv}}.}
+
+\item{prange}{optional vector of length 2 for "coefs"-plot to give the limits of the predictors' plot range; defaults to c(1,p).}
+
+\item{coef_order}{optional index vector of length p for "coefs"-plot to give the order of the predictors; defaults to 1:p.}
 }
 \value{
 ggplot2 object

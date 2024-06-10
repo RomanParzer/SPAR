@@ -4,16 +4,28 @@
 \alias{predict.spar}
 \title{predict.spar}
 \usage{
-\method{predict}{spar}(spar_res, xnew, nummod = NULL, lambda = NULL, coef = NULL)
+\method{predict}{spar}(
+  spar_res,
+  xnew,
+  type = c("response", "link"),
+  avg_type = c("link", "response"),
+  nummod = NULL,
+  lambda = NULL,
+  coef = NULL
+)
 }
 \arguments{
 \item{spar_res}{result of spar function of class "spar".}
 
 \item{xnew}{matrix of new predictor variables; must have same number of columns as x.}
 
-\item{nummod}{number of models used to form coefficients; value with minimal validation MSE is used if not provided.}
+\item{type}{the type of required predictions; either on response level (default) or on link level}
 
-\item{lambda}{threshold level used to form coefficients; value with minimal validation MSE is used if not provided.}
+\item{avg_type}{type of averaging the marginal models; either on link (default) or on response level}
+
+\item{nummod}{number of models used to form coefficients; value with minimal validation Meas is used if not provided.}
+
+\item{lambda}{threshold level used to form coefficients; value with minimal validation Meas is used if not provided.}
 
 \item{coef}{optional; result of coef.spar, can be used if coef.spar has already been called.}
 }

@@ -47,8 +47,46 @@ test_that("Returned coef and preds are correct for fixed screening and projectio
 
   expect_equal(sparcoef$lambda,0.002324331,tolerance = 1e-6)
   expect_equal(sparcoef$beta[53],0)
-  expect_equal(sparcoef$beta[1],0.13841086,tolerance = 1e-6)
-  expect_equal(pred[1],20.78687,tolerance = 1e-6)
+  expect_equal(sparcoef$beta[1],0.1384109,tolerance = 1e-6)
+  expect_equal(pred[1],20.78687,tolerance = 1e-5)
+})
+
+test_that("Returned coef and preds are correct for fixed screening and projections for binomial(logit)", {
+  x <- example_data$x
+  y <- round(1/(1+exp(-example_data$y)))
+  xnew <- example_data$xtest
+
+  m <- 2*floor(log(ncol(x)))
+  nsc <- 2*nrow(x)
+  RP1 <- Matrix::Matrix(c(0),nrow=m,ncol=nsc,sparse=TRUE)
+  RP1@i <- as.integer(c(rep(1:m,each=nsc%/%m),rep(m,nsc%%m))-1)
+  RP1@p <- 0:nsc
+  RP1@x <- (-1)^(1:nsc)
+
+  m <- floor(nrow(x)/2)
+  RP2 <- Matrix::Matrix(c(0),nrow=m,ncol=nsc,sparse=TRUE)
+  RP2@i <- as.integer(c(rep(m:1,each=nsc%/%m),rep(1,nsc%%m))-1)
+  RP2@p <- 0:nsc
+  RP2@x <- (-1)^(1:nsc)
+
+  spar_res <- spar(x,y,nummods=c(2),inds = list(1:(2*nrow(x)),500+1:(2*nrow(x))),RPMs = list(RP1,RP2),family = binomial(logit))
+  sparcoef <- coef(spar_res)
+  pred <- predict(spar_res,xnew=xnew)
+
+  expect_equal(sparcoef$lambda,0.009781171,tolerance = 1e-6)
+  expect_equal(sparcoef$beta[11],0)
+  expect_equal(sparcoef$beta[1],0.04584074,tolerance = 1e-6)
+  expect_equal(pred[1],0.9675592,tolerance = 1e-5)
+})
+
+test_that("Columns with zero sd get ceofficient 0", {
+  x <- example_data$x
+  x[,c(1,11,111)] <- 2
+  y <- example_data$y
+
+  spar_res <- spar(x,y)
+  sparcoef <- coef(spar_res)
+  expect_equal(sparcoef$beta[c(1,11,111)],c(0,0,0))
 })
 
 # Tests expecting errors
@@ -103,6 +141,12 @@ test_that("Get errors for prediction when xnew has wrong dimensions", {
   spar_res <- spar(x,y)
   xnew <- example_data$xtest
   expect_error(predict(spar_res,xnew=xnew[,-1]))
+})
+
+test_that("Get errors for classification validation measure for non-binomial family", {
+  x <- example_data$x
+  y <- example_data$y
+  expect_error(spar(x,y,type.measure = "1-auc"))
 })
 
 

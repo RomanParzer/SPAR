@@ -7,19 +7,24 @@
 spar.cv(
   x,
   y,
+  family = gaussian("identity"),
   nscreen = 2 * nrow(x),
   nfolds = 10,
   nlambda = 20,
   lambdas = NULL,
   nummods = c(20),
+  split_data = FALSE,
+  type.measure = c("deviance", "mse", "mae", "class", "1-auc"),
   mslow = ceiling(log(ncol(x))),
   msup = ceiling(nrow(x)/2)
 )
 }
 \arguments{
-\item{x}{n x p matrix of predictor variables}
+\item{x}{n x p matrix of predictor variables.}
 
-\item{y}{response vector of length n}
+\item{y}{quantitative response vector of length n.}
+
+\item{family}{'family'-objected used for glm (except the quasi), default gaussian("identity").}
 
 \item{nscreen}{number of variables kept after screening in each marginal model, multiples of n are suggested; defaults to 2n.}
 
@@ -31,6 +36,11 @@ spar.cv(
 
 \item{nummods}{vector of numbers of marginal models to consider for validation; defaults to c(20).}
 
+\item{split_data}{logical to indicate whether data for calculation of scr_coef and fitting of mar mods should be split 1/4 to 3/4 to avoid overfitting; default FALSE}
+
+\item{type.measure}{loss to use for validation; defaults to "deviance" available for all families. Other options are "mse" or "mae" (between responses and predicted means, for all families),
+"class" (misclassification error) and "1-auc" (One minus area under the ROC curve) both just for "binomial" family.}
+
 \item{mslow}{lower bound for unifrom random goal dimensions in marginal models; defaults to log(p).}
 
 \item{msup}{upper bound for unifrom random goal dimensions in marginal models; defaults to n/2.}
@@ -39,10 +49,10 @@ spar.cv(
 object of class "spar" with elements
 \itemize{
 \item betas p x max(nummods) matrix of standardized coefficients from each marginal model
-\item HOLPcoef p-vector of HOLP coefficient used for screening
-\item inds list of index-vectors corresponding to variables kept after screening in each marginal model of length max(numods)
-\item RPMs list of sparse CW projection matrices used in each marginal model of length max(numods)
-\item val_sum data.frame with CV results (mean and sd MSE and mean number of active variables) for each element of lambdas and nummods
+\item scr_coef p-vector of HOLP coefficient used for screening
+\item inds list of index-vectors corresponding to variables kept after screening in each marginal model of length max(nummods)
+\item RPMs list of sparse CW projection matrices used in each marginal model of length max(nummods)
+\item val_sum data.frame with CV results (mean and sd validation measure and mean number of active variables) for each element of lambdas and nummods
 \item lambdas vector of lambdas considered for thresholding
 \item nummods vector of numbers of marginal models considered for validation
 \item ycenter empirical mean of initial response vector
@@ -58,12 +68,14 @@ Apply Sparse Projected Averaged Regression to High-dimensional Data (see Parzer,
 \dontrun{
 data("example_data")
 spar_res <- spar.cv(example_data$x,example_data$y,nummods=c(5,10,15,20,25,30))
-coef <- coef(spar_res)
+spar_res
+coefs <- coef(spar_res)
 pred <- predict(spar_res,example_data$x)
 plot(spar_res)
-plot(spar_res,"MSE","nummod")
-plot(spar_res,"numAct","lambda")}
+plot(spar_res,"Val_Meas","nummod")
+plot(spar_res,"Val_numAct","lambda")
+plot(spar_res,"coefs",prange=c(1,400))}
 }
 \seealso{
-\link{spar},\link{coef.spar.cv},\link{predict.spar.cv},\link{plot.spar.cv}
+\link{spar},\link{coef.spar.cv},\link{predict.spar.cv},\link{plot.spar.cv},\link{print.spar.cv}
 }

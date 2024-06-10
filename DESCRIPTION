@@ -1,7 +1,7 @@
 Type: Package
 Package: SPAR
 Title: Sparse Projected Averaged Regression
-Version: 1.1.0
+Version: 2.3.0
 Author: Roman Parzer
 Maintainer: Roman Parzer <romanparzer1@gmail.com>
 Description: Apply Sparse Projected Averaged Regression to
@@ -10,7 +10,9 @@ License: GPL-3
 Imports: 
     dplyr,
     Matrix,
-    ggplot2
+    ROCR,
+    ggplot2,
+    glmnet
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.2.3

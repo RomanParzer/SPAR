@@ -7,30 +7,32 @@
 #' Apply Sparse Projected Averaged Regression to High-dimensional Data (see Parzer, Vana-Guer and Filzmoser 2023).
 #' This function performs the procedure for given thresholds lambda and numbers of marginal models, and acts as a help-function for the full cross-validated procedure [spar.cv].
 #'
-#' @param x n x p matrix of predictor variables
-#' @param y response vector of length n
+#' @param x n x p numeric matrix of predictor variables.
+#' @param y quantitative response vector of length n.
+#' @param family 'family'-objected used for glm (except the quasi), default gaussian("identity").
 #' @param xval optional matrix of predictor variables observations used for validation of threshold lambda and number of models; x is used if not provided.
 #' @param yval optional response observations used for validation of threshold lambda and number of models; y is used if not provided.
 #' @param nscreen number of variables kept after screening in each marginal model, multiples of n are suggested; defaults to 2n.
 #' @param nlambda number of different lambdas to consider for thresholding; ignored when lambdas are given; defaults to 20.
 #' @param lambdas optional vector of lambdas to consider for thresholding; if not provided, nlam values ranging from 0 to the maximum ablsolute marginal coefficient are used.
 #' @param nummods vector of numbers of marginal models to consider for validation; defaults to c(20).
+#' @param split_data logical to indicate whether data for calculation of scr_coef and fitting of mar mods should be split 1/4 to 3/4 to avoid overfitting; default FALSE
+#' @param type.measure loss to use for validation; defaults to "deviance" available for all families. Other options are "mse" or "mae" (between responses and predicted means, for all families),
+#' "class" (misclassification error) and "1-auc" (one minus area under the ROC curve) both just for "binomial" family.
 #' @param mslow lower bound for unifrom random goal dimensions in marginal models; defaults to log(p).
 #' @param msup upper bound for unifrom random goal dimensions in marginal models; defaults to n/2.
-#' @param inds optional list of index-vectors corresponding to variables kept after screening in each marginal model of length max(nummods).
+#' @param inds optional list of index-vectors corresponding to variables kept after screening in each marginal model of length max(nummods),dimensions need to fit those of RPMs.
 #' @param RPMs optional list of sparse CW projection matrices used in each marginal model of length max(nummods), diagonal elements will be overwritten with a coefficient only depending on the given x and y.
 #' @returns object of class "spar" with elements
 #' \itemize{
 #'  \item betas p x max(nummods) matrix of standardized coefficients from each marginal model
-#'  \item HOLPcoef p-vector of HOLP coefficient used for screening
+#'  \item scr_coef p-vector of HOLP coefficient used for screening
 #'  \item inds list of index-vectors corresponding to variables kept after screening in each marginal model of length max(nummods)
 #'  \item RPMs list of sparse CW projection matrices used in each marginal model of length max(nummods)
-#'  \item val_res data.frame with validation results (MSE and number of active variables) for each element of lambdas and nummods
+#'  \item val_res data.frame with validation results (validation measure and number of active variables) for each element of lambdas and nummods
 #'  \item val_set logical flag, whether validation data were provided; if FALSE, training data were used for validation
 #'  \item lambdas vector of lambdas considered for thresholding
 #'  \item nummods vector of numbers of marginal models considered for validation
-#'  \item ycenter empirical mean of initial response vector
-#'  \item yscale empirical standard deviation of initial response vector
 #'  \item xcenter p-vector of empirical means of initial predictor variables
 #'  \item xscale p-vector of empirical standard deviations of initial predictor variables
 #' }
@@ -38,23 +40,27 @@
 #' \dontrun{
 #' data("example_data")
 #' spar_res <- spar(example_data$x,example_data$y,
-#' example_data$xtest,example_data$ytest,nummods=c(5,10,15,20,25,30))
+#' xval=example_data$xtest,yval=example_data$ytest,nummods=c(5,10,15,20,25,30))
 #' spar_res
 #' coefs <- coef(spar_res)
 #' pred <- predict(spar_res,xnew=example_data$x)
 #' plot(spar_res)
-#' plot(spar_res,"MSE","nummod")
-#' plot(spar_res,"numAct","lambda")}
+#' plot(spar_res,"Val_Meas","nummod")
+#' plot(spar_res,"Val_numAct","lambda")
+#' plot(spar_res,"coefs",prange=c(1,400))}
 #' @seealso [spar.cv],[coef.spar],[predict.spar],[plot.spar],[print.spar]
 #' @export
 spar <- function(x,
                  y,
+                 family = gaussian("identity"),
                  xval = NULL,
                  yval = NULL,
                  nscreen = 2*nrow(x),
                  nlambda = 20,
                  lambdas = NULL,
                  nummods = c(20),
+                 split_data = FALSE,
+                 type.measure = c("deviance","mse","mae","class","1-auc"),
                  mslow = ceiling(log(ncol(x))),
                  msup = ceiling(nrow(x)/2),
                  inds = NULL,
@@ -62,40 +68,75 @@ spar <- function(x,
 
   stopifnot(mslow <= msup)
   stopifnot(msup <= nscreen)
-  stopifnot(is.numeric(y))
 
+  type.measure <- match.arg(type.measure)
+  stopifnot(is.numeric(y))
   p <- ncol(x)
   n <- nrow(x)
+  stopifnot(length(y)==n)
 
-  ycenter <- mean(y)
-  yscale <- sd(y)
+  if (split_data==TRUE) {
+    scr_inds <- sample(1:n,n%/%4)
+    mar_inds <- (1:n)[-scr_inds]
+  } else {
+    mar_inds <- scr_inds <- 1:n
+  }
+
   xcenter <- apply(x,2,mean)
   xscale <- apply(x,2,sd)
-  xscale[xscale==0] <- 1
 
-  z <- scale(x,center = xcenter,scale = xscale)
-  yz <- scale(y,center = ycenter,scale = yscale)
-
-  if (p < n/2) {
-    HOLPcoef <- tryCatch( solve(crossprod(z),crossprod(z,yz)),
-                               error=function(error_message) {
-                                 return(solve(crossprod(z)+(sqrt(p)+sqrt(n))*diag(p),crossprod(z,yz)))
-                               })
-  } else if (p < 2*n) {
-    HOLPcoef <- crossprod(z,solve(tcrossprod(z)+(sqrt(p)+sqrt(n))*diag(n),yz))
+  if (is.null(inds) | is.null(RPMs)) {
+    actual_p <- sum(xscale>0)
+    z <- scale(x[,xscale>0],center = xcenter[xscale>0],scale = xscale[xscale>0])
   } else {
-    solve_res <- tryCatch( solve(tcrossprod(z),yz),
-                           error=function(error_message) {
-                             return(solve(tcrossprod(z)+(sqrt(p)+sqrt(n))*diag(n),yz))
-                           })
-    HOLPcoef <- crossprod(z,solve_res)
+    actual_p <- p
+    xscale[xscale==0] <- 1
+    z <- scale(x,center = xcenter,scale = xscale)
   }
-  inc_probs <- abs(HOLPcoef)
+
+
+  if (family$family=="gaussian" & family$link=="identity") {
+    fit_family <- "gaussian"
+    ycenter <- mean(y)
+    yscale <- sd(y)
+    yz <- scale(y,center = ycenter,scale = yscale)
+    if (actual_p < n/2) {
+      scr_coef <- tryCatch( solve(crossprod(z[scr_inds,]),crossprod(z[scr_inds,],yz[scr_inds])),
+                            error=function(error_message) {
+                              return(solve(crossprod(z[scr_inds,])+(sqrt(actual_p)+sqrt(n))*diag(actual_p),crossprod(z[scr_inds,],yz[scr_inds])))
+                            })
+    } else if (actual_p < 2*n) {
+      scr_coef <- crossprod(z[scr_inds,],solve(tcrossprod(z[scr_inds,])+(sqrt(actual_p)+sqrt(n))*diag(n),yz[scr_inds]))
+    } else {
+      solve_res <- tryCatch( solve(tcrossprod(z[scr_inds,]),yz[scr_inds]),
+                             error=function(error_message) {
+                               return(solve(tcrossprod(z[scr_inds,])+(sqrt(actual_p)+sqrt(n))*diag(n),yz[scr_inds]))
+                             })
+      scr_coef <- crossprod(z[scr_inds,],solve_res)
+    }
+  } else {
+    if (family$family=="binomial" & family$link=="logit") {
+      fit_family <- "binomial"
+    } else if (family$family=="poisson" & family$link=="log") {
+      fit_family <- "poisson"
+    } else {
+      fit_family <- family
+    }
+
+    ycenter <- 0
+    yscale <- 1
+    glmnet_res <- glmnet::glmnet(x=z[scr_inds,],y=y[scr_inds],family = fit_family,alpha=0)
+    lam <- min(glmnet_res$lambda)
+    scr_coef <- coef(glmnet_res,s=lam)[-1]
+  }
+
+  inc_probs <- abs(scr_coef)
   max_inc_probs <- max(inc_probs)
   inc_probs <- inc_probs/max_inc_probs
 
   max_num_mod <- max(nummods)
-  betas_std <- Matrix::Matrix(data=c(0),p,max_num_mod,sparse = TRUE)
+  intercepts <- numeric(max_num_mod)
+  betas_std <- Matrix::Matrix(data=c(0),actual_p,max_num_mod,sparse = TRUE)
 
   drawRPMs <- FALSE
   if (is.null(RPMs)) {
@@ -112,9 +153,9 @@ spar <- function(x,
   for (i in 1:max_num_mod) {
     if (drawinds) {
       if (nscreen<p) {
-        ind_use <- sample(1:p,nscreen,prob=inc_probs)
+        ind_use <- sample(1:actual_p,nscreen,prob=inc_probs)
       } else {
-        ind_use <- 1:p
+        ind_use <- 1:actual_p
       }
       inds[[i]] <- ind_use
     } else {
@@ -129,21 +170,28 @@ spar <- function(x,
         RPM <- Matrix::Matrix(diag(1,m),sparse=TRUE)
         RPMs[[i]] <- RPM
       } else {
-        RPM <- generate_RPM(m,p_use,coef=HOLPcoef[ind_use]/max_inc_probs)
+        RPM <- generate_RPM(m,p_use,coef=scr_coef[ind_use]/max_inc_probs)
         RPMs[[i]] <- RPM
       }
     } else {
       RPM <- RPMs[[i]]
-      RPM@x <- HOLPcoef[ind_use]/max_inc_probs
+      RPM@x <- scr_coef[ind_use]/max_inc_probs
     }
 
-    znew <- Matrix::tcrossprod(z[,ind_use],RPM)
-    lm_coef <- tryCatch( Matrix::solve(Matrix::crossprod(znew),Matrix::crossprod(znew,yz)),
-                         error=function(error_message) {
-                           return(Matrix::solve(Matrix::crossprod(znew)+0.01*diag(ncol(znew)),Matrix::crossprod(znew,yz)))
-                         })
-
-    betas_std[ind_use,i] <- Matrix::crossprod(RPM,lm_coef)
+    znew <- Matrix::tcrossprod(z[mar_inds,ind_use],RPM)
+    if (family$family=="gaussian" & family$link=="identity") {
+      mar_coef <- tryCatch( Matrix::solve(Matrix::crossprod(znew),Matrix::crossprod(znew,yz[mar_inds])),
+                           error=function(error_message) {
+                             return(Matrix::solve(Matrix::crossprod(znew)+0.01*diag(ncol(znew)),Matrix::crossprod(znew,yz[mar_inds])))
+                           })
+      intercepts[i] <- 0
+      betas_std[ind_use,i] <- Matrix::crossprod(RPM,mar_coef)
+    } else {
+      glmnet_res <- glmnet::glmnet(znew,y[mar_inds],family = fit_family,alpha=0)
+      mar_coef <- coef(glmnet_res,s=min(glmnet_res$lambda))
+      intercepts[i] <- mar_coef[1]
+      betas_std[ind_use,i] <- Matrix::crossprod(RPM,mar_coef[-1])
+    }
   }
 
   if (is.null(lambdas)) {
@@ -152,7 +200,6 @@ spar <- function(x,
     } else {
       lambdas <- c(0)
     }
-    
   } else {
     nlambda <- length(lambdas)
   }
@@ -165,6 +212,31 @@ spar <- function(x,
     yval <- y
     xval <- x
   }
+
+  if (type.measure=="deviance") {
+    val.meas <- function(yval,eta_hat) {
+      return(sum(family$dev.resids(yval,family$linkinv(eta_hat),1)))
+    }
+  } else if (type.measure=="mse") {
+    val.meas <- function(yval,eta_hat) {
+      return(mean((yval-family$linkinv(eta_hat))^2))
+    }
+  } else if (type.measure=="mae") {
+    val.meas <- function(yval,eta_hat) {
+      return(mean(abs(yval-family$linkinv(eta_hat))))
+    }
+  } else if (type.measure=="class") {
+    stopifnot(family$family=="binomial")
+    val.meas <- function(yval,eta_hat) {
+      return(mean(yval!=round(family$linkinv(eta_hat))))
+    }
+  } else if (type.measure=="1-auc") {
+    stopifnot(family$family=="binomial")
+    val.meas <- function(yval,eta_hat) {
+      return(1-ROCR::performance(ROCR::prediction(family$linkinv(eta_hat),yval),measure="auc")@y.values[[1]])
+    }
+  }
+
   for (nummod in nummods) {
     coef <- betas_std[,1:nummod,drop=FALSE]
     abscoef <- abs(coef)
@@ -174,24 +246,27 @@ spar <- function(x,
       tmp_coef[abscoef<thresh] <- 0
 
       avg_coef <- Matrix::rowMeans(tmp_coef)
-      tmp_beta <- yscale*avg_coef/xscale
-      tmp_intercept <- as.numeric(ycenter - sum(xcenter*tmp_beta) )
-      yvalhat <- xval%*%tmp_beta + tmp_intercept
-
+      tmp_beta <- numeric(p)
+      tmp_beta[xscale>0] <- yscale*avg_coef/(xscale[xscale>0])
+      tmp_intercept <- mean(intercepts[1:nummod]) + as.numeric(ycenter - sum(xcenter*tmp_beta) )
+      eta_hat <- xval%*%tmp_beta + tmp_intercept
       c(l,
         thresh,
         nummod,
         sum(tmp_beta!=0),
-        mean((yvalhat-yval)^2)
+        val.meas(yval,eta_hat)
       )
     })
-    rownames(tabres) <- c("nlam","lam","nummod","numAct","MSE")
+    rownames(tabres) <- c("nlam","lam","nummod","numAct","Meas")
     val_res <- rbind(val_res,data.frame(t(tabres)))
   }
+  betas <- Matrix::Matrix(data=c(0),p,max_num_mod,sparse = TRUE)
+  betas[xscale>0,] <- betas_std
 
-  res <- list(betas = betas_std, HOLPcoef = HOLPcoef, inds = inds, RPMs = RPMs,
+  res <- list(betas = betas, intercepts = intercepts, scr_coef = scr_coef, inds = inds, RPMs = RPMs,
        val_res = val_res, val_set = val_set, lambdas = lambdas, nummods = nummods,
-       ycenter = ycenter, yscale = yscale, xcenter = xcenter, xscale = xscale)
+       ycenter = ycenter, yscale = yscale, xcenter = xcenter, xscale = xscale,
+       family = family, type.measure = type.measure)
   attr(res,"class") <- "spar"
 
   return(res)
@@ -201,8 +276,8 @@ spar <- function(x,
 #'
 #' Extract coefficients from spar object
 #' @param spar_res result of spar function of class "spar".
-#' @param nummod number of models used to form coefficients; value with minimal validation MSE is used if not provided.
-#' @param lambda threshold level used to form coefficients; value with minimal validation MSE is used if not provided.
+#' @param nummod number of models used to form coefficients; value with minimal validation Meas is used if not provided.
+#' @param lambda threshold level used to form coefficients; value with minimal validation Meas is used if not provided.
 #' @return List of coefficients with elements
 #' \itemize{
 #'  \item intercept
@@ -216,7 +291,7 @@ coef.spar <- function(spar_res,
                       nummod = NULL,
                       lambda = NULL) {
   if (is.null(nummod) & is.null(lambda)) {
-    best_ind <- which.min(spar_res$val_res$MSE)
+    best_ind <- which.min(spar_res$val_res$Meas)
     par <- spar_res$val_res[best_ind,]
     nummod <- par$nummod
     lambda <- par$lam
@@ -225,13 +300,13 @@ coef.spar <- function(spar_res,
       stop("Lambda needs to be among the previously fitted values when nummod is not provided!")
     }
     tmp_val_res <- spar_res$val_res[spar_res$val_res$lam==lambda,]
-    nummod <- tmp_val_res$nummod[which.min(tmp_val_res$MSE)]
+    nummod <- tmp_val_res$nummod[which.min(tmp_val_res$Meas)]
   } else if (is.null(lambda)) {
     if (!nummod %in% spar_res$val_res$nummod) {
       stop("Number of models needs to be among the previously fitted values when lambda is not provided!")
     }
     tmp_val_res <- spar_res$val_res[spar_res$val_res$nummod==nummod,]
-    lambda <- tmp_val_res$lam[which.min(tmp_val_res$MSE)]
+    lambda <- tmp_val_res$lam[which.min(tmp_val_res$Meas)]
   } else {
     if (length(nummod)!=1 | length(lambda)!=1) {
       stop("Length of nummod and lambda must be 1!")
@@ -244,10 +319,12 @@ coef.spar <- function(spar_res,
   }
 
   # calc for chosen parameters
-  final_coef <- spar_res$betas[,1:nummod,drop=FALSE]
+  final_coef <- spar_res$betas[spar_res$xscale>0,1:nummod,drop=FALSE]
   final_coef[abs(final_coef)<lambda] <- 0
-  beta <- spar_res$yscale*Matrix::rowMeans(final_coef)/spar_res$xscale
-  intercept <- spar_res$ycenter - sum(spar_res$xcenter*beta)
+  p <- length(spar_res$xscale)
+  beta <- numeric(p)
+  beta[spar_res$xscale>0] <- spar_res$yscale*Matrix::rowMeans(final_coef)/(spar_res$xscale[spar_res$xscale>0])
+  intercept <- spar_res$ycenter + mean(spar_res$intercepts[1:nummod]) - sum(spar_res$xcenter*beta)
   return(list(intercept=intercept,beta=beta,nummod=nummod,lambda=lambda))
 }
 
@@ -256,24 +333,55 @@ coef.spar <- function(spar_res,
 #' Predict responses for new predictors from spar object
 #' @param spar_res result of spar function of class "spar".
 #' @param xnew matrix of new predictor variables; must have same number of columns as x.
-#' @param nummod number of models used to form coefficients; value with minimal validation MSE is used if not provided.
-#' @param lambda threshold level used to form coefficients; value with minimal validation MSE is used if not provided.
+#' @param type the type of required predictions; either on response level (default) or on link level
+#' @param avg_type type of averaging the marginal models; either on link (default) or on response level
+#' @param nummod number of models used to form coefficients; value with minimal validation Meas is used if not provided.
+#' @param lambda threshold level used to form coefficients; value with minimal validation Meas is used if not provided.
 #' @param coef optional; result of coef.spar, can be used if coef.spar has already been called.
 #' @return Vector of predictions
 #' @export
 
 predict.spar <- function(spar_res,
                       xnew,
+                      type = c("response","link"),
+                      avg_type = c("link","response"),
                       nummod = NULL,
                       lambda = NULL,
                       coef = NULL) {
-  if (ncol(xnew)!=nrow(spar_res$betas)) {
+  if (ncol(xnew)!=length(spar_res$xscale)) {
     stop("xnew must have same number of columns as initial x!")
   }
+  type <- match.arg(type)
+  avg_type <- match.arg(avg_type)
   if (is.null(coef)) {
     coef <- coef(spar_res,nummod,lambda)
   }
-  res <- as.numeric(xnew%*%coef$beta + coef$intercept)
+  if (avg_type=="link") {
+    if (type=="link") {
+      res <- as.numeric(xnew%*%coef$beta + coef$intercept)
+    } else {
+      eta <- as.numeric(xnew%*%coef$beta + coef$intercept)
+      res <- spar_res$family$linkinv(eta)
+    }
+  } else {
+    if (type=="link") {
+      res <- as.numeric(xnew%*%coef$beta + coef$intercept)
+    } else {
+      # do diff averaging
+      final_coef <- spar_res$betas[spar_res$xscale>0,1:coef$nummod,drop=FALSE]
+      final_coef[abs(final_coef)<coef$lambda] <- 0
+
+      preds <- sapply(1:coef$nummod,function(j){
+        tmp_coef <- final_coef[,j]
+        beta <- numeric(length(spar_res$xscale))
+        beta[spar_res$xscale>0] <- spar_res$yscale*tmp_coef/(spar_res$xscale[spar_res$xscale>0])
+        intercept <- spar_res$ycenter + spar_res$intercepts[j]  - sum(spar_res$xcenter*beta)
+        eta <- as.numeric(xnew%*%beta + coef$intercept)
+        spar_res$family$linkinv(eta)
+      })
+      res <- rowMeans(preds)
+    }
+  }
   return(res)
 }
 
@@ -281,23 +389,27 @@ predict.spar <- function(spar_res,
 #'
 #' Plot errors or number of active variables over different thresholds or number of models of spar result, or residuals vs fitted
 #' @param spar_res result of spar function of class "spar".
-#' @param plot_type one of c("MSE","numAct","res-vs-fitted").
+#' @param plot_type one of c("Val_Measure","Val_numAct","res-vs-fitted","coefs").
 #' @param plot_along one of c("lambda","nummod"); ignored when plot_type="res-vs-fitted".
-#' @param nummod fixed value for nummod when plot_along="lambda" for plot_type="MSE" or "numAct"; same as for predict.spar when plot_type="res-vs-fitted".
-#' @param lambda fixed value for lambda when plot_along="nummod" for plot_type="MSE" or "numAct"; same as for predict.spar when plot_type="res-vs-fitted".
+#' @param nummod fixed value for nummod when plot_along="lambda" for plot_type="Val_Measure" or "Val_numAct"; same as for \code{\link{predict.spar}} when plot_type="res-vs-fitted".
+#' @param lambda fixed value for lambda when plot_along="nummod" for plot_type="Val_Measure" or "Val_numAct"; same as for \code{\link{predict.spar}} when plot_type="res-vs-fitted".
 #' @param xfit data used for predictions in "res-vs-fitted".
 #' @param yfit data used for predictions in "res-vs-fitted".
+#' @param prange optional vector of length 2 for "coefs"-plot to give the limits of the predictors' plot range; defaults to c(1,p).
+#' @param coef_order optional index vector of length p for "coefs"-plot to give the order of the predictors; defaults to 1:p.
 #' @return ggplot2 object
 #' @import ggplot2
 #' @export
 
 plot.spar <- function(spar_res,
-                      plot_type = c("MSE","numAct","res-vs-fitted"),
+                      plot_type = c("Val_Measure","Val_numAct","res-vs-fitted","coefs"),
                       plot_along = c("lambda","nummod"),
                       nummod = NULL,
                       lambda = NULL,
                       xfit = NULL,
-                      yfit = NULL) {
+                      yfit = NULL,
+                      prange = NULL,
+                      coef_order = NULL) {
   plot_type <- match.arg(plot_type)
   plot_along <- match.arg(plot_along)
   mynummod <- nummod
@@ -308,52 +420,52 @@ plot.spar <- function(spar_res,
     pred <- predict(spar_res,xfit,nummod,lambda)
     res <- ggplot2::ggplot(data = data.frame(fitted=pred,residuals=yfit-pred),ggplot2::aes(x=fitted,y=residuals)) +
       ggplot2::geom_point() +
-      # ggplot2::geom_smooth(size=0.5,alpha=0.2,method = 'loess',formula='y ~ x') +
-      ggplot2::geom_hline(yintercept = 0,linetype=2,size=0.5)
-  } else if (plot_type=="MSE") {
+      ggplot2::geom_hline(yintercept = 0,linetype=2,linewidth=0.5)
+  } else if (plot_type=="Val_Measure") {
     if (plot_along=="lambda") {
       if (is.null(nummod)) {
-        mynummod <- spar_res$val_res$nummod[which.min(spar_res$val_res$MSE)]
+        mynummod <- spar_res$val_res$nummod[which.min(spar_res$val_res$Meas)]
         tmp_title <- "Fixed optimal nummod="
       } else {
         tmp_title <- "Fixed given nummod="
       }
       tmp_df <- dplyr::filter(spar_res$val_res,nummod==mynummod)
-      ind_min <- which.min(tmp_df$MSE)
+      ind_min <- which.min(tmp_df$Meas)
 
-      res <- ggplot2::ggplot(data = tmp_df,ggplot2::aes(x=nlam,y=MSE)) +
+      res <- ggplot2::ggplot(data = tmp_df,ggplot2::aes(x=nlam,y=Meas)) +
         ggplot2::geom_point() +
         ggplot2::geom_line() +
         ggplot2::scale_x_continuous(breaks=seq(1,nrow(spar_res$val_res),1),labels=round(spar_res$val_res$lam,3)) +
-        ggplot2::labs(x=expression(lambda)) +
-        ggplot2::geom_point(data=data.frame(x=tmp_df$nlam[ind_min],y=tmp_df$MSE[ind_min]),ggplot2::aes(x=x,y=y),col="red") +
+        ggplot2::labs(x=expression(lambda),y=spar_res$type.measure) +
+        ggplot2::geom_point(data=data.frame(x=tmp_df$nlam[ind_min],y=tmp_df$Meas[ind_min]),ggplot2::aes(x=x,y=y),col="red") +
         ggplot2::ggtitle(paste0(tmp_title,mynummod))
     } else {
       if (is.null(lambda)) {
-        lambda <- spar_res$val_res$lam[which.min(spar_res$val_res$MSE)]
+        lambda <- spar_res$val_res$lam[which.min(spar_res$val_res$Meas)]
         tmp_title <- "Fixed optimal "
       } else {
         tmp_title <- "Fixed given "
       }
       tmp_df <- dplyr::filter(spar_res$val_res,lam==lambda)
-      ind_min <- which.min(tmp_df$MSE)
+      ind_min <- which.min(tmp_df$Meas)
 
-      res <- ggplot2::ggplot(data = tmp_df,ggplot2::aes(x=nummod,y=MSE)) +
+      res <- ggplot2::ggplot(data = tmp_df,ggplot2::aes(x=nummod,y=Meas)) +
         ggplot2::geom_point() +
         ggplot2::geom_line() +
-        ggplot2::geom_point(data=data.frame(x=tmp_df$nummod[ind_min],y=tmp_df$MSE[ind_min]),ggplot2::aes(x=x,y=y),col="red")+
+        ggplot2::labs(y=spar_res$type.measure) +
+        ggplot2::geom_point(data=data.frame(x=tmp_df$nummod[ind_min],y=tmp_df$Meas[ind_min]),ggplot2::aes(x=x,y=y),col="red")+
         ggplot2::ggtitle(substitute(paste(txt,lambda,"=",v),list(txt=tmp_title,v=round(lambda,3))))
     }
-  } else if (plot_type=="numAct") {
+  } else if (plot_type=="Val_numAct") {
     if (plot_along=="lambda") {
       if (is.null(nummod)) {
-        mynummod <- spar_res$val_res$nummod[which.min(spar_res$val_res$MSE)]
+        mynummod <- spar_res$val_res$nummod[which.min(spar_res$val_res$Meas)]
         tmp_title <- "Fixed optimal nummod="
       } else {
         tmp_title <- "Fixed given nummod="
       }
       tmp_df <- dplyr::filter(spar_res$val_res,nummod==mynummod)
-      ind_min <- which.min(tmp_df$MSE)
+      ind_min <- which.min(tmp_df$Meas)
 
       res <- ggplot2::ggplot(data = tmp_df,ggplot2::aes(x=nlam,y=numAct)) +
         ggplot2::geom_point() +
@@ -364,20 +476,44 @@ plot.spar <- function(spar_res,
         ggplot2::ggtitle(paste0(tmp_title,mynummod))
     } else {
       if (is.null(lambda)) {
-        lambda <- spar_res$val_res$lam[which.min(spar_res$val_res$MSE)]
+        lambda <- spar_res$val_res$lam[which.min(spar_res$val_res$Meas)]
         tmp_title <- "Fixed optimal "
       } else {
         tmp_title <- "Fixed given "
       }
       tmp_df <- dplyr::filter(spar_res$val_res,lam==lambda)
-      ind_min <- which.min(tmp_df$MSE)
+      ind_min <- which.min(tmp_df$Meas)
 
       res <- ggplot2::ggplot(data = tmp_df,ggplot2::aes(x=nummod,y=numAct)) +
         ggplot2::geom_point() +
         ggplot2::geom_line() +
         ggplot2::geom_point(data=data.frame(x=tmp_df$nummod[ind_min],y=tmp_df$numAct[ind_min]),ggplot2::aes(x=x,y=y),col="red")+
-        ggplot2::ggtitle(substitute(paste(txt,lambda,"=",v),list(v=round(lambda,3))))
+        ggplot2::ggtitle(substitute(paste(txt,lambda,"=",v),list(txt=tmp_title,v=round(lambda,3))))
     }
+  } else if (plot_type=="coefs") {
+    p <- nrow(spar_res$betas)
+    nummod <- ncol(spar_res$betas)
+    if (is.null(prange)) {
+      prange <- c(1,p)
+    }
+    if (is.null(coef_order)) {
+      coef_order <- 1:p
+    }
+
+    tmp_mat <- data.frame(t(apply(as.matrix(spar_res$betas)[coef_order,],1,function(row)row[order(abs(row),decreasing = TRUE)])),
+                          predictor=1:p)
+    colnames(tmp_mat) <- c(1:nummod,"predictor")
+    tmp_df <- tidyr::pivot_longer(tmp_mat,tidyselect::all_of(1:nummod),names_to = "marginal model",values_to = "value")
+    tmp_df$`marginal model` <- as.numeric(tmp_df$`marginal model`)
+
+    mrange <- max(apply(spar_res$betas,1,function(row)sum(row!=0)))
+    res <- ggplot2::ggplot(tmp_df,ggplot2::aes(x=predictor,y=`marginal model`,fill=value)) +
+      ggplot2::geom_tile() +
+      ggplot2::scale_fill_gradient2() +
+      ggplot2::coord_cartesian(xlim=prange,ylim=c(1,mrange)) +
+      ggplot2::theme_bw() +
+      ggplot2::theme(panel.border = ggplot2::element_blank())
+
   } else {
     res <- NULL
   }
@@ -393,7 +529,9 @@ plot.spar <- function(spar_res,
 print.spar <- function(spar_res) {
   mycoef <- coef(spar_res)
   beta <- mycoef$beta
-  cat(sprintf("SPAR object:\nSmallest MSE reached for nummod=%d, lambda=%.3f leading to %d / %d active predictors.\n",mycoef$nummod,mycoef$lambda,sum(beta!=0),length(beta)))
+  cat(sprintf("SPAR object:\nSmallest Validation Measure reached for nummod=%d, lambda=%.3f leading to %d / %d active predictors.\n",mycoef$nummod,mycoef$lambda,sum(beta!=0),length(beta)))
   cat("Summary of those non-zero coefficients:\n")
   print(summary(beta[beta!=0]))
 }
+
+

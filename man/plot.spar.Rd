@@ -6,28 +6,34 @@
 \usage{
 \method{plot}{spar}(
   spar_res,
-  plot_type = c("MSE", "numAct", "res-vs-fitted"),
+  plot_type = c("Val_Measure", "Val_numAct", "res-vs-fitted", "coefs"),
   plot_along = c("lambda", "nummod"),
   nummod = NULL,
   lambda = NULL,
   xfit = NULL,
-  yfit = NULL
+  yfit = NULL,
+  prange = NULL,
+  coef_order = NULL
 )
 }
 \arguments{
 \item{spar_res}{result of spar function of class "spar".}
 
-\item{plot_type}{one of c("MSE","numAct","res-vs-fitted").}
+\item{plot_type}{one of c("Val_Measure","Val_numAct","res-vs-fitted","coefs").}
 
 \item{plot_along}{one of c("lambda","nummod"); ignored when plot_type="res-vs-fitted".}
 
-\item{nummod}{fixed value for nummod when plot_along="lambda" for plot_type="MSE" or "numAct"; same as for predict.spar when plot_type="res-vs-fitted".}
+\item{nummod}{fixed value for nummod when plot_along="lambda" for plot_type="Val_Measure" or "Val_numAct"; same as for \code{\link{predict.spar}} when plot_type="res-vs-fitted".}
 
-\item{lambda}{fixed value for lambda when plot_along="nummod" for plot_type="MSE" or "numAct"; same as for predict.spar when plot_type="res-vs-fitted".}
+\item{lambda}{fixed value for lambda when plot_along="nummod" for plot_type="Val_Measure" or "Val_numAct"; same as for \code{\link{predict.spar}} when plot_type="res-vs-fitted".}
 
 \item{xfit}{data used for predictions in "res-vs-fitted".}
 
 \item{yfit}{data used for predictions in "res-vs-fitted".}
+
+\item{prange}{optional vector of length 2 for "coefs"-plot to give the limits of the predictors' plot range; defaults to c(1,p).}
+
+\item{coef_order}{optional index vector of length p for "coefs"-plot to give the order of the predictors; defaults to 1:p.}
 }
 \value{
 ggplot2 object
