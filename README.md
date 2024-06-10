@@ -13,7 +13,8 @@ Exported functions are
 
 ```s
 # install.packages("remotes")
-remotes::install_github("RomanParzer/SPAR")
+remotes::install_github("RomanParzer/SPAR") # for current main branch
+# remotes::install_github("RomanParzer/SPAR",ref=remotes::github_release()) # for latest release
 ```
 
 ## Usage 
