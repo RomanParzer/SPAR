@@ -2,6 +2,8 @@
 ### Main implementation of sparse projected averaged regression (SPAR)
 ##########################################
 
+# fix errors for auc evaluation
+
 #' Sparse Projected Averaged Regression
 #'
 #' Apply Sparse Projected Averaged Regression to High-dimensional Data (see Parzer, Vana-Guer and Filzmoser 2023).
@@ -204,7 +206,7 @@ spar <- function(x,
     nlambda <- length(lambdas)
   }
 
-  val_res <- data.frame(nlam=NULL,lam=NULL,nummod=NULL,numAct=NULL,value=NULL,measure=NULL)
+  val_res <- data.frame(nlam=NULL,lam=NULL,nummod=NULL,numAct=NULL,Meas=NULL)
   if (!is.null(yval) & !is.null(xval)) {
     val_set <- TRUE
   } else {
@@ -233,7 +235,12 @@ spar <- function(x,
   } else if (type.measure=="1-auc") {
     stopifnot(family$family=="binomial")
     val.meas <- function(yval,eta_hat) {
-      return(1-ROCR::performance(ROCR::prediction(family$linkinv(eta_hat),yval),measure="auc")@y.values[[1]])
+      if (var(yval)==0) {
+        res <- NA
+      } else {
+        res <- 1-ROCR::performance(ROCR::prediction(family$linkinv(eta_hat),yval),measure="auc")@y.values[[1]]
+      }
+      return(res)
     }
   }
 

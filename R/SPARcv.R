@@ -65,7 +65,8 @@ spar.cv <- function(x,
   n <- nrow(x)
 
   SPARres <- spar(x,y,family = family, nscreen = nscreen,nlambda = nlambda,
-                  mslow=mslow,msup=msup,nummods=nummods,split_data=split_data,type.measure = type.measure)
+                  mslow=mslow,msup=msup,nummods=nummods,split_data=split_data,
+                  type.measure = type.measure)
 
   val_res <- SPARres$val_res
   folds <- sample(cut(1:n,breaks=nfolds,labels=FALSE))
@@ -83,7 +84,7 @@ spar.cv <- function(x,
 
   val_sum <- dplyr::group_by(val_res,nlam,lam,nummod)
   suppressMessages(
-    val_sum <- dplyr::summarise(val_sum,mMeas=mean(Meas),sdMeas=sd(Meas),mNumAct=mean(numAct))
+    val_sum <- dplyr::summarise(val_sum,mMeas=mean(Meas,na.rm=TRUE),sdMeas=sd(Meas,na.rm=TRUE),mNumAct=mean(numAct,na.rm=TRUE))
   )
 
   res <- list(betas = SPARres$betas, intercepts = SPARres$intercepts, scr_coef = SPARres$scr_coef, inds = SPARres$inds, RPMs = SPARres$RPMs,
