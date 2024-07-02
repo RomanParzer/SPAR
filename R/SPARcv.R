@@ -15,6 +15,7 @@
 #' @param type.measure loss to use for validation; defaults to "deviance" available for all families. Other options are "mse" or "mae" (between responses and predicted means, for all families),
 #' "class" (misclassification error) and "1-auc" (One minus area under the ROC curve) both just for "binomial" family.
 #' @param type.rpm  type of random projection matrix to be employed; one of "cwdatadriven", "cw", "gaussian", "sparse"; defaults to "cwdatadriven".
+#' @param type.screening  type of screening coefficients; one of "ridge", "marglik", "corr"; defaults to "ridge" which is based on the ridge coefficients where the penalty converges to zero.
 #' @param mslow lower bound for unifrom random goal dimensions in marginal models; defaults to log(p).
 #' @param msup upper bound for unifrom random goal dimensions in marginal models; defaults to n/2.
 #' @param control a list optional arguments to be passed to functions creating the random projection matrices.
@@ -57,6 +58,7 @@ spar.cv <- function(x,
                     split_data = FALSE,
                     type.measure = c("deviance","mse","mae","class","1-auc"),
                     type.rpm = c("cwdatadriven", "cw", "gaussian", "sparse"),
+                    type.screening = c("ridge", "marglik", "corr"),
                     mslow = ceiling(log(ncol(x))),
                     msup = ceiling(nrow(x)/2),
                     control = list(rpm = NULL)) {
@@ -71,6 +73,7 @@ spar.cv <- function(x,
   SPARres <- spar(x,y,family = family, nscreen = nscreen,nlambda = nlambda,
                   mslow=mslow,msup=msup,nummods=nummods,split_data=split_data,
                   type.measure = type.measure, type.rpm = type.rpm,
+                  type.screening = type.screening,
                   control = control)
 
   val_res <- SPARres$val_res
@@ -83,7 +86,8 @@ spar.cv <- function(x,
                         mslow = mslow, msup = msup,
                         inds = SPARres$inds, RPMs = SPARres$RPMs,
                         nummods = nummods, split_data = split_data,
-                        type.measure = type.measure, type.rpm = type.rpm)
+                        type.measure = type.measure, type.rpm = type.rpm,
+                        type.screening = type.screening)
     val_res <- rbind(val_res,foldSPARres$val_res)
   }
 
@@ -98,7 +102,8 @@ spar.cv <- function(x,
               scr_coef = SPARres$scr_coef, inds = SPARres$inds,
               RPMs = SPARres$RPMs,
               val_sum = val_sum, lambdas = SPARres$lambdas, nummods=nummods,
-              family = family, type.measure = type.measure, type.rpm = type.rpm,
+              family = family, type.measure = type.measure,
+              type.rpm = type.rpm, type.screening = type.screening,
               ycenter = SPARres$ycenter, yscale = SPARres$yscale,
               xcenter = SPARres$xcenter, xscale = SPARres$xscale)
   attr(res,"class") <- "spar.cv"

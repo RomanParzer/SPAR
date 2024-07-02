@@ -16,9 +16,10 @@ spar.cv(
   split_data = FALSE,
   type.measure = c("deviance", "mse", "mae", "class", "1-auc"),
   type.rpm = c("cwdatadriven", "cw", "gaussian", "sparse"),
+  type.screening = c("ridge", "marglik", "corr"),
   mslow = ceiling(log(ncol(x))),
   msup = ceiling(nrow(x)/2),
-  control = list()
+  control = list(rpm = NULL)
 )
 }
 \arguments{
@@ -45,9 +46,13 @@ spar.cv(
 
 \item{type.rpm}{type of random projection matrix to be employed; one of "cwdatadriven", "cw", "gaussian", "sparse"; defaults to "cwdatadriven".}
 
+\item{type.screening}{type of screening coefficients; one of "ridge", "marglik", "corr"; defaults to "ridge" which is based on the ridge coefficients where the penalty converges to zero.}
+
 \item{mslow}{lower bound for unifrom random goal dimensions in marginal models; defaults to log(p).}
 
 \item{msup}{upper bound for unifrom random goal dimensions in marginal models; defaults to n/2.}
+
+\item{control}{a list optional arguments to be passed to functions creating the random projection matrices.}
 }
 \value{
 object of class "spar" with elements

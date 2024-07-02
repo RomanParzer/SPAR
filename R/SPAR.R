@@ -22,6 +22,7 @@
 #' @param type.measure loss to use for validation; defaults to "deviance" available for all families. Other options are "mse" or "mae" (between responses and predicted means, for all families),
 #' "class" (misclassification error) and "1-auc" (one minus area under the ROC curve) both just for "binomial" family.
 #' @param type.rpm  type of random projection matrix to be employed; one of "cwdatadriven", "cw", "gaussian", "sparse"; defaults to "cwdatadriven".
+#' @param type.screening  type of screening coefficients; one of "ridge", "marglik", "corr"; defaults to "ridge" which is based on the ridge coefficients where the penalty converges to zero.
 #' @param mslow lower bound for unifrom random goal dimensions in marginal models; defaults to log(p).
 #' @param msup upper bound for unifrom random goal dimensions in marginal models; defaults to n/2.
 #' @param inds optional list of index-vectors corresponding to variables kept after screening in each marginal model of length max(nummods),dimensions need to fit those of RPMs.
@@ -67,6 +68,7 @@ spar <- function(x,
                  split_data = FALSE,
                  type.measure = c("deviance","mse","mae","class","1-auc"),
                  type.rpm = c("cwdatadriven", "cw", "gaussian", "sparse"),
+                 type.screening = c("ridge", "marglik", "corr"),
                  mslow = ceiling(log(ncol(x))),
                  msup = ceiling(nrow(x)/2),
                  inds = NULL,
@@ -83,6 +85,7 @@ spar <- function(x,
 
   type.measure <- match.arg(type.measure)
   type.rpm <- match.arg(type.rpm)
+  type.screening <- match.arg(type.screening)
 
   if (split_data==TRUE) {
     scr_inds <- sample(1:n,n%/%4)
@@ -91,8 +94,8 @@ spar <- function(x,
     mar_inds <- scr_inds <- 1:n
   }
 
-  xcenter <- apply(x,2,mean)
-  xscale <- apply(x,2,sd)
+  xcenter <- apply(x, 2, mean)
+  xscale  <- apply(x, 2, sd)
 
   if (is.null(inds) | is.null(RPMs)) {
     actual_p <- sum(xscale>0)
@@ -102,27 +105,10 @@ spar <- function(x,
     xscale[xscale==0] <- 1
     z <- scale(x,center = xcenter,scale = xscale)
   }
-
-
   if (family$family=="gaussian" & family$link=="identity") {
     fit_family <- "gaussian"
     ycenter <- mean(y)
     yscale <- sd(y)
-    yz <- scale(y,center = ycenter,scale = yscale)
-    if (actual_p < n/2) {
-      scr_coef <- tryCatch( solve(crossprod(z[scr_inds,]),crossprod(z[scr_inds,],yz[scr_inds])),
-                            error=function(error_message) {
-                              return(solve(crossprod(z[scr_inds,])+(sqrt(actual_p)+sqrt(n))*diag(actual_p),crossprod(z[scr_inds,],yz[scr_inds])))
-                            })
-    } else if (actual_p < 2*n) {
-      scr_coef <- crossprod(z[scr_inds,],solve(tcrossprod(z[scr_inds,])+(sqrt(actual_p)+sqrt(n))*diag(n),yz[scr_inds]))
-    } else {
-      solve_res <- tryCatch( solve(tcrossprod(z[scr_inds,]),yz[scr_inds]),
-                             error=function(error_message) {
-                               return(solve(tcrossprod(z[scr_inds,])+(sqrt(actual_p)+sqrt(n))*diag(n),yz[scr_inds]))
-                             })
-      scr_coef <- crossprod(z[scr_inds,],solve_res)
-    }
   } else {
     if (family$family=="binomial" & family$link=="logit") {
       fit_family <- "binomial"
@@ -131,13 +117,53 @@ spar <- function(x,
     } else {
       fit_family <- family
     }
-
     ycenter <- 0
-    yscale <- 1
-    glmnet_res <- glmnet::glmnet(x=z[scr_inds,],y=y[scr_inds],family = fit_family,alpha=0)
-    lam <- min(glmnet_res$lambda)
-    scr_coef <- coef(glmnet_res,s=lam)[-1]
+    yscale  <- 1
   }
+
+  yz <- scale(y,center = ycenter,scale = yscale)
+
+  scr_coef <- switch(type.screening,
+                     "ridge" = screening_ridge_lambda0(z[scr_inds,], yz = yz[scr_inds, ],
+                                                       family = fit_family),
+                     "marglik" = screening_marglik(z[scr_inds,], yz = yz[scr_inds, ],
+                                                   family = family),
+                     "corr" = screening_corr(z[scr_inds,], yz = yz[scr_inds, ],
+                                             family = family))
+  # if (family$family=="gaussian" & family$link=="identity") {
+  #   fit_family <- "gaussian"  # why??
+  #   ycenter <- mean(y)
+  #   yscale <- sd(y)
+  #   yz <- scale(y,center = ycenter,scale = yscale)
+  #   if (actual_p < n/2) {
+  #     scr_coef <- tryCatch( solve(crossprod(z[scr_inds,]),crossprod(z[scr_inds,],yz[scr_inds])),
+  #                           error=function(error_message) {
+  #                             return(solve(crossprod(z[scr_inds,])+(sqrt(actual_p)+sqrt(n))*diag(actual_p),crossprod(z[scr_inds,],yz[scr_inds])))
+  #                           })
+  #   } else if (actual_p < 2*n) {
+  #     scr_coef <- crossprod(z[scr_inds,],solve(tcrossprod(z[scr_inds,])+(sqrt(actual_p)+sqrt(n))*diag(n),yz[scr_inds]))
+  #   } else {
+  #     solve_res <- tryCatch( solve(tcrossprod(z[scr_inds,]),yz[scr_inds]),
+  #                            error=function(error_message) {
+  #                              return(solve(tcrossprod(z[scr_inds,])+(sqrt(actual_p)+sqrt(n))*diag(n),yz[scr_inds]))
+  #                            })
+  #     scr_coef <- crossprod(z[scr_inds,],solve_res)
+  #   }
+  # } else {
+  #   if (family$family=="binomial" & family$link=="logit") {
+  #     fit_family <- "binomial"
+  #   } else if (family$family=="poisson" & family$link=="log") {
+  #     fit_family <- "poisson"
+  #   } else {
+  #     fit_family <- family
+  #   }
+  #
+  #   ycenter <- 0
+  #   yscale <- 1
+  #   glmnet_res <- glmnet::glmnet(x=z[scr_inds,],y=y[scr_inds],family = fit_family,alpha=0)
+  #   lam <- min(glmnet_res$lambda)
+  #   scr_coef <- coef(glmnet_res,s=lam)[-1]
+  # }
 
   inc_probs <- abs(scr_coef)
   max_inc_probs <- max(inc_probs)
@@ -151,7 +177,7 @@ spar <- function(x,
   if (is.null(RPMs)) {
     RPMs <- vector("list",length=max_num_mod)
     drawRPMs <- TRUE
-    ms <- sample(seq(floor(mslow),ceiling(msup)),max_num_mod,replace=TRUE)
+    ms <- sample(seq(floor(mslow), ceiling(msup)),max_num_mod, replace=TRUE)
   }
   drawinds <- FALSE
   if (is.null(inds)) {
@@ -180,12 +206,12 @@ spar <- function(x,
         RPMs[[i]] <- RPM
       } else {
         RPM <- switch(
-            type.rpm,
-            "cwdatadriven" = generate_cw_rp(m = m, p = p_use, coef = scr_coef[ind_use]/max_inc_probs),
-            "cw"           = generate_cw_rp(m = m, p = p_use,
-                                            coef = sample(c(-1,1), p_use, replace = TRUE)),
-            "gaussian"     = generate_gaussian_rp(m = m, p = p_use),
-            "sparse"       = generate_sparse_rp(m = m, p = p_use, psi = control$rpm$psi))
+          type.rpm,
+          "cwdatadriven" = generate_cw_rp(m = m, p = p_use, coef = scr_coef[ind_use]/max_inc_probs),
+          "cw"           = generate_cw_rp(m = m, p = p_use,
+                                          coef = sample(c(-1,1), p_use, replace = TRUE)),
+          "gaussian"     = generate_gaussian_rp(m = m, p = p_use),
+          "sparse"       = generate_sparse_rp(m = m, p = p_use, psi = control$rpm$psi))
         # RPM <- generate_RPM(m,p_use,coef=scr_coef[ind_use]/max_inc_probs)
         RPMs[[i]] <- RPM
       }
@@ -289,7 +315,8 @@ spar <- function(x,
   res <- list(betas = betas, intercepts = intercepts, scr_coef = scr_coef, inds = inds, RPMs = RPMs,
               val_res = val_res, val_set = val_set, lambdas = lambdas, nummods = nummods,
               ycenter = ycenter, yscale = yscale, xcenter = xcenter, xscale = xscale,
-              family = family, type.measure = type.measure, type.rpm = type.rpm)
+              family = family, type.measure = type.measure, type.rpm = type.rpm,
+              type.screening = type.screening)
   attr(res,"class") <- "spar"
 
   return(res)
