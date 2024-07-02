@@ -1,3 +1,5 @@
+library("SPAR")
+
 # Test spar ----
 
 ## CW data driven random projection ----
