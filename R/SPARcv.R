@@ -54,8 +54,10 @@ spar.cv <- function(x,
                     nummods = c(20),
                     split_data = FALSE,
                     type.measure = c("deviance","mse","mae","class","1-auc"),
+                    type.rpm = c("cwdatadriven", "cw", "gaussian", "sparse"),
                     mslow = ceiling(log(ncol(x))),
-                    msup = ceiling(nrow(x)/2)) {
+                    msup = ceiling(nrow(x)/2),
+                    control = list()) {
   stopifnot("matrix" %in% class(x) |"data.frame" %in% class(x))
   x <- as.matrix(x)
   if (!class(x[1,1])%in%c("numeric","integer")) {
@@ -66,7 +68,7 @@ spar.cv <- function(x,
 
   SPARres <- spar(x,y,family = family, nscreen = nscreen,nlambda = nlambda,
                   mslow=mslow,msup=msup,nummods=nummods,split_data=split_data,
-                  type.measure = type.measure)
+                  type.measure = type.measure, type.rpm = type.rpm)
 
   val_res <- SPARres$val_res
   folds <- sample(cut(1:n,breaks=nfolds,labels=FALSE))
@@ -78,18 +80,24 @@ spar.cv <- function(x,
                         mslow = mslow, msup = msup,
                         inds = SPARres$inds, RPMs = SPARres$RPMs,
                         nummods = nummods, split_data = split_data,
-                        type.measure = type.measure)
+                        type.measure = type.measure, type.rpm = type.rpm)
     val_res <- rbind(val_res,foldSPARres$val_res)
   }
 
-  val_sum <- dplyr::group_by(val_res,nlam,lam,nummod)
+  val_sum <- dplyr::group_by(val_res, nlam, lam, nummod)
   suppressMessages(
-    val_sum <- dplyr::summarise(val_sum,mMeas=mean(Meas,na.rm=TRUE),sdMeas=sd(Meas,na.rm=TRUE),mNumAct=mean(numAct,na.rm=TRUE))
+    val_sum <- dplyr::summarise(val_sum, mMeas = mean(Meas,na.rm=TRUE),
+                                sdMeas = sd(Meas,na.rm=TRUE),
+                                mNumAct = mean(numAct,na.rm=TRUE))
   )
 
-  res <- list(betas = SPARres$betas, intercepts = SPARres$intercepts, scr_coef = SPARres$scr_coef, inds = SPARres$inds, RPMs = SPARres$RPMs,
-              val_sum = val_sum, lambdas = SPARres$lambdas, nummods=nummods, family = family, type.measure = type.measure,
-              ycenter = SPARres$ycenter, yscale = SPARres$yscale, xcenter = SPARres$xcenter, xscale = SPARres$xscale)
+  res <- list(betas = SPARres$betas, intercepts = SPARres$intercepts,
+              scr_coef = SPARres$scr_coef, inds = SPARres$inds,
+              RPMs = SPARres$RPMs,
+              val_sum = val_sum, lambdas = SPARres$lambdas, nummods=nummods,
+              family = family, type.measure = type.measure, type.rpm = type.rpm,
+              ycenter = SPARres$ycenter, yscale = SPARres$yscale,
+              xcenter = SPARres$xcenter, xscale = SPARres$xscale)
   attr(res,"class") <- "spar.cv"
   return(res)
 }
