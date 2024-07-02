@@ -26,6 +26,7 @@
 #' @param msup upper bound for unifrom random goal dimensions in marginal models; defaults to n/2.
 #' @param inds optional list of index-vectors corresponding to variables kept after screening in each marginal model of length max(nummods),dimensions need to fit those of RPMs.
 #' @param RPMs optional list of sparse CW projection matrices used in each marginal model of length max(nummods), diagonal elements will be overwritten with a coefficient only depending on the given x and y.
+#' @param control a list optional arguments to be passed to functions creating the random projection matrices.
 #' @returns object of class "spar" with elements
 #' \itemize{
 #'  \item betas p x max(nummods) matrix of standardized coefficients from each marginal model
@@ -53,7 +54,7 @@
 #' plot(spar_res,"coefs",prange=c(1,400))}
 #' @seealso [spar.cv],[coef.spar],[predict.spar],[plot.spar],[print.spar]
 #' @export
-#' @importFrom stats rnorm
+#' @importFrom stats coef fitted gaussian predict rnorm quantile residuals sd var
 spar <- function(x,
                  y,
                  family = gaussian("identity"),
@@ -70,7 +71,7 @@ spar <- function(x,
                  msup = ceiling(nrow(x)/2),
                  inds = NULL,
                  RPMs = NULL,
-                 control = list()) {
+                 control = list(rpm = NULL)) {
 
   stopifnot(mslow <= msup)
   stopifnot(msup <= nscreen)

@@ -17,6 +17,7 @@
 #' @param type.rpm  type of random projection matrix to be employed; one of "cwdatadriven", "cw", "gaussian", "sparse"; defaults to "cwdatadriven".
 #' @param mslow lower bound for unifrom random goal dimensions in marginal models; defaults to log(p).
 #' @param msup upper bound for unifrom random goal dimensions in marginal models; defaults to n/2.
+#' @param control a list optional arguments to be passed to functions creating the random projection matrices.
 #' @returns object of class "spar" with elements
 #' \itemize{
 #'  \item betas p x max(nummods) matrix of standardized coefficients from each marginal model
@@ -58,7 +59,7 @@ spar.cv <- function(x,
                     type.rpm = c("cwdatadriven", "cw", "gaussian", "sparse"),
                     mslow = ceiling(log(ncol(x))),
                     msup = ceiling(nrow(x)/2),
-                    control = list()) {
+                    control = list(rpm = NULL)) {
   stopifnot("matrix" %in% class(x) |"data.frame" %in% class(x))
   x <- as.matrix(x)
   if (!class(x[1,1])%in%c("numeric","integer")) {
@@ -69,7 +70,8 @@ spar.cv <- function(x,
 
   SPARres <- spar(x,y,family = family, nscreen = nscreen,nlambda = nlambda,
                   mslow=mslow,msup=msup,nummods=nummods,split_data=split_data,
-                  type.measure = type.measure, type.rpm = type.rpm)
+                  type.measure = type.measure, type.rpm = type.rpm,
+                  control = control)
 
   val_res <- SPARres$val_res
   folds <- sample(cut(1:n,breaks=nfolds,labels=FALSE))
