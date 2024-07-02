@@ -21,10 +21,12 @@
 #' @param split_data logical to indicate whether data for calculation of scr_coef and fitting of mar mods should be split 1/4 to 3/4 to avoid overfitting; default FALSE
 #' @param type.measure loss to use for validation; defaults to "deviance" available for all families. Other options are "mse" or "mae" (between responses and predicted means, for all families),
 #' "class" (misclassification error) and "1-auc" (one minus area under the ROC curve) both just for "binomial" family.
+#' @param type.rpm  type of random projection matrix to be employed; one of "cwdatadriven", "cw", "gaussian", "sparse"; defaults to "cwdatadriven".
 #' @param mslow lower bound for unifrom random goal dimensions in marginal models; defaults to log(p).
 #' @param msup upper bound for unifrom random goal dimensions in marginal models; defaults to n/2.
 #' @param inds optional list of index-vectors corresponding to variables kept after screening in each marginal model of length max(nummods),dimensions need to fit those of RPMs.
 #' @param RPMs optional list of sparse CW projection matrices used in each marginal model of length max(nummods), diagonal elements will be overwritten with a coefficient only depending on the given x and y.
+#' @param control a list optional arguments to be passed to functions creating the random projection matrices.
 #' @returns object of class "spar" with elements
 #' \itemize{
 #'  \item betas p x max(nummods) matrix of standardized coefficients from each marginal model
@@ -52,6 +54,7 @@
 #' plot(spar_res,"coefs",prange=c(1,400))}
 #' @seealso [spar.cv],[coef.spar],[predict.spar],[plot.spar],[print.spar]
 #' @export
+#' @importFrom stats coef fitted gaussian predict rnorm quantile residuals sd var
 spar <- function(x,
                  y,
                  family = gaussian("identity"),
@@ -63,19 +66,23 @@ spar <- function(x,
                  nummods = c(20),
                  split_data = FALSE,
                  type.measure = c("deviance","mse","mae","class","1-auc"),
+                 type.rpm = c("cwdatadriven", "cw", "gaussian", "sparse"),
                  mslow = ceiling(log(ncol(x))),
                  msup = ceiling(nrow(x)/2),
                  inds = NULL,
-                 RPMs = NULL) {
+                 RPMs = NULL,
+                 control = list(rpm = NULL)) {
 
   stopifnot(mslow <= msup)
   stopifnot(msup <= nscreen)
 
-  type.measure <- match.arg(type.measure)
   stopifnot(is.numeric(y))
   p <- ncol(x)
   n <- nrow(x)
   stopifnot(length(y)==n)
+
+  type.measure <- match.arg(type.measure)
+  type.rpm <- match.arg(type.rpm)
 
   if (split_data==TRUE) {
     scr_inds <- sample(1:n,n%/%4)
@@ -172,20 +179,29 @@ spar <- function(x,
         RPM <- Matrix::Matrix(diag(1,m),sparse=TRUE)
         RPMs[[i]] <- RPM
       } else {
-        RPM <- generate_RPM(m,p_use,coef=scr_coef[ind_use]/max_inc_probs)
+        RPM <- switch(
+            type.rpm,
+            "cwdatadriven" = generate_cw_rp(m = m, p = p_use, coef = scr_coef[ind_use]/max_inc_probs),
+            "cw"           = generate_cw_rp(m = m, p = p_use,
+                                            coef = sample(c(-1,1), p_use, replace = TRUE)),
+            "gaussian"     = generate_gaussian_rp(m = m, p = p_use),
+            "sparse"       = generate_sparse_rp(m = m, p = p_use, psi = control$rpm$psi))
+        # RPM <- generate_RPM(m,p_use,coef=scr_coef[ind_use]/max_inc_probs)
         RPMs[[i]] <- RPM
       }
     } else {
       RPM <- RPMs[[i]]
-      RPM@x <- scr_coef[ind_use]/max_inc_probs
+      if (type.rpm == "cwdatadriven")  RPM@x <- scr_coef[ind_use]/max_inc_probs
+      ## TODO: think about this
     }
 
     znew <- Matrix::tcrossprod(z[mar_inds,ind_use],RPM)
     if (family$family=="gaussian" & family$link=="identity") {
       mar_coef <- tryCatch( Matrix::solve(Matrix::crossprod(znew),Matrix::crossprod(znew,yz[mar_inds])),
-                           error=function(error_message) {
-                             return(Matrix::solve(Matrix::crossprod(znew)+0.01*diag(ncol(znew)),Matrix::crossprod(znew,yz[mar_inds])))
-                           })
+                            error=function(error_message) {
+                              return(Matrix::solve(Matrix::crossprod(znew)+0.01*diag(ncol(znew)),
+                                                   Matrix::crossprod(znew,yz[mar_inds])))
+                            })
       intercepts[i] <- 0
       betas_std[ind_use,i] <- Matrix::crossprod(RPM,mar_coef)
     } else {
@@ -271,9 +287,9 @@ spar <- function(x,
   betas[xscale>0,] <- betas_std
 
   res <- list(betas = betas, intercepts = intercepts, scr_coef = scr_coef, inds = inds, RPMs = RPMs,
-       val_res = val_res, val_set = val_set, lambdas = lambdas, nummods = nummods,
-       ycenter = ycenter, yscale = yscale, xcenter = xcenter, xscale = xscale,
-       family = family, type.measure = type.measure)
+              val_res = val_res, val_set = val_set, lambdas = lambdas, nummods = nummods,
+              ycenter = ycenter, yscale = yscale, xcenter = xcenter, xscale = xscale,
+              family = family, type.measure = type.measure, type.rpm = type.rpm)
   attr(res,"class") <- "spar"
 
   return(res)
@@ -349,12 +365,12 @@ coef.spar <- function(spar_res,
 #' @export
 
 predict.spar <- function(spar_res,
-                      xnew,
-                      type = c("response","link"),
-                      avg_type = c("link","response"),
-                      nummod = NULL,
-                      lambda = NULL,
-                      coef = NULL) {
+                         xnew,
+                         type = c("response","link"),
+                         avg_type = c("link","response"),
+                         nummod = NULL,
+                         lambda = NULL,
+                         coef = NULL) {
   if (ncol(xnew)!=length(spar_res$xscale)) {
     stop("xnew must have same number of columns as initial x!")
   }

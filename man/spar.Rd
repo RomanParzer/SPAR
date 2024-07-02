@@ -16,10 +16,12 @@ spar(
   nummods = c(20),
   split_data = FALSE,
   type.measure = c("deviance", "mse", "mae", "class", "1-auc"),
+  type.rpm = c("cwdatadriven", "cw", "gaussian", "sparse"),
   mslow = ceiling(log(ncol(x))),
   msup = ceiling(nrow(x)/2),
   inds = NULL,
-  RPMs = NULL
+  RPMs = NULL,
+  control = list()
 )
 }
 \arguments{
@@ -45,6 +47,8 @@ spar(
 
 \item{type.measure}{loss to use for validation; defaults to "deviance" available for all families. Other options are "mse" or "mae" (between responses and predicted means, for all families),
 "class" (misclassification error) and "1-auc" (one minus area under the ROC curve) both just for "binomial" family.}
+
+\item{type.rpm}{type of random projection matrix to be employed; one of "cwdatadriven", "cw", "gaussian", "sparse"; defaults to "cwdatadriven".}
 
 \item{mslow}{lower bound for unifrom random goal dimensions in marginal models; defaults to log(p).}
 

@@ -14,8 +14,10 @@
 #' @param split_data logical to indicate whether data for calculation of scr_coef and fitting of mar mods should be split 1/4 to 3/4 to avoid overfitting; default FALSE
 #' @param type.measure loss to use for validation; defaults to "deviance" available for all families. Other options are "mse" or "mae" (between responses and predicted means, for all families),
 #' "class" (misclassification error) and "1-auc" (One minus area under the ROC curve) both just for "binomial" family.
+#' @param type.rpm  type of random projection matrix to be employed; one of "cwdatadriven", "cw", "gaussian", "sparse"; defaults to "cwdatadriven".
 #' @param mslow lower bound for unifrom random goal dimensions in marginal models; defaults to log(p).
 #' @param msup upper bound for unifrom random goal dimensions in marginal models; defaults to n/2.
+#' @param control a list optional arguments to be passed to functions creating the random projection matrices.
 #' @returns object of class "spar" with elements
 #' \itemize{
 #'  \item betas p x max(nummods) matrix of standardized coefficients from each marginal model
@@ -54,8 +56,10 @@ spar.cv <- function(x,
                     nummods = c(20),
                     split_data = FALSE,
                     type.measure = c("deviance","mse","mae","class","1-auc"),
+                    type.rpm = c("cwdatadriven", "cw", "gaussian", "sparse"),
                     mslow = ceiling(log(ncol(x))),
-                    msup = ceiling(nrow(x)/2)) {
+                    msup = ceiling(nrow(x)/2),
+                    control = list(rpm = NULL)) {
   stopifnot("matrix" %in% class(x) |"data.frame" %in% class(x))
   x <- as.matrix(x)
   if (!class(x[1,1])%in%c("numeric","integer")) {
@@ -66,7 +70,8 @@ spar.cv <- function(x,
 
   SPARres <- spar(x,y,family = family, nscreen = nscreen,nlambda = nlambda,
                   mslow=mslow,msup=msup,nummods=nummods,split_data=split_data,
-                  type.measure = type.measure)
+                  type.measure = type.measure, type.rpm = type.rpm,
+                  control = control)
 
   val_res <- SPARres$val_res
   folds <- sample(cut(1:n,breaks=nfolds,labels=FALSE))
@@ -78,18 +83,24 @@ spar.cv <- function(x,
                         mslow = mslow, msup = msup,
                         inds = SPARres$inds, RPMs = SPARres$RPMs,
                         nummods = nummods, split_data = split_data,
-                        type.measure = type.measure)
+                        type.measure = type.measure, type.rpm = type.rpm)
     val_res <- rbind(val_res,foldSPARres$val_res)
   }
 
-  val_sum <- dplyr::group_by(val_res,nlam,lam,nummod)
+  val_sum <- dplyr::group_by(val_res, nlam, lam, nummod)
   suppressMessages(
-    val_sum <- dplyr::summarise(val_sum,mMeas=mean(Meas,na.rm=TRUE),sdMeas=sd(Meas,na.rm=TRUE),mNumAct=mean(numAct,na.rm=TRUE))
+    val_sum <- dplyr::summarise(val_sum, mMeas = mean(Meas,na.rm=TRUE),
+                                sdMeas = sd(Meas,na.rm=TRUE),
+                                mNumAct = mean(numAct,na.rm=TRUE))
   )
 
-  res <- list(betas = SPARres$betas, intercepts = SPARres$intercepts, scr_coef = SPARres$scr_coef, inds = SPARres$inds, RPMs = SPARres$RPMs,
-              val_sum = val_sum, lambdas = SPARres$lambdas, nummods=nummods, family = family, type.measure = type.measure,
-              ycenter = SPARres$ycenter, yscale = SPARres$yscale, xcenter = SPARres$xcenter, xscale = SPARres$xscale)
+  res <- list(betas = SPARres$betas, intercepts = SPARres$intercepts,
+              scr_coef = SPARres$scr_coef, inds = SPARres$inds,
+              RPMs = SPARres$RPMs,
+              val_sum = val_sum, lambdas = SPARres$lambdas, nummods=nummods,
+              family = family, type.measure = type.measure, type.rpm = type.rpm,
+              ycenter = SPARres$ycenter, yscale = SPARres$yscale,
+              xcenter = SPARres$xcenter, xscale = SPARres$xscale)
   attr(res,"class") <- "spar.cv"
   return(res)
 }
