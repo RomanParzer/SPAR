@@ -7,7 +7,9 @@ check <- function(...) stopifnot(...)
 data("example_data")
 set.seed(123)
 spar_res <- spar(example_data$x,example_data$y,
-                 xval=example_data$xtest,yval=example_data$ytest,nummods=c(5,10,15,20,25,30))
+                 xval=example_data$xtest,
+                 yval=example_data$ytest,
+                 nummods=c(5,10,15,20,25,30))
 coefs <- coef(spar_res)
 pred <- predict(spar_res,xnew=example_data$x)
 
@@ -35,7 +37,8 @@ plot(spar_res,"coefs",prange=c(1,400))
 set.seed(123)
 spar_res <- spar(example_data$x,example_data$y,
                  type.rpm = "cw",
-                 xval=example_data$xtest,yval=example_data$ytest,nummods=c(5,10,15,20,25,30))
+                 xval=example_data$xtest,
+                 yval=example_data$ytest,nummods=c(5,10,15,20,25,30))
 coefs <- coef(spar_res)
 pred <- predict(spar_res,xnew=example_data$x)
 
@@ -96,6 +99,54 @@ check(all.equal(pred[1:9], c(0.955574625383119, -7.52015175441735, -12.603085926
                              -3.57712863562895, -21.1376344306622, -7.29159259461283)))
 
 
+
+## CW data driven random projection + marglik screening ----
+set.seed(123)
+spar_res <- spar(example_data$x,example_data$y,
+                 xval=example_data$xtest,
+                 yval=example_data$ytest,
+                 type.screening = "marglik",
+                 nummods=c(5,10,15,20,25,30))
+coefs <- coef(spar_res)
+pred <- predict(spar_res,xnew=example_data$x)
+
+check(all.equal(spar_res$val_res$Meas[1:9],
+                c(36987.5322901503, 36949.4797434644, 36931.0268626913,
+                  36897.4360526667, 36626.0312347913, 36242.6439579747,
+                  36353.1565612513, 36485.5528287869, 36634.211412069)))
+
+## CW data driven random projection + corr screening ----
+set.seed(123)
+spar_res <- spar(example_data$x,example_data$y,
+                 xval=example_data$xtest,
+                 yval=example_data$ytest,
+                 type.screening = "corr",
+                 nummods=c(5,10,15,20,25,30))
+coefs <- coef(spar_res)
+pred <- predict(spar_res,xnew=example_data$x)
+
+check(all.equal(spar_res$val_res$Meas[1:9],
+                c(34499.4534926008, 34540.8917325482, 34387.2713957518,
+                  34146.955959413, 33845.9528722571, 33307.2657895852,
+                  33511.1244871967, 33459.4705164291, 33406.6816789355)))
+
+## CW data driven random projection + marglik screening + poisson ----
+set.seed(123)
+spar_res <- spar(x = example_data$x,
+                 y = round(example_data$y)-min(round(example_data$y)),
+                 xval=example_data$xtest,
+                 yval=example_data$ytest,
+                 family = poisson(),
+                 type.screening = "marglik",
+                 nummods=c(5,10,15,20,25,30))
+coefs <- coef(spar_res)
+pred <- predict(spar_res,xnew=example_data$x)
+check(all.equal(spar_res$val_res$Meas[1:9],
+                c(11471.5510813567, 11476.2322669657, 11483.1609167691,
+                  11471.416337895, 11473.8836500575, 11406.039142218,
+                  11350.113943664, 11319.766930617, 11298.4564578812)))
+
+
 # Test spar.cv ----
 
 
@@ -103,7 +154,6 @@ check(all.equal(pred[1:9], c(0.955574625383119, -7.52015175441735, -12.603085926
 data("example_data")
 set.seed(123)
 spar_res <- spar.cv(example_data$x,example_data$y,
-                    type.rpm = "cwdatadriven",
                     nummods=c(5,10,15,20,25,30))
 check(all.equal(spar_res$betas@x[1:9],
                 c(0.052367149047699, 0.00478355893105122, 0.0234420488129777,
@@ -139,4 +189,17 @@ check(all.equal(spar_res$betas@x[1:9],
                 c(-0.00446497193077751, 0.033361358294459, 0.0561732697026508,
                   -0.0127116665014228, -0.0376739622890854, -0.0310112713849973,
                   0.00262425209145074, 0.0100322291982222, -0.014057846161789)))#
+
+## CW data driven random projection + marglik screening + poisson ----
+set.seed(123)
+spar_res <- spar.cv(
+  x = example_data$x,
+  y = round(example_data$y)-min(round(example_data$y)),
+  family = poisson(),
+  type.screening = "marglik",
+  nummods=c(5,10,15,20,25,30))
+check(all.equal(spar_res$val_res$Meas[1:9],
+                c(0.000289766923593471, 0.00172407363115684, -0.00352175785475286,
+                  0.00264521526374947, -0.00109777934573065, 0.00765517621412511,
+                  0.00653992190926876, 0.00648630006237551, 0.00172835156062276)))
 
