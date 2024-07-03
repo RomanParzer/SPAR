@@ -14,17 +14,19 @@
 #' @param family 'family'-objected used for glm (except the quasi), default gaussian("identity").
 #' @param xval optional matrix of predictor variables observations used for validation of threshold lambda and number of models; x is used if not provided.
 #' @param yval optional response observations used for validation of threshold lambda and number of models; y is used if not provided.
-#' @param nscreen number of variables kept after screening in each marginal model, multiples of n are suggested; defaults to 2n.
 #' @param nlambda number of different lambdas to consider for thresholding; ignored when lambdas are given; defaults to 20.
 #' @param lambdas optional vector of lambdas to consider for thresholding; if not provided, nlam values ranging from 0 to the maximum ablsolute marginal coefficient are used.
 #' @param nummods vector of numbers of marginal models to consider for validation; defaults to c(20).
-#' @param split_data logical to indicate whether data for calculation of scr_coef and fitting of mar mods should be split 1/4 to 3/4 to avoid overfitting; default FALSE
 #' @param type.measure loss to use for validation; defaults to "deviance" available for all families. Other options are "mse" or "mae" (between responses and predicted means, for all families),
 #' "class" (misclassification error) and "1-auc" (one minus area under the ROC curve) both just for "binomial" family.
-#' @param mslow lower bound for unifrom random goal dimensions in marginal models; defaults to log(p).
-#' @param msup upper bound for unifrom random goal dimensions in marginal models; defaults to n/2.
+#' @param type.rpm  type of random projection matrix to be employed; one of "cwdatadriven", "cw", "gaussian", "sparse"; defaults to "cwdatadriven".
+#' @param type.screening  type of screening coefficients; one of "ridge", "marglik", "corr"; defaults to "ridge" which is based on the ridge coefficients where the penalty converges to zero.
 #' @param inds optional list of index-vectors corresponding to variables kept after screening in each marginal model of length max(nummods),dimensions need to fit those of RPMs.
 #' @param RPMs optional list of sparse CW projection matrices used in each marginal model of length max(nummods), diagonal elements will be overwritten with a coefficient only depending on the given x and y.
+#' @param control a list two elements: rpm and scr. rpm contains a list of optional arguments to be passed to functions creating the random projection matrices. Here mslow is a lower bound for uniform random goal dimensions in marginal models; defaults to log(p);
+#'  msup is upper bound for uniform random goal dimensions in marginal models; defaults to n/2.
+#'  scr contains a list of optional arguments to be passed to functions performing screening. nscreen is the number of variables to keep after screening 2n;
+#'  split_data logical to indicate whether data for calculation of scr_coef and fitting of mar mods should be split 1/4 to 3/4 to avoid overfitting; default FALSE.
 #' @returns object of class "spar" with elements
 #' \itemize{
 #'  \item betas p x max(nummods) matrix of standardized coefficients from each marginal model
@@ -52,30 +54,44 @@
 #' plot(spar_res,"coefs",prange=c(1,400))}
 #' @seealso [spar.cv],[coef.spar],[predict.spar],[plot.spar],[print.spar]
 #' @export
+#' @importFrom stats coef fitted gaussian predict rnorm quantile residuals sd var
 spar <- function(x,
                  y,
                  family = gaussian("identity"),
                  xval = NULL,
                  yval = NULL,
-                 nscreen = 2*nrow(x),
                  nlambda = 20,
                  lambdas = NULL,
                  nummods = c(20),
-                 split_data = FALSE,
                  type.measure = c("deviance","mse","mae","class","1-auc"),
-                 mslow = ceiling(log(ncol(x))),
-                 msup = ceiling(nrow(x)/2),
+                 type.rpm = c("cwdatadriven", "cw", "gaussian", "sparse"),
+                 type.screening = c("ridge", "marglik", "corr"),
                  inds = NULL,
-                 RPMs = NULL) {
+                 RPMs = NULL,
+                 control = list(rpm = list(mslow = ceiling(log(ncol(x))),
+                                           msup = ceiling(nrow(x)/2)),
+                                scr = list(nscreen = 2*nrow(x), split_data = FALSE))) {
+
+  mslow <- control$rpm$mslow
+  if (is.null(mslow)) mslow <- ceiling(log(ncol(x)))
+  msup <- control$rpm$msup
+  if (is.null(msup)) msup <- ceiling(nrow(x)/2)
+  nscreen <- control$scr$nscreen
+  if (is.null(nscreen)) nscreen <- 2*nrow(x)
+  split_data <- control$scr$split_data
+  if (is.null(split_data)) split_data <- FALSE
 
   stopifnot(mslow <= msup)
   stopifnot(msup <= nscreen)
 
-  type.measure <- match.arg(type.measure)
   stopifnot(is.numeric(y))
   p <- ncol(x)
   n <- nrow(x)
   stopifnot(length(y)==n)
+
+  type.measure <- match.arg(type.measure)
+  type.rpm <- match.arg(type.rpm)
+  type.screening <- match.arg(type.screening)
 
   if (split_data==TRUE) {
     scr_inds <- sample(1:n,n%/%4)
@@ -84,8 +100,8 @@ spar <- function(x,
     mar_inds <- scr_inds <- 1:n
   }
 
-  xcenter <- apply(x,2,mean)
-  xscale <- apply(x,2,sd)
+  xcenter <- apply(x, 2, mean)
+  xscale  <- apply(x, 2, sd)
 
   if (is.null(inds) | is.null(RPMs)) {
     actual_p <- sum(xscale>0)
@@ -95,27 +111,10 @@ spar <- function(x,
     xscale[xscale==0] <- 1
     z <- scale(x,center = xcenter,scale = xscale)
   }
-
-
   if (family$family=="gaussian" & family$link=="identity") {
     fit_family <- "gaussian"
     ycenter <- mean(y)
     yscale <- sd(y)
-    yz <- scale(y,center = ycenter,scale = yscale)
-    if (actual_p < n/2) {
-      scr_coef <- tryCatch( solve(crossprod(z[scr_inds,]),crossprod(z[scr_inds,],yz[scr_inds])),
-                            error=function(error_message) {
-                              return(solve(crossprod(z[scr_inds,])+(sqrt(actual_p)+sqrt(n))*diag(actual_p),crossprod(z[scr_inds,],yz[scr_inds])))
-                            })
-    } else if (actual_p < 2*n) {
-      scr_coef <- crossprod(z[scr_inds,],solve(tcrossprod(z[scr_inds,])+(sqrt(actual_p)+sqrt(n))*diag(n),yz[scr_inds]))
-    } else {
-      solve_res <- tryCatch( solve(tcrossprod(z[scr_inds,]),yz[scr_inds]),
-                             error=function(error_message) {
-                               return(solve(tcrossprod(z[scr_inds,])+(sqrt(actual_p)+sqrt(n))*diag(n),yz[scr_inds]))
-                             })
-      scr_coef <- crossprod(z[scr_inds,],solve_res)
-    }
   } else {
     if (family$family=="binomial" & family$link=="logit") {
       fit_family <- "binomial"
@@ -124,13 +123,53 @@ spar <- function(x,
     } else {
       fit_family <- family
     }
-
     ycenter <- 0
-    yscale <- 1
-    glmnet_res <- glmnet::glmnet(x=z[scr_inds,],y=y[scr_inds],family = fit_family,alpha=0)
-    lam <- min(glmnet_res$lambda)
-    scr_coef <- coef(glmnet_res,s=lam)[-1]
+    yscale  <- 1
   }
+
+  yz <- scale(y,center = ycenter,scale = yscale)
+
+  scr_coef <- switch(type.screening,
+                     "ridge" = screening_ridge_lambda0(z[scr_inds,], yz = yz[scr_inds, ],
+                                                       family = fit_family),
+                     "marglik" = screening_marglik(z[scr_inds,], yz = yz[scr_inds, ],
+                                                   family = family),
+                     "corr" = screening_corr(z[scr_inds,], yz = yz[scr_inds, ],
+                                             family = family))
+  # if (family$family=="gaussian" & family$link=="identity") {
+  #   fit_family <- "gaussian"  # why??
+  #   ycenter <- mean(y)
+  #   yscale <- sd(y)
+  #   yz <- scale(y,center = ycenter,scale = yscale)
+  #   if (actual_p < n/2) {
+  #     scr_coef <- tryCatch( solve(crossprod(z[scr_inds,]),crossprod(z[scr_inds,],yz[scr_inds])),
+  #                           error=function(error_message) {
+  #                             return(solve(crossprod(z[scr_inds,])+(sqrt(actual_p)+sqrt(n))*diag(actual_p),crossprod(z[scr_inds,],yz[scr_inds])))
+  #                           })
+  #   } else if (actual_p < 2*n) {
+  #     scr_coef <- crossprod(z[scr_inds,],solve(tcrossprod(z[scr_inds,])+(sqrt(actual_p)+sqrt(n))*diag(n),yz[scr_inds]))
+  #   } else {
+  #     solve_res <- tryCatch( solve(tcrossprod(z[scr_inds,]),yz[scr_inds]),
+  #                            error=function(error_message) {
+  #                              return(solve(tcrossprod(z[scr_inds,])+(sqrt(actual_p)+sqrt(n))*diag(n),yz[scr_inds]))
+  #                            })
+  #     scr_coef <- crossprod(z[scr_inds,],solve_res)
+  #   }
+  # } else {
+  #   if (family$family=="binomial" & family$link=="logit") {
+  #     fit_family <- "binomial"
+  #   } else if (family$family=="poisson" & family$link=="log") {
+  #     fit_family <- "poisson"
+  #   } else {
+  #     fit_family <- family
+  #   }
+  #
+  #   ycenter <- 0
+  #   yscale <- 1
+  #   glmnet_res <- glmnet::glmnet(x=z[scr_inds,],y=y[scr_inds],family = fit_family,alpha=0)
+  #   lam <- min(glmnet_res$lambda)
+  #   scr_coef <- coef(glmnet_res,s=lam)[-1]
+  # }
 
   inc_probs <- abs(scr_coef)
   max_inc_probs <- max(inc_probs)
@@ -144,7 +183,7 @@ spar <- function(x,
   if (is.null(RPMs)) {
     RPMs <- vector("list",length=max_num_mod)
     drawRPMs <- TRUE
-    ms <- sample(seq(floor(mslow),ceiling(msup)),max_num_mod,replace=TRUE)
+    ms <- sample(seq(floor(mslow), ceiling(msup)),max_num_mod, replace=TRUE)
   }
   drawinds <- FALSE
   if (is.null(inds)) {
@@ -172,20 +211,29 @@ spar <- function(x,
         RPM <- Matrix::Matrix(diag(1,m),sparse=TRUE)
         RPMs[[i]] <- RPM
       } else {
-        RPM <- generate_RPM(m,p_use,coef=scr_coef[ind_use]/max_inc_probs)
+        RPM <- switch(
+          type.rpm,
+          "cwdatadriven" = generate_cw_rp(m = m, p = p_use, coef = scr_coef[ind_use]/max_inc_probs),
+          "cw"           = generate_cw_rp(m = m, p = p_use,
+                                          coef = sample(c(-1,1), p_use, replace = TRUE)),
+          "gaussian"     = generate_gaussian_rp(m = m, p = p_use),
+          "sparse"       = generate_sparse_rp(m = m, p = p_use, psi = control$rpm$psi))
+        # RPM <- generate_RPM(m,p_use,coef=scr_coef[ind_use]/max_inc_probs)
         RPMs[[i]] <- RPM
       }
     } else {
       RPM <- RPMs[[i]]
-      RPM@x <- scr_coef[ind_use]/max_inc_probs
+      if (type.rpm == "cwdatadriven")  RPM@x <- scr_coef[ind_use]/max_inc_probs
+      ## TODO: think about this
     }
 
     znew <- Matrix::tcrossprod(z[mar_inds,ind_use],RPM)
     if (family$family=="gaussian" & family$link=="identity") {
       mar_coef <- tryCatch( Matrix::solve(Matrix::crossprod(znew),Matrix::crossprod(znew,yz[mar_inds])),
-                           error=function(error_message) {
-                             return(Matrix::solve(Matrix::crossprod(znew)+0.01*diag(ncol(znew)),Matrix::crossprod(znew,yz[mar_inds])))
-                           })
+                            error=function(error_message) {
+                              return(Matrix::solve(Matrix::crossprod(znew)+0.01*diag(ncol(znew)),
+                                                   Matrix::crossprod(znew,yz[mar_inds])))
+                            })
       intercepts[i] <- 0
       betas_std[ind_use,i] <- Matrix::crossprod(RPM,mar_coef)
     } else {
@@ -271,9 +319,10 @@ spar <- function(x,
   betas[xscale>0,] <- betas_std
 
   res <- list(betas = betas, intercepts = intercepts, scr_coef = scr_coef, inds = inds, RPMs = RPMs,
-       val_res = val_res, val_set = val_set, lambdas = lambdas, nummods = nummods,
-       ycenter = ycenter, yscale = yscale, xcenter = xcenter, xscale = xscale,
-       family = family, type.measure = type.measure)
+              val_res = val_res, val_set = val_set, lambdas = lambdas, nummods = nummods,
+              ycenter = ycenter, yscale = yscale, xcenter = xcenter, xscale = xscale,
+              family = family, type.measure = type.measure, type.rpm = type.rpm,
+              type.screening = type.screening)
   attr(res,"class") <- "spar"
 
   return(res)
@@ -349,12 +398,12 @@ coef.spar <- function(spar_res,
 #' @export
 
 predict.spar <- function(spar_res,
-                      xnew,
-                      type = c("response","link"),
-                      avg_type = c("link","response"),
-                      nummod = NULL,
-                      lambda = NULL,
-                      coef = NULL) {
+                         xnew,
+                         type = c("response","link"),
+                         avg_type = c("link","response"),
+                         nummod = NULL,
+                         lambda = NULL,
+                         coef = NULL) {
   if (ncol(xnew)!=length(spar_res$xscale)) {
     stop("xnew must have same number of columns as initial x!")
   }
