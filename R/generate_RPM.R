@@ -6,7 +6,7 @@
 #' @param coef p-vector of diagonal elements, random +/-1 by default
 #' @returns sparse mxp matrix of class "dgCMatrix" (Matrix package)
 #' @keywords internal
-generate_cw_rp <- function(type.rpm, m, p, coef = NULL, ...) {
+generate_cw_rp <- function(type.rpm, m, p, coef = NULL) {
 
   goal_dims <- sample(m, p, replace = TRUE)
   counter <- 0
