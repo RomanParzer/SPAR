@@ -23,11 +23,9 @@
 #' "class" (misclassification error) and "1-auc" (one minus area under the ROC curve) both just for "binomial" family.
 #' @param type.rpm  type of random projection matrix to be employed; one of "cwdatadriven", "cw", "gaussian", "sparse"; defaults to "cwdatadriven".
 #' @param type.screening  type of screening coefficients; one of "ridge", "marglik", "corr"; defaults to "ridge" which is based on the ridge coefficients where the penalty converges to zero.
-#' @param mslow lower bound for unifrom random goal dimensions in marginal models; defaults to log(p).
-#' @param msup upper bound for unifrom random goal dimensions in marginal models; defaults to n/2.
 #' @param inds optional list of index-vectors corresponding to variables kept after screening in each marginal model of length max(nummods),dimensions need to fit those of RPMs.
 #' @param RPMs optional list of sparse CW projection matrices used in each marginal model of length max(nummods), diagonal elements will be overwritten with a coefficient only depending on the given x and y.
-#' @param control a list optional arguments to be passed to functions creating the random projection matrices.
+#' @param control a list optional arguments to be passed to functions creating the random projection matrices. mslow is a lower bound for uniform random goal dimensions in marginal models; defaults to log(p). msup is upper bound for uniform random goal dimensions in marginal models; defaults to n/2.
 #' @returns object of class "spar" with elements
 #' \itemize{
 #'  \item betas p x max(nummods) matrix of standardized coefficients from each marginal model
@@ -69,11 +67,15 @@ spar <- function(x,
                  type.measure = c("deviance","mse","mae","class","1-auc"),
                  type.rpm = c("cwdatadriven", "cw", "gaussian", "sparse"),
                  type.screening = c("ridge", "marglik", "corr"),
-                 mslow = ceiling(log(ncol(x))),
-                 msup = ceiling(nrow(x)/2),
                  inds = NULL,
                  RPMs = NULL,
-                 control = list(rpm = NULL)) {
+                 control = list(rpm = list(mslow = ceiling(log(ncol(x))),
+                                           msup = ceiling(nrow(x)/2)))) {
+
+  mslow <- control$rpm$mslow
+  if (is.null(mslow)) mslow <- ceiling(log(ncol(x)))
+  msup <- control$rpm$msup
+  if (is.null(msup)) msup <- ceiling(nrow(x)/2)
 
   stopifnot(mslow <= msup)
   stopifnot(msup <= nscreen)

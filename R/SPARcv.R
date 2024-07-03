@@ -16,9 +16,7 @@
 #' "class" (misclassification error) and "1-auc" (One minus area under the ROC curve) both just for "binomial" family.
 #' @param type.rpm  type of random projection matrix to be employed; one of "cwdatadriven", "cw", "gaussian", "sparse"; defaults to "cwdatadriven".
 #' @param type.screening  type of screening coefficients; one of "ridge", "marglik", "corr"; defaults to "ridge" which is based on the ridge coefficients where the penalty converges to zero.
-#' @param mslow lower bound for unifrom random goal dimensions in marginal models; defaults to log(p).
-#' @param msup upper bound for unifrom random goal dimensions in marginal models; defaults to n/2.
-#' @param control a list optional arguments to be passed to functions creating the random projection matrices.
+#' @param control a list optional arguments to be passed to functions creating the random projection matrices. mslow is a lower bound for uniform random goal dimensions in marginal models; defaults to log(p). msup is upper bound for uniform random goal dimensions in marginal models; defaults to n/2.
 #' @returns object of class "spar" with elements
 #' \itemize{
 #'  \item betas p x max(nummods) matrix of standardized coefficients from each marginal model
@@ -59,9 +57,8 @@ spar.cv <- function(x,
                     type.measure = c("deviance","mse","mae","class","1-auc"),
                     type.rpm = c("cwdatadriven", "cw", "gaussian", "sparse"),
                     type.screening = c("ridge", "marglik", "corr"),
-                    mslow = ceiling(log(ncol(x))),
-                    msup = ceiling(nrow(x)/2),
-                    control = list(rpm = NULL)) {
+                    control = list(rpm = list(mslow = ceiling(log(ncol(x))),
+                                              msup  = ceiling(nrow(x)/2)))) {
   stopifnot("matrix" %in% class(x) |"data.frame" %in% class(x))
   x <- as.matrix(x)
   if (!class(x[1,1])%in%c("numeric","integer")) {
@@ -71,7 +68,7 @@ spar.cv <- function(x,
   n <- nrow(x)
 
   SPARres <- spar(x,y,family = family, nscreen = nscreen,nlambda = nlambda,
-                  mslow=mslow,msup=msup,nummods=nummods,split_data=split_data,
+                  nummods=nummods,split_data=split_data,
                   type.measure = type.measure, type.rpm = type.rpm,
                   type.screening = type.screening,
                   control = control)
@@ -83,11 +80,10 @@ spar.cv <- function(x,
     foldSPARres <- spar(x[-fold_ind,SPARres$xscale>0],y[-fold_ind],family = family,
                         xval = x[fold_ind,SPARres$xscale>0], yval = y[fold_ind],
                         nscreen = nscreen, lambdas = SPARres$lambdas,
-                        mslow = mslow, msup = msup,
                         inds = SPARres$inds, RPMs = SPARres$RPMs,
                         nummods = nummods, split_data = split_data,
                         type.measure = type.measure, type.rpm = type.rpm,
-                        type.screening = type.screening)
+                        type.screening = type.screening, control = control)
     val_res <- rbind(val_res,foldSPARres$val_res)
   }
 
