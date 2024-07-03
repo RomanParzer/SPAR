@@ -68,8 +68,8 @@ spar.cv <- function(x,
   p <- ncol(x)
   n <- nrow(x)
 
-  SPARres <- spar(x,y,family = family, nscreen = nscreen,nlambda = nlambda,
-                  nummods=nummods,split_data=split_data,
+  SPARres <- spar(x,y,family = family,nlambda = nlambda,
+                  nummods=nummods,
                   type.measure = type.measure, type.rpm = type.rpm,
                   type.screening = type.screening,
                   control = control)
@@ -80,9 +80,9 @@ spar.cv <- function(x,
     fold_ind <- which(folds==k)
     foldSPARres <- spar(x[-fold_ind,SPARres$xscale>0],y[-fold_ind],family = family,
                         xval = x[fold_ind,SPARres$xscale>0], yval = y[fold_ind],
-                        nscreen = nscreen, lambdas = SPARres$lambdas,
+                        lambdas = SPARres$lambdas,
                         inds = SPARres$inds, RPMs = SPARres$RPMs,
-                        nummods = nummods, split_data = split_data,
+                        nummods = nummods,
                         type.measure = type.measure, type.rpm = type.rpm,
                         type.screening = type.screening, control = control)
     val_res <- rbind(val_res,foldSPARres$val_res)
