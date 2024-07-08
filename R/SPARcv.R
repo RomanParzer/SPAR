@@ -6,16 +6,18 @@
 #' @param x n x p matrix of predictor variables.
 #' @param y quantitative response vector of length n.
 #' @param family 'family'-objected used for glm (except the quasi), default gaussian("identity").
-#' @param nscreen number of variables kept after screening in each marginal model, multiples of n are suggested; defaults to 2n.
 #' @param nfolds number of folds to use for cross-validation >2, defaults to 10.
 #' @param nlambda number of different lambdas to consider for thresholding; ignored when lambdas are given; defaults to 20.
 #' @param lambdas optional vector of lambdas to consider for thresholding; if not provided, nlam values ranging from 0 to the maximum ablsolute marginal coefficient are used.
 #' @param nummods vector of numbers of marginal models to consider for validation; defaults to c(20).
-#' @param split_data logical to indicate whether data for calculation of scr_coef and fitting of mar mods should be split 1/4 to 3/4 to avoid overfitting; default FALSE
 #' @param type.measure loss to use for validation; defaults to "deviance" available for all families. Other options are "mse" or "mae" (between responses and predicted means, for all families),
 #' "class" (misclassification error) and "1-auc" (One minus area under the ROC curve) both just for "binomial" family.
-#' @param mslow lower bound for unifrom random goal dimensions in marginal models; defaults to log(p).
-#' @param msup upper bound for unifrom random goal dimensions in marginal models; defaults to n/2.
+#' @param type.rpm  type of random projection matrix to be employed; one of "cwdatadriven", "cw", "gaussian", "sparse"; defaults to "cwdatadriven".
+#' @param type.screening  type of screening coefficients; one of "ridge", "marglik", "corr"; defaults to "ridge" which is based on the ridge coefficients where the penalty converges to zero.
+#' @param control a list two elements: rpm and scr. rpm contains a list of optional arguments to be passed to functions creating the random projection matrices. Here mslow is a lower bound for uniform random goal dimensions in marginal models; defaults to log(p);
+#'  msup is upper bound for uniform random goal dimensions in marginal models; defaults to n/2.
+#'  scr contains a list of optional arguments to be passed to functions performing screening. nscreen is the number of variables to keep after screening 2n;
+#'  split_data logical to indicate whether data for calculation of scr_coef and fitting of mar mods should be split 1/4 to 3/4 to avoid overfitting; default FALSE.
 #' @returns object of class "spar" with elements
 #' \itemize{
 #'  \item betas p x max(nummods) matrix of standardized coefficients from each marginal model
@@ -54,8 +56,10 @@ spar.cv <- function(x,
                     nummods = c(20),
                     split_data = FALSE,
                     type.measure = c("deviance","mse","mae","class","1-auc"),
-                    mslow = ceiling(log(ncol(x))),
-                    msup = ceiling(nrow(x)/2)) {
+                    type.rpm = c("cwdatadriven", "cw", "gaussian", "sparse"),
+                    type.screening = c("ridge", "marglik", "corr"),
+                    control = list(rpm = list(mslow = ceiling(log(ncol(x))),
+                                              msup  = ceiling(nrow(x)/2)))) {
   stopifnot("matrix" %in% class(x) |"data.frame" %in% class(x))
   x <- as.matrix(x)
   if (!class(x[1,1])%in%c("numeric","integer")) {
@@ -64,9 +68,11 @@ spar.cv <- function(x,
   p <- ncol(x)
   n <- nrow(x)
 
-  SPARres <- spar(x,y,family = family, nscreen = nscreen,nlambda = nlambda,
-                  mslow=mslow,msup=msup,nummods=nummods,split_data=split_data,
-                  type.measure = type.measure)
+  SPARres <- spar(x,y,family = family,nlambda = nlambda,
+                  nummods=nummods,
+                  type.measure = type.measure, type.rpm = type.rpm,
+                  type.screening = type.screening,
+                  control = control)
 
   val_res <- SPARres$val_res
   folds <- sample(cut(1:n,breaks=nfolds,labels=FALSE))
@@ -74,22 +80,29 @@ spar.cv <- function(x,
     fold_ind <- which(folds==k)
     foldSPARres <- spar(x[-fold_ind,SPARres$xscale>0],y[-fold_ind],family = family,
                         xval = x[fold_ind,SPARres$xscale>0], yval = y[fold_ind],
-                        nscreen = nscreen, lambdas = SPARres$lambdas,
-                        mslow = mslow, msup = msup,
+                        lambdas = SPARres$lambdas,
                         inds = SPARres$inds, RPMs = SPARres$RPMs,
-                        nummods = nummods, split_data = split_data,
-                        type.measure = type.measure)
+                        nummods = nummods,
+                        type.measure = type.measure, type.rpm = type.rpm,
+                        type.screening = type.screening, control = control)
     val_res <- rbind(val_res,foldSPARres$val_res)
   }
 
-  val_sum <- dplyr::group_by(val_res,nlam,lam,nummod)
+  val_sum <- dplyr::group_by(val_res, nlam, lam, nummod)
   suppressMessages(
-    val_sum <- dplyr::summarise(val_sum,mMeas=mean(Meas,na.rm=TRUE),sdMeas=sd(Meas,na.rm=TRUE),mNumAct=mean(numAct,na.rm=TRUE))
+    val_sum <- dplyr::summarise(val_sum, mMeas = mean(Meas,na.rm=TRUE),
+                                sdMeas = sd(Meas,na.rm=TRUE),
+                                mNumAct = mean(numAct,na.rm=TRUE))
   )
 
-  res <- list(betas = SPARres$betas, intercepts = SPARres$intercepts, scr_coef = SPARres$scr_coef, inds = SPARres$inds, RPMs = SPARres$RPMs,
-              val_sum = val_sum, lambdas = SPARres$lambdas, nummods=nummods, family = family, type.measure = type.measure,
-              ycenter = SPARres$ycenter, yscale = SPARres$yscale, xcenter = SPARres$xcenter, xscale = SPARres$xscale)
+  res <- list(betas = SPARres$betas, intercepts = SPARres$intercepts,
+              scr_coef = SPARres$scr_coef, inds = SPARres$inds,
+              RPMs = SPARres$RPMs,
+              val_sum = val_sum, lambdas = SPARres$lambdas, nummods=nummods,
+              family = family, type.measure = type.measure,
+              type.rpm = type.rpm, type.screening = type.screening,
+              ycenter = SPARres$ycenter, yscale = SPARres$yscale,
+              xcenter = SPARres$xcenter, xscale = SPARres$xscale)
   attr(res,"class") <- "spar.cv"
   return(res)
 }
