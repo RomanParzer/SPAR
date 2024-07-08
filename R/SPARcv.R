@@ -49,7 +49,6 @@
 spar.cv <- function(x,
                     y,
                     family = gaussian("identity"),
-                    nscreen = 2*nrow(x),
                     nfolds = 10,
                     nlambda = 20,
                     lambdas = NULL,
@@ -59,7 +58,8 @@ spar.cv <- function(x,
                     type.rpm = c("cwdatadriven", "cw", "gaussian", "sparse"),
                     type.screening = c("ridge", "marglik", "corr"),
                     control = list(rpm = list(mslow = ceiling(log(ncol(x))),
-                                              msup  = ceiling(nrow(x)/2)))) {
+                                              msup = ceiling(nrow(x)/2)),
+                                   scr = list(nscreen = 2*nrow(x), split_data = FALSE))) {
   stopifnot("matrix" %in% class(x) |"data.frame" %in% class(x))
   x <- as.matrix(x)
   if (!class(x[1,1])%in%c("numeric","integer")) {

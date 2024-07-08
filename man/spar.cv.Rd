@@ -8,7 +8,6 @@ spar.cv(
   x,
   y,
   family = gaussian("identity"),
-  nscreen = 2 * nrow(x),
   nfolds = 10,
   nlambda = 20,
   lambdas = NULL,
@@ -17,9 +16,8 @@ spar.cv(
   type.measure = c("deviance", "mse", "mae", "class", "1-auc"),
   type.rpm = c("cwdatadriven", "cw", "gaussian", "sparse"),
   type.screening = c("ridge", "marglik", "corr"),
-  mslow = ceiling(log(ncol(x))),
-  msup = ceiling(nrow(x)/2),
-  control = list(rpm = NULL)
+  control = list(rpm = list(mslow = ceiling(log(ncol(x))), msup = ceiling(nrow(x)/2)),
+    scr = list(nscreen = 2 * nrow(x), split_data = FALSE))
 )
 }
 \arguments{
@@ -29,8 +27,6 @@ spar.cv(
 
 \item{family}{'family'-objected used for glm (except the quasi), default gaussian("identity").}
 
-\item{nscreen}{number of variables kept after screening in each marginal model, multiples of n are suggested; defaults to 2n.}
-
 \item{nfolds}{number of folds to use for cross-validation >2, defaults to 10.}
 
 \item{nlambda}{number of different lambdas to consider for thresholding; ignored when lambdas are given; defaults to 20.}
@@ -39,8 +35,6 @@ spar.cv(
 
 \item{nummods}{vector of numbers of marginal models to consider for validation; defaults to c(20).}
 
-\item{split_data}{logical to indicate whether data for calculation of scr_coef and fitting of mar mods should be split 1/4 to 3/4 to avoid overfitting; default FALSE}
-
 \item{type.measure}{loss to use for validation; defaults to "deviance" available for all families. Other options are "mse" or "mae" (between responses and predicted means, for all families),
 "class" (misclassification error) and "1-auc" (One minus area under the ROC curve) both just for "binomial" family.}
 
@@ -48,11 +42,10 @@ spar.cv(
 
 \item{type.screening}{type of screening coefficients; one of "ridge", "marglik", "corr"; defaults to "ridge" which is based on the ridge coefficients where the penalty converges to zero.}
 
-\item{mslow}{lower bound for unifrom random goal dimensions in marginal models; defaults to log(p).}
-
-\item{msup}{upper bound for unifrom random goal dimensions in marginal models; defaults to n/2.}
-
-\item{control}{a list optional arguments to be passed to functions creating the random projection matrices.}
+\item{control}{a list two elements: rpm and scr. rpm contains a list of optional arguments to be passed to functions creating the random projection matrices. Here mslow is a lower bound for uniform random goal dimensions in marginal models; defaults to log(p);
+msup is upper bound for uniform random goal dimensions in marginal models; defaults to n/2.
+scr contains a list of optional arguments to be passed to functions performing screening. nscreen is the number of variables to keep after screening 2n;
+split_data logical to indicate whether data for calculation of scr_coef and fitting of mar mods should be split 1/4 to 3/4 to avoid overfitting; default FALSE.}
 }
 \value{
 object of class "spar" with elements

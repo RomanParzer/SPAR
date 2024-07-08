@@ -10,19 +10,16 @@ spar(
   family = gaussian("identity"),
   xval = NULL,
   yval = NULL,
-  nscreen = 2 * nrow(x),
   nlambda = 20,
   lambdas = NULL,
   nummods = c(20),
-  split_data = FALSE,
   type.measure = c("deviance", "mse", "mae", "class", "1-auc"),
   type.rpm = c("cwdatadriven", "cw", "gaussian", "sparse"),
   type.screening = c("ridge", "marglik", "corr"),
-  mslow = ceiling(log(ncol(x))),
-  msup = ceiling(nrow(x)/2),
   inds = NULL,
   RPMs = NULL,
-  control = list(rpm = NULL)
+  control = list(rpm = list(mslow = ceiling(log(ncol(x))), msup = ceiling(nrow(x)/2)),
+    scr = list(nscreen = 2 * nrow(x), split_data = FALSE))
 )
 }
 \arguments{
@@ -36,15 +33,11 @@ spar(
 
 \item{yval}{optional response observations used for validation of threshold lambda and number of models; y is used if not provided.}
 
-\item{nscreen}{number of variables kept after screening in each marginal model, multiples of n are suggested; defaults to 2n.}
-
 \item{nlambda}{number of different lambdas to consider for thresholding; ignored when lambdas are given; defaults to 20.}
 
 \item{lambdas}{optional vector of lambdas to consider for thresholding; if not provided, nlam values ranging from 0 to the maximum ablsolute marginal coefficient are used.}
 
 \item{nummods}{vector of numbers of marginal models to consider for validation; defaults to c(20).}
-
-\item{split_data}{logical to indicate whether data for calculation of scr_coef and fitting of mar mods should be split 1/4 to 3/4 to avoid overfitting; default FALSE}
 
 \item{type.measure}{loss to use for validation; defaults to "deviance" available for all families. Other options are "mse" or "mae" (between responses and predicted means, for all families),
 "class" (misclassification error) and "1-auc" (one minus area under the ROC curve) both just for "binomial" family.}
@@ -53,15 +46,14 @@ spar(
 
 \item{type.screening}{type of screening coefficients; one of "ridge", "marglik", "corr"; defaults to "ridge" which is based on the ridge coefficients where the penalty converges to zero.}
 
-\item{mslow}{lower bound for unifrom random goal dimensions in marginal models; defaults to log(p).}
-
-\item{msup}{upper bound for unifrom random goal dimensions in marginal models; defaults to n/2.}
-
 \item{inds}{optional list of index-vectors corresponding to variables kept after screening in each marginal model of length max(nummods),dimensions need to fit those of RPMs.}
 
 \item{RPMs}{optional list of sparse CW projection matrices used in each marginal model of length max(nummods), diagonal elements will be overwritten with a coefficient only depending on the given x and y.}
 
-\item{control}{a list optional arguments to be passed to functions creating the random projection matrices.}
+\item{control}{a list two elements: rpm and scr. rpm contains a list of optional arguments to be passed to functions creating the random projection matrices. Here mslow is a lower bound for uniform random goal dimensions in marginal models; defaults to log(p);
+msup is upper bound for uniform random goal dimensions in marginal models; defaults to n/2.
+scr contains a list of optional arguments to be passed to functions performing screening. nscreen is the number of variables to keep after screening 2n;
+split_data logical to indicate whether data for calculation of scr_coef and fitting of mar mods should be split 1/4 to 3/4 to avoid overfitting; default FALSE.}
 }
 \value{
 object of class "spar" with elements

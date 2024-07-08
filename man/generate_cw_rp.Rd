@@ -4,7 +4,7 @@
 \alias{generate_cw_rp}
 \title{Generate CW Random Projection Matrix (Definition 2.2. in Parzer, Vana_Gür, Filzmoser 2023)}
 \usage{
-generate_cw_rp(type.rpm, m, p, coef = NULL, ...)
+generate_cw_rp(type.rpm, m, p, coef = NULL)
 }
 \arguments{
 \item{m}{goal dimension}
