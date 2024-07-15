@@ -85,42 +85,51 @@ library("MASS")
 \section[Introduction]{Introduction} \label{sec:intro}
 
 \pkg{SPAR} is a package for building predictive generalized linear models
-(GLMs) with high-dimensional (HD) predictors in \proglang{R}.
-Probabilistic variable screening and
-random projection of the predictors are performed to obtain an ensemble of GLMs, which are then averaged to obtain predictions in an HD setting.
+(GLMs) with high-dimensional (HD) predictors in \proglang{R}. In package
+\pkg{SPAR}, probabilistic variable screening and random projection of the predictors are performed to obtain an ensemble of GLMs, which are then averaged to obtain predictions in an high-dimensional regression setting.
 
-\begin{itemize}
-%%
-\item Random projection  linearly maps a set of points in high dimensions into a much
+Random projection is a computationally-efficient method which linearly maps a set of points in high dimensions into a much
 lower-dimensional space while approximately preserving pairwise distances.
+For very large $p$, random projection can suffer from overfitting, as too many irrelevant predictors are being considered for prediction purposes \citep{Dunson2020TargRandProj}. Therefore, screening out irrelevant variables before performing the random projection is advisable in order to tackle this issue. The screening can be performed in a probabilistic fashion, by randomly
+sampling covariates for inclusion in the model based on probabilities proportional to an importance measure (as opposed to random subspace sampling employed in e.g.,~random forests).
+Finally, in practice the information from multiple such screening and projections can be combined by averaging, in order to reduce the variance introduced by the random sampling (of both projections and screening indicators) \cite{Thanei2017RPforHDR}.
 %%
-\item Screening: For very large $p$, random projection can suffer from overfitting, as too many irrelevant predictors are being considered for prediction purposes % \cite{Dunson2020TargRandProj}
-%%
-\item Averaging is beneficial in practice to combine information of multiple such reductions \cite{Thanei2017RPforHDR}.
-\end{itemize}
 
-Several packages which provide functionality for random projections are available for \proglang{R}. Package \pkg{RandPro} \citep{RandProR} \citep{SIDDHARTH2020100629} allows for four different random projection matrices to be applied to the predictor matrix before employing one of $k$~nearest neighbor, support vector machine or naive Bayes classifier. Package \pkg{SPCAvRP} \citep{SPCAvRPR} implements sparse principal component analysis, based on the aggregation of eigenvector information from ``carefully-selected'' axis-aligned random projections of the sample covariance matrix.
+Several packages which provide functionality for random projections are available for \proglang{R}. Package \pkg{RandPro} \citep{RandProR, SIDDHARTH2020100629} allows for four different random projection matrices to be applied to the predictor matrix before employing one of $k$~nearest neighbor, support vector machine or naive Bayes classifier. Package \pkg{SPCAvRP} \citep{SPCAvRPR} implements sparse principal component analysis, based on the aggregation of eigenvector information from ``carefully-selected'' axis-aligned random projections of the sample covariance matrix.
 Package \pkg{RPEnsembleR} \citep{RPEnsembleR} implements the same idea of ``carefully-selected'' random projections when building an ensemble of classifiers.
 
+On the other hand, there are a multitude of packages dealing with
+variable screening on the Comprehensive \proglang{R} Archive Network (CRAN).
 
-Packages dealing with screening on CRAN:
-\begin{itemize}
-    \item Ball	Statistical Inference and Sure Independence Screening via Ball Statistics
-    \item BayesS5	Bayesian Variable Selection Using Simplified Shotgun Stochastic Search with Screening (S5)
-    \item bravo	Bayesian Screening and Variable Selection
-    \item cdcsis	Conditional Distance Correlation Based Feature Screening and Conditional Independence Inference
+The (iterative) sure independence screening procedure and extensions in
+\cite{Fan2007SISforUHD,Fan2010sisglms,fan2010high} is implemented in package \pkg{SIS} \citep{SISR}, which also
+provides functionality for estimating a penalized generalized linear model or a cox regression model for the variables picked by the screening procedure.
 
-    \item fusionclust	Clustering and Feature Screening using L1 Fusion Penalty
-    \item LqG	Robust Group Variable Screening Based on Maximum Lq-Likelihood Estimation
-    \item MFSIS	Moder-Free Sure Independent Screening Procedures
-    \item QCSIS	Sure Independence Screening via Quantile Correlation and Composite Quantile Correlation
-   \item https://cran.r-project.org/web/packages/RaSEn/index.html
-    \item SIS \citep{SISR}
-    \item SMLE	Joint Feature Screening via Sparse MLE
-    \item tilting	: Variable Selection via Tilted Correlation Screening Algorithm
-    \item TSGSIS	Two Stage-Grouped Sure Independence Screening
-    \item VariableScreening:	High-Dimensional Screening for Semiparametric Longitudinal Regression
-\end{itemize}
+Package \pkg{VariableScreening} \citep{pkg:VariableScreening} implements screening for iid data,
+varying-coefficient models, and longitudinal data using different screening methods: Sure Independent Ranking and Screening -- which ranks the predictors by their correlation with the rank-ordered response (SIRS),
+Distance Correlation Sure Independence Screening -- a non-parametric extension of the correlation coefficient (DC-SIS), MV Sure Independence Screening -- using the mean conditional variance measure (MV-SIS).
+
+A collection of model-free screening techniques such as SIRS, DC-SIS, MV-SIS, the fused Kolmogorov filter \citep{mai2015fusedkolmogorov}, the projection correlation method using knock-off features \citep{liu2020knockoff}, are provided in package \pkg{MFSIS} \citep{pkg:MFSIS}.
+Package \pkg{tilting} \citep{pkg:tilting} implements an algorithm for variable selection in high-dimensional linear regression using tilted correlation, which takes into account high correlations among the variables in a data-driven way.
+Feature screening based on conditional distance correlation \citep{wang2015conditional} can be performed with the \pkg{cdcsis} package \citep{pkg:cdcsis} while package \pkg{QCSIS} \citep{pkg:QCSIS} implements screening based on
+(composite) quantile correlation.
+
+Package \pkg{LqG} \citep{pkg:LqG} provides a group screening procedure that is based on maximum Lq-likelihood estimation, to simultaneously account for the group structure and data contamination in variable screening.
+
+Feature screening using an $L1$ fusion penalty can be performed with package \pkg{fusionclust} \citep{pkg:fusionclust}.
+Package \pkg{SMLE} \citep{pkg:SMLE} implements joint feature screening via sparse MLE \citep{SMLE2014} in high-dimensional linear, logistic, and Poisson models.
+Package \pkg{TSGSIS} \citep{pkg:TSGSIS} provides a high-dimensional grouped variable selection approach for detecting interactions that may not have marginal effects in high dimensional linear and logistic regression  \citep{10.1093/bioinformatics/btx409}.
+
+Package \pkg{RaSEn} implements the RaSE algorithm for ensemble classification and classification problems, where random subspaces are generated and the optimal one is chosen to train a weak learner on the basis of some criterion. Various choices of base classifiers are implemented, for instance, linear discriminant analysis, quadratic discriminant analysis, k-nearest neighbour, logistic or linear regression, decision trees, random forest, support vector machines. The selected percentages of variables can be employed for variable screening.
+%% Special
+Package \pkg{Ball} \citep{pkg:ball} provides functionality for variable screening using ball statistics, which is appropriate for shape, directional, compositional and symmetric positive definite matrix data.
+%% Bayesian
+Package \pkg{BayesS5} \citep{pkg:BayesS5} implements Bayesian variable selection using simplified shotgun stochastic search  algorithm with screening
+\citep{shin2017scalablebayesianvariableselection}
+while package \pkg{bravo} \citep{pkg:bravo} implements the Bayesian iterative screening method proposed in \cite{wang2021bayesianiterativescreeningultrahigh}
+
+
+
 
 The rest of the paper is organized as follows:
 Section~\ref{sec:models} provides the methodological details of the implemented algorithm. The package is described in Section~\ref{sec:software}.
