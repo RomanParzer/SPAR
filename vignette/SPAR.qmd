@@ -37,9 +37,9 @@ bibliography: SPAR.bib
 Random projection is a computationally-efficient method which linearly maps a set of points in high dimensions into a much lower-dimensional space while approximately preserving pairwise distances. For very large $p$, random projection can suffer from overfitting, as too many irrelevant predictors are being considered for prediction purposes [@Dunson2020TargRandProj]. Therefore, screening out irrelevant variables before performing the random projection is advisable in order to tackle this issue. The screening can be performed in a probabilistic fashion, by randomly sampling covariates for inclusion in the model based on probabilities proportional to an importance measure (as opposed to random subspace sampling employed in e.g., random forests). Finally, in practice the information from multiple such screening and projections can be combined by averaging, in order to reduce the variance introduced by the random sampling (of both projections and screening indicators) [@Thanei2017RPforHDR].
 
 Several packages which provide functionality for random projections are available for [R]{.proglang}. Package [RandPro]{.pkg} [@RandProR; @SIDDHARTH2020100629] allows for four different random projection matrices to be applied to the predictor matrix before employing one of $k$\~nearest neighbor, support vector machine or naive Bayes classifier. Package [SPCAvRP]{.pkg} [@SPCAvRPR] implements sparse principal component analysis, based on the aggregation of eigenvector information from "carefully-selected" axis-aligned random projections of the sample covariance matrix. Package [RPEnsembleR]{.pkg} [@RPEnsembleR] implements the same idea of "carefully-selected" random projections when building an ensemble of classifiers.
+For [Python]{.proglang} @Python the [sklearn.random_projection]{.pkg} module implements two types of unstructured random matrix, namely Gaussian random matrix and sparse random matrix.
 
 On the other hand, there are a multitude of packages dealing with variable screening on the Comprehensive [R]{.proglang} Archive Network (CRAN).
-
 The (iterative) sure independence screening procedure and extensions in @Fan2007SISforUHD, @Fan2010sisglms, @fan2010high are implemented in package [SIS]{.pkg} [@SISR], which also provides functionality for estimating a penalized generalized linear model or a cox regression model for the variables picked by the screening procedure.
 
 Package [VariableScreening]{.pkg} [@pkg:VariableScreening] implements screening for iid data, varying-coefficient models, and longitudinal data using different screening methods: Sure Independent Ranking and Screening -- which ranks the predictors by their correlation with the rank-ordered response (SIRS), Distance Correlation Sure Independence Screening -- a non-parametric extension of the correlation coefficient (DC-SIS), MV Sure Independence Screening -- using the mean conditional variance measure (MV-SIS).
@@ -223,7 +223,22 @@ Methods `print`, `plot`, `coef`, `predict` are available.
 
 ## Illustrations {#sec-illustrations}
 
-TODO: Show example with Darwin and Image Data?
+### Darwin data set
+
+The Darwin dataset [@CILIA2022darwin] contains a binary response for Alzheimer's disease (AD) together with extracted features from 25 handwriting tests (18 features per task) for 89 AD patients and 85 healthy people ($n=174$).
+
+```{r eval=FALSE}
+spar_darwin <- spar.cv(darwin$x, darwin$y,
+                       family = binomial(logit),
+                       nummods = c(5,10,20,50),
+                       type.measure = "1-auc")
+
+plot(spar_darwin)
+plot(spar_darwin, "coefs")
+```
+
+
+### Face image data
 
 ## Conclusion {#sec-conclusion}
 
