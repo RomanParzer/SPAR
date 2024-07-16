@@ -1139,8 +1139,26 @@ year = {2021}
 
 	journal = {Statistics and Computing}
 }
+@article{cho2012high,
+  title={High dimensional variable selection via tilting},
+  author={Cho, Haeran and Fryzlewicz, Piotr},
+  journal={Journal of the Royal Statistical Society Series B: Statistical Methodology},
+  volume={74},
+  number={3},
+  pages={593--622},
+  year={2012},
+  publisher={Oxford University Press}
+}
 
-
+@article{ma2016robust,
+  title={Robust model-free feature screening via quantile correlation},
+  author={Ma, Xuejun and Zhang, Jingxiao},
+  journal={Journal of Multivariate Analysis},
+  volume={143},
+  pages={472--480},
+  year={2016},
+  publisher={Elsevier}
+}
 @article{Wang2015HOLP,
 author = {Wang, Xiangyu and Leng, Chenlei},
 year = {2016},
@@ -2233,7 +2251,16 @@ URL = {https://doi.org/10.1214/17-AOS1538}
 	bdsk-url-1 = {https://doi.org/10.1080/07474938.2023.2280825}}
 
 %% Screening for GLMs
-
+@article{zhu2011model,
+  title={Model-free feature screening for ultrahigh-dimensional data},
+  author={Zhu, Li-Ping and Li, Lexin and Li, Runze and Zhu, Li-Xing},
+  journal={Journal of the American Statistical Association},
+  volume={106},
+  number={496},
+  pages={1464--1475},
+  year={2011},
+  publisher={Taylor \& Francis}
+}
 @article{Fan2010sisglms,
 	author = {Jianqing Fan and Rui Song},
 	doi = {10.1214/10-AOS798},
@@ -3772,6 +3799,16 @@ This paper proposes an algorithm for regression analysis that addresses these fe
  A real data application on car fuel consumption demonstrates its usefulness.}
 }
 
+@article{li2007nonlinear,
+  title={Nonlinear estimators and tail bounds for dimension reduction in {L}1 using {C}auchy random projections},
+  author={Li, Ping and Hastie, Trevor J and Church, Kenneth W},
+  journal={Journal of Machine Learning Research},
+  volume={8},
+  number={Oct},
+  pages={2497--2532},
+  year={2007}
+}
+
 @inproceedings{Clarkson2013LowRankApprox,
 author = {Clarkson, Kenneth L. and Woodruff, David P.},
 title = {Low Rank Approximation and Regression in Input Sparsity Time},
@@ -3779,7 +3816,6 @@ year = {2013},
 isbn = {9781450320290},
 publisher = {Association for Computing Machinery},
 address = {New York, NY, USA},
-url = {https://doi.org/10.1145/2488608.2488620},
 doi = {https://doi.org/10.1145/2488608.2488620},
   booktitle = {Proceedings of the Forty-Fifth Annual ACM Symposium on Theory of Computing},
   pages = {81–90},
@@ -3799,7 +3835,7 @@ doi = {https://doi.org/10.1145/2488608.2488620},
 
 @article{Fan2011UHDVarEst,
     author = {Fan, Jianqing and Guo, Shaojun and Hao, Ning},
-    title = {{Variance Estimation Using Refitted Cross-Validation in Ultrahigh Dimensional Regression}},
+    title = {Variance Estimation Using Refitted Cross-Validation in Ultrahigh Dimensional Regression},
     journal = {Journal of the Royal Statistical Society Series B: Statistical Methodology},
     volume = {74},
     number = {1},
@@ -4563,6 +4599,17 @@ url = {https://EconPapers.repec.org/RePEc:spr:spochp:978-1-4939-0742-7_8}
     url = {https://CRAN.R-project.org/package=RandPro},
   }
 
+@article{ailon2009fast,
+  title={The fast Johnson--Lindenstrauss transform and approximate nearest neighbors},
+  author={Ailon, Nir and Chazelle, Bernard},
+  journal={SIAM Journal on computing},
+  volume={39},
+  number={1},
+  pages={302--322},
+  year={2009},
+  publisher={SIAM}
+}
+
 @article{SIDDHARTH2020100629,
 	abstract = {The performance of the high dimensional multivariate data analysis is seriously affected by the curse of dimensionality. Feature extraction acts as an important pre-processing step in data analysis process to avoid the curse of dimensionality. Random projection method is the most underrated feature extraction technique that performs extremely well in the case of high dimensional data analysis. This technique is known for its characteristics like data independent projection, simpler computation and distance preserving property. The Johnson--Lindenstrauss lemma is the idea behind random projection method. It states that the small set of points in the high dimensional space can be embedded into smaller subspace and also approximately preserves the distance with higher probability. This article describes a practical implementation of random projection method in the popular statistical programming language R and it is compared with the other similar implementations. The software package for random projection method has been uploaded in Comprehensive R Archive Network(CRAN) repository as RandPro and the code has been distributed in github. The RandPro package is tested with different types of data including text, image and sensor data. The result shows that the RandPro package preserves the pairwise distance between the data points in the corresponding low dimensional space for further processing.},
 	author = {R. Siddharth and G. Aghila},
@@ -4633,7 +4680,26 @@ Regression},
     note = {\proglang{R}~package version 0.2.1},
     url = {https://CRAN.R-project.org/package=VariableScreening},
   }
-
+  @article{cui2015model,
+  title={Model-free feature screening for ultrahigh dimensional discriminant analysis},
+  author={Cui, Hengjian and Li, Runze and Zhong, Wei},
+  journal={Journal of the American Statistical Association},
+  volume={110},
+  number={510},
+  pages={630--641},
+  year={2015},
+  publisher={Taylor \& Francis}
+}
+@article{li2012feature,
+  title={Feature screening via distance correlation learning},
+  author={Li, Runze and Zhong, Wei and Zhu, Liping},
+  journal={Journal of the American Statistical Association},
+  volume={107},
+  number={499},
+  pages={1129--1139},
+  year={2012},
+  publisher={Taylor \& Francis}
+}
    @Manual{pkg:tilting,
     title = {tilting: Variable Selection via Tilted Correlation Screening Algorithm},
     author = {Haeran Cho and Piotr Fryzlewicz},
@@ -4721,4 +4787,11 @@ Estimation},
 }
 
 
+  @Manual{pkg:RaSEn,
+    title = {RaSEn: Random Subspace Ensemble Classification and Variable Screening},
+    author = {Ye Tian and Yang Feng},
+    year = {2021},
+    note = {R package version 3.0.0},
+    url = {https://CRAN.R-project.org/package=RaSEn},
+  }
 
