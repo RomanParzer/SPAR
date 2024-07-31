@@ -1,0 +1,412 @@
+---
+title: "[SPAR]{.pkg}: Sparse Projected Averaged Regression in [R]{.proglang}"
+format:
+    #jss-pdf:
+    #    keep-tex: true
+    jss-html: default
+author:
+  - name: Roman Parzer
+    affiliations:
+      - name: TU Wien
+        department: Computational Statistics (CSTAT) \ Institute of Statistics and Mathematical Methods in Economics
+        address: Karlsplatz 4
+        city: Vienna
+        country: Austria
+        postal-code: 1040
+    orcid: 
+    email: Roman.Parzers@tuwien.ac.at
+  - name: Peter Filzmoser
+    affiliations:
+      - TU Wien
+  - name: Laura Vana Gür
+    affiliations:
+      - TU Wien
+abstract: |
+  [SPAR]{.pkg} is a package for building predictive generalized linear models (GLMs) with high-dimensional (HD) predictors in [R]{.proglang}. In package [SPAR]{.pkg}, probabilistic variable screening and random projection of the predictors are performed to obtain an ensemble of GLMs, which are then averaged to obtain predictions in an high-dimensional regression setting.
+
+keywords: [random projection, variable screening, ensemble learning, R]
+keywords-formatted: [random projection, variable screening, ensemble learning, "[R]{.proglang}"]
+
+bibliography: SPAR.bib   
+---
+
+## Introduction {#sec-intro}
+
+[SPAR]{.pkg} is a package for building predictive generalized linear models (GLMs) with high-dimensional (HD) predictors in [R]{.proglang}. In package [SPAR]{.pkg}, probabilistic variable screening and random projection of the predictors are performed to obtain an ensemble of GLMs, which are then averaged to obtain predictions in an high-dimensional regression setting.
+
+Random projection is a computationally-efficient method which linearly maps a set of points in high dimensions into a much lower-dimensional space while approximately preserving pairwise distances. For very large $p$, random projection can suffer from overfitting, as too many irrelevant predictors are being considered for prediction purposes [@Dunson2020TargRandProj]. Therefore, screening out irrelevant variables before performing the random projection is advisable in order to tackle this issue. The screening can be performed in a probabilistic fashion, by randomly sampling covariates for inclusion in the model based on probabilities proportional to an importance measure (as opposed to random subspace sampling employed in e.g., random forests). Finally, in practice the information from multiple such screening and projections can be combined by averaging, in order to reduce the variance introduced by the random sampling (of both projections and screening indicators) [@Thanei2017RPforHDR].
+
+Several packages which provide functionality for random projections are available for [R]{.proglang}. Package [RandPro]{.pkg} [@RandProR; @SIDDHARTH2020100629] allows for four different random projection matrices to be applied to the predictor matrix before employing one of $k$\~nearest neighbor, support vector machine or naive Bayes classifier. Package [SPCAvRP]{.pkg} [@SPCAvRPR] implements sparse principal component analysis, based on the aggregation of eigenvector information from "carefully-selected" axis-aligned random projections of the sample covariance matrix. Package [RPEnsembleR]{.pkg} [@RPEnsembleR] implements the same idea of "carefully-selected" random projections when building an ensemble of classifiers.
+For [Python]{.proglang} @Python the [sklearn.random_projection]{.pkg} module implements two types of unstructured random matrix, namely Gaussian random matrix and sparse random matrix.
+
+On the other hand, there are a multitude of packages dealing with variable screening on the Comprehensive [R]{.proglang} Archive Network (CRAN).
+The (iterative) sure independence screening procedure and extensions in @Fan2007SISforUHD, @Fan2010sisglms, @fan2010high are implemented in package [SIS]{.pkg} [@SISR], which also provides functionality for estimating a penalized generalized linear model or a cox regression model for the variables picked by the screening procedure.
+
+Package [VariableScreening]{.pkg} [@pkg:VariableScreening] implements screening for iid data, varying-coefficient models, and longitudinal data using different screening methods: Sure Independent Ranking and Screening -- which ranks the predictors by their correlation with the rank-ordered response (SIRS), Distance Correlation Sure Independence Screening -- a non-parametric extension of the correlation coefficient (DC-SIS), MV Sure Independence Screening -- using the mean conditional variance measure (MV-SIS).
+
+A collection of model-free screening techniques such as SIRS, DC-SIS, MV-SIS, the fused Kolmogorov filter [@mai2015fusedkolmogorov], the projection correlation method using knock-off features [@liu2020knockoff], are provided in package [MFSIS]{.pkg} [@pkg:MFSIS]. Package [tilting]{.pkg} [@pkg:tilting] implements an algorithm for variable selection in high-dimensional linear regression using tilted correlation, which takes into account high correlations among the variables in a data-driven way. Feature screening based on conditional distance correlation [@wang2015conditional] can be performed with the [cdcsis]{.pkg} package [@pkg:cdcsis] while package [QCSIS]{.pkg} [@pkg:QCSIS] implements screening based on (composite) quantile correlation.
+
+Package [LqG]{.pkg} [@pkg:LqG] provides a group screening procedure that is based on maximum Lq-likelihood estimation, to simultaneously account for the group structure and data contamination in variable screening.
+
+Feature screening using an $L1$ fusion penalty can be performed with package [fusionclust]{.pkg} [@pkg:fusionclust]. Package [SMLE]{.pkg} [@pkg:SMLE] implements joint feature screening via sparse MLE [@SMLE2014] in high-dimensional linear, logistic, and Poisson models. Package [TSGSIS]{.pkg} [@pkg:TSGSIS] provides a high-dimensional grouped variable selection approach for detecting interactions that may not have marginal effects in high dimensional linear and logistic regression [@10.1093/bioinformatics/btx409].
+
+Package [RaSEn]{.pkg} [@pkg:RaSEn] implements the RaSE algorithm for ensemble classification and classification problems, where random subspaces are generated and the optimal one is chosen to train a weak learner on the basis of some criterion. Various choices of base classifiers are implemented, for instance, linear discriminant analysis, quadratic discriminant analysis, k-nearest neighbor, logistic or linear regression, decision trees, random forest, support vector machines. The selected percentages of variables can be employed for variable screening.
+
+Package [Ball]{.pkg} [@pkg:ball] provides functionality for variable screening using ball statistics, which is appropriate for shape, directional, compositional and symmetric positive definite matrix data.
+
+Package [BayesS5]{.pkg} [@pkg:BayesS5] implements Bayesian variable selection using simplified shotgun stochastic search algorithm with screening [@shin2017scalablebayesianvariableselection] while package [bravo]{.pkg} [@pkg:bravo] implements the Bayesian iterative screening method proposed in [@wang2021bayesianiterativescreeningultrahigh].
+
+The rest of the paper is organized as follows: @sec-models provides the methodological details of the implemented algorithm. The package is described in @sec-software. @sec-illustrations contains two examples of employing the package on real data sets. Finally, @sec-conclusion concludes.
+
+## Methods {#sec-models}
+
+### Variable screening
+
+The general idea of variable screening is to select a (small) subset of variables, based on some marginal utility measure for the predictors, and disregard the rest for further analysis.
+In their seminal work on sure independence screening (SIS), @Fan2007SISforUHD propose to use the vector of marginal empirical correlations 
+$\hat\alpha=(\alpha_1,\ldots ,\alpha_p)'\in\mathbb{R}^p,\alpha_j=\text{Cor}(X_{.j},y)$ for variable screening in a linear regression setting
+by selecting the variable set $\mathcal{A}_\gamma = \{j\in [p]:|w_j|>\gamma\}$ depending on a threshold $\gamma>0$, where $[p]=\{1,\dots,p\}$. 
+Under certain 
+technical conditions, where $p$ grows exponentially with $n$, they show that this procedure has the *sure screening property*
+$$
+\mathbb{P}(\mathcal{A} \subset \mathcal{A}_{\gamma_n})\to 1 \text{ for } n\to \infty
+$$
+with an explicit exponential rate of convergence, where $\mathcal{A}=\{j\in[p]:\beta_j\neq 0\}$ is the set of truly active variables. These conditions imply that 
+$\mathcal{A}$ and $\mathcal{A}_{\gamma_n}$
+contain less than $n$ variables. One of the critical conditions is that on the population level for some fixed $i\in[n]$,
+$\min_{j\in\mathcal{A}}|\text{Cov}(y_i/\beta_j,x_{ij})| \geq c$
+for some constant $c>0$, which rules out practically possible
+scenarios where an important variable is marginally uncorrelated to the response. 
+@Fan2010sisglms extend the approach to GLMs, where the screening
+is performed based on the log-likelihood of the GLM containing only $X_j$  as a predictor: $\hat\alpha_j=: \text{min}_{{\beta_j}\in\mathbb{R}}\sum_{i=1}^n -\ell(\beta;y_i,x_{ij})$.
+
+
+A rich stream of literature focuses on developing semi- or non-parametric alternatives to SIS which should be more robust to model misspecification. For linear regression, approaches include using the ranked correlation [@zhu2011model], (conditional) distance correlation [@li2012feature,@wang2015conditional]. or quantile correlation [@ma2016robust].
+For GLMs, @fan2011nonparametric extend @Fan2010sisglms by fitting a generalized additive model with B-splines. Further extensions for discrete (or categorical) outcomes include the fused Kolmogorov filter [@mai2013kolmogorov], using the mean conditional variance, i.e., the expectation in $X_j$ of the variance in the response of the conditional cumulative
+distribution function $\Prob(X\leq x|Y)$ [@cui2015model].
+@ke2023sufficient propose a model free method where the contribution of each individual predictor is quantified marginally and conditionally in the presence of the control variables as well as the other candidates by reproducing-kernel-based $R^2$ and partial 
+$R^2$ statistics.
+
+To account for multicollinearity among the predictors, which can cause relevant predictors to be marginally uncorrelated with the response, various extensions have been proposed. In a linear regression setting,  @Wang2015HOLP
+propose employing the ridge estimator when the penalty term converges to zero while @cho2012high propose using the tilted correlation, i.e., the correlation of a tilted version of $X_j$ with $y$. For discrete outcomes, joint feature screening @SMLE2014 has been proposed. 
+
+
+
+
+### Random projection
+
+The random projection method relies on the Johnson-Lindenstrauss (JL) lemma [@JohnsonLindenstrauss1984], which asserts that there exists a random map $\Phi\in \mathbb{R}^{m \times p}$ that embeds any set of points in $p$-dimensional Euclidean space collected in the rows of $X\in \mathbb{R}^{n\times p}$ into a $m$-dimensional Euclidean space with $m< \mathcal{O}(\log n/\varepsilon^2)$ so that all pairwise distances are maintained within a factor of $1 \pm \varepsilon$, for any $0 <\varepsilon< 1$.
+
+The random map $\Phi$ should be chosen such that it fulfills certain conditions [see @JohnsonLindenstrauss1984]. The literature focuses on constructing such matrices either by sampling them from some "appropriate" distribution, by inducing sparsity in the matrix and/or by employing specific fast constructs which lead to efficient matrix-vector multiplications.
+
+It turns out that the conditions are generally satisfied by
+nearly all sub-Gaussian distributions [@matouvsek2008variants]. Common choices are:
+
+-   Normal distribution.: $\Phi_{ij} \overset{iid}{\sim} N(0,1)$ [@FRANKL1988JLSphere] or $\Phi_{ij} = \begin{cases} {\sim} N(0,1/\sqrt{\psi}) & \text{with prob. } \psi \\ 0 & \text{with prob. } 1 - \psi \end{cases}$ [@matouvsek2008variants],
+
+-   Rademacher distribution [@ACHLIOPTAS2003JL; @LiHastie2006VerySparseRP] $$
+    \Phi_{ij} = \begin{cases}
+        \pm 1/\sqrt{\psi} & \text{with prob. } \psi/2 \\
+        0 & \text{with prob. } 1 - \psi, \quad 0<\psi\leq 1‚
+      \end{cases},
+    $$ 
+  where @ACHLIOPTAS2003JL shows results for $\psi=1$ and $\psi=1/3$ while @LiHastie2006VerySparseRP recommend using $\psi=1/\sqrt{p}$ to obtain very sparse matrices.
+
+Distributions which are not sub-Gaussian, such as standard Cauchy, have also been proposed in the literature to tackle 
+scenarios where the data is high-dimensional, non-sparse, and heavy-tailed by preserving approximate $\ell_1$ distances  [see e.g., @li2007nonlinear].
+
+An orthonormalization is usually applied  $(\Phi\Phi^\top)^{-1/2}\Phi$.
+Orthonormalization can constitute a computational bottleneck
+for the random projection method, however, in high-dimensions it can be omitted. 
+<!-- TODO: citation -->
+<!-- For the RH examples, taking $\psi$ too small gives high distortion of sparse vectors \citep{matouvsek2008variants}. Ailon-Chazelle 2006 get around this by using a randomized orthogonal (normalized Hadamard) matrix to ensure w.h.p all data vectors are dense. -->
+
+To speed computations, @ailon2009fast propose the fast Johnson- Lindenstrauss transform (FJLT), where the random projection matrix is given by $\Phi=PHD$ with $P$ random and sparse, $P_{ij} \sim N (0, 1/q)$ with probability $1/q$ and $0$ otherwise, $H$ the normalized Hadamard (orthogonal) matrix $H_{ij} = p^{-1/2}(-1)^{\langle i-1,j-1\rangle}$, where $\langle i, j\rangle$ is the dot-product of the $m$-bit vectors $i$, $j$ expressed in binary, and $D = \text{diag}(\pm 1)$ is a diagonal matrix with random elements $D_{ii}$.
+
+@Clarkson2013LowRankApproxShort propose a sparse embedding matrix ${\Phi=BD}$, where $B\in\{0,1\}^{m \times p}$ is random binary matrix and $D$ is a $p\times p$ diagonal matrix with $(D_{ii}+1)/2\sim \text{Unif}\{0,1\}$, and prove that the dimension $m$ is bounded by
+a polynomial in $r\varepsilon^{-1}$ for $0 <\varepsilon< 1$ and $r$ being the rank of $X$. While this is generally larger than that of FJLT, the sparse embedding matrix requires less time to compute $\Phi X$ compared to other subspace embeddings.
+
+@parzer2023sparse propose employing ${D_{ii}=\hat \alpha}$ in the sparse embedding matrix of @Clarkson2013LowRankApproxShort, $\hat \alpha$ is a screening coefficient in the regression such as the ridge or the HOLP coefficients, and show that the proposed projection increases the predictive performance in 
+a linear regression setting.
+
+
+<!-- see more info at https://www.cs.waikato.ac.nz/~bobd/ECML_Tutorial/ECML_handouts.pdf. -->
+
+<!-- See also https://web.math.princeton.edu/~amits/publications/LeanWalsh_published.pdf. -->
+
+<!-- https://arxiv.org/pdf/1710.03163.pdf -->
+
+<!-- https://cseweb.ucsd.edu/~dasgupta/papers/randomf.pdf -->
+
+<!-- https://people.math.ethz.ch/~nicolai/mv/notes6.pdf -->
+
+<!-- https://web.math.princeton.edu/~amits/publications/LeanWalsh_published.pdf -->
+
+<!-- https://pastel.hal.science/tel-01481912/document -->
+
+
+
+### Algorithm
+
+-   choose family with corresponding log-likelihood $\ell(.)$ and link
+
+-   standardize predictors $X:n\times p$
+
+-   calculate screening coefficients $\hat\alpha$ e.g.,
+
+    -   ridge: $\hat\alpha=: \text{argmin}_{{\beta}\in\mathbb{R}^p}\sum_{i=1}^n -\ell(\beta;y_i,x_i) + \frac{\varepsilon}{2}\sum_{j=1}^p{\beta}_j^2, \, \varepsilon > 0$
+    -   marginal likelihood: $\hat\alpha_j=: \text{min}_{{\beta_j}\in\mathbb{R}}\sum_{i=1}^n -\ell(\beta;y_i,x_{ij})$
+
+-   For $k=1,\dots,M$ models:
+
+    -   draw $2n$ predictors with probabilities $p_j\propto |\hat\alpha_j|$ yielding screening index set $I_k=\{j_1^k,\dots,j_{2n}^k\}\subset[p]$
+
+    -   project remaining variables to dim. $m_k\sim \text{Unif}\{\log(p),\dots,n/2\}$ using \textbf{projection matrix} $\Phi_k$ to obtain $Z_k=X_{\cdot I_k}\Phi_k^\top \in \mathbb{R}^{n\times m_k}$:
+
+    -   fit a \textbf{GLM} of $y$ against $Z_k$ (with small $L_2$-penalty \cite{glmnet2023}) to obtain estimated coefficients $\gamma^k\in\mathbb{R}^{m_k}$ and $\hat \beta_{I_k}^k=\Phi_k'\gamma^k$, $\hat \beta_{\bar I_k}^k=0$.
+
+-   for a given threshold $\lambda>0$, set all $\hat\beta_j^k$ with $|\hat\beta_j^k|<\lambda$ to $0$ for all $j,k$
+
+-   \textit{Optional:} choose $M$ and $\lambda$ via cross-validation by repeating steps 1 to 4 for each fold and evaluating a prediction performance measure on the withheld fold; and choose \begin{align}
+         (M_{\text{best}},\lambda_{\text{best}}) = \text{argmin}_{M,\lambda}\text{Dev}(M,\lambda)
+       \end{align}
+
+-   combine via **simple average** $\hat \beta = \sum_{k=1}^M\hat \beta^k / M$
+
+-   \item
+
+    output the estimated coefficients and predictions for the chosen $M$ and $\lambda$
+
+## Software {#sec-software}
+
+The two main functions are:
+
+```{r eval=FALSE}
+spar(x, y, family = gaussian(), ...)
+```
+
+and
+
+```{r eval=FALSE}
+spar.cv(x, y, family = gaussian(), nfolds = 10L, ...)
+```
+
+Most important arguments:
+
+-   `x` $n \times p$ numeric matrix of predictor variables.
+
+-   `y` numeric response vector of length $n$.
+
+-   `family` object from [stats::family]{.fct}.
+
+-   `type.rpm` type of random projection matrix to be employed; one of `"cwdatadriven"`, `"cw"` @Clarkson2013LowRankApproxShort, `"gaussian"`, `"sparse"`.
+
+-   `nscreen` max number of variables kept after screening in each marginal model; defaults to $2n$.
+
+-   `type.screening` measure by which the coefficients are screened; `"ridge"` performs screening based on ridge regression, `"marglik"` marginal likelihood of fitting a GLM for each predictor, `"corr"` correlation of the response with each predictor.
+
+-   `type.measure` loss to use for choosing $\lambda$ and $M$; defaults to `"deviance"` (available for all families). Other options are `"mse"` or `"mae"` (for all families), `"class"` and `"1-auc"` for `"binomial"`.
+
+-   `nlambda` number of $\lambda$ values to be considered for thresholding and optionally `lambdas`, a vector of values.
+
+-   `nummods` vector containing the size of the different ensembles $M$ to consider for the prediction.
+
+Methods `print`, `plot`, `coef`, `predict` are available.
+
+| Name           | Random projection method |
+|---------|---------|
+| `gaussian`            | Standard Gaussian      |  
+| `sparse`              | Rademacher      |  
+| `cw`                  | sparse embedding matrix      |  
+| `cwdatadriven`        | data driven sparse embedding matrix |
+: Overview of implemented random projection matrices. {#tbl-overviewrp}
+
+
+## Illustrations {#sec-illustrations}
+
+
+
+### Face image data
+
+We illustrate the package on a data set containing $n = 698$
+black and white face images of size $p = 64 \times 64 = 4096$ and the 
+faces' horizontal looking direction angle as the response variable.
+The Isomap face data can be found online on https://web.archive.org/web/20160913051505/http://isomap.
+stanford.edu/datasets.html
+
+```{r}
+library("R.matlab")
+temp <- tempdir()
+download.file("https://web.archive.org/web/20150922051706/http://isomap.stanford.edu/face_data.mat.Z", file.path(temp, "face_data.mat.Z"))
+system(sprintf('uncompress %s', paste0(temp, "/face_data.mat.Z")))
+facedata <- readMat(file.path(temp, "face_data.mat"))
+
+x <- t(facedata$images)
+y <- facedata$poses[1,]
+```
+We can visualize e.g., the first observation in this data set by:
+```{r}
+library(ggplot2)
+i <- 1
+ggplot(data.frame(X = rep(1:64,each=64),Y = rep(64:1,64),
+                  Z = facedata$images[,i]),
+       aes(X, Y, fill = Z)) +
+  geom_tile() +
+  theme_void() +
+  ggtitle(paste0("y = ",round(facedata$poses[1,i],1))) +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5))
+```
+
+We can split the data into training vs test sample:
+```{r}
+set.seed(1234)
+ntot <- length(y)
+ntest <- ntot * 0.25
+testind <- sample(1:ntot, ntest, replace=FALSE)
+xtrain <- as.matrix(x[-testind, ])
+ytrain <- y[-testind]
+xtest <- as.matrix(x[testind, ])
+ytest <- y[testind]
+```
+
+We can now estimate the model on the training data:
+```{r}
+library(SPAR)
+spar_faces <- spar.cv(xtrain, ytrain,
+                      family = gaussian(),
+                      nummods = c(5, 10, 20, 50),
+                      type.measure = "mse")
+spar_faces
+```
+
+The `plot` method for '`spar.cv`' objects displays by default the measure 
+employed in the cross validation (in this case MSE) for a grid of $\lambda$
+values, where the number of models is fixed to the value found to perform 
+best in cross-validation exercise:
+```{r eval=TRUE}
+plot(spar_faces)
+```
+The coefficients of the different variables (in this example pixels) obtained by averaging over the coefficients the marginal models (for optimal $\lambda$ and number of models) are given by:
+```{r}
+face_coef <- coef(spar_faces, opt_par = "best")
+str(face_coef)
+```
+
+The coefficients from each of the marginal models (before averaging) 
+can be plotted using the `plot(..., plot_type = "coefs")`
+```{r}
+plot(spar_faces, "coefs")
+```
+
+The `predict()` function can be applied to the '`spar.cv`' object:
+```{r}
+ynew <- predict(spar_faces, xnew = xtest)
+```
+In the high-dimensional setting it is interesting to look at the relative mean 
+square prediction error which compares the MSE to the MSE of a model containing only an intercept:
+```{r}
+rMSPEconst <- mean((ytest - mean(y))^2) 
+mean((ynew-ytest)^2)/rMSPEconst
+```
+
+Additionally, for this data set, one can visualize the effect of each pixel 
+$\hat\beta_j x^\text{new}_{i,j}$ in predicting the face orientation in a given image e.g., 9th in the test set:
+```{r}
+i <- 9
+plot4 <- ggplot(data.frame(X = rep(1:64, each = 64),
+                           Y = rep(64:1, 64),
+                           effect = xtest[i,] * face_coef$beta), 
+                aes(X, Y, fill= effect)) +
+  geom_tile() +
+  theme_void() +
+  scale_fill_gradient2() +
+  ggtitle(bquote(hat(y) == .(round(ynew[i])))) +
+  theme(plot.title = element_text(hjust = 0.5)) 
+plot4
+```
+
+### Darwin data set
+
+The Darwin dataset [@CILIA2022darwin] contains a binary response for Alzheimer's disease (AD) together with extracted features from 25 handwriting tests (18 features per task) for 89 AD patients and 85 healthy people ($n=174$).
+
+The data set can be downloaded from  https://archive.ics.uci.edu/dataset/732/darwin:
+
+```{r}
+temp <- tempfile()
+download.file("https://archive.ics.uci.edu/static/public/732/darwin.zip", temp)
+darwin_tmp <- read.csv(unzip(temp,  "data.csv"), stringsAsFactors = TRUE)
+```
+
+Before proceeding with the analysis, the data is screened for multivariate outliers
+using the DDC algorithm in package [cellWise]{.pkg}.
+
+
+```{r}
+darwin_orig <- list(
+  x = as.matrix(darwin_tmp[, !(colnames(darwin_tmp) %in% c("ID", "class"))]),
+  y = as.numeric(darwin_tmp$class) - 1)
+
+tmp <- cellWise::DDC(darwin_orig$x,
+                     list(returnBigXimp = TRUE, 
+                          tolProb = 0.999,
+                          silent = TRUE))
+darwin <- list(x = tmp$Ximp,
+               y = darwin_orig$y)
+
+```
+
+We estimate the spar model with binomial family and logit link and 
+use $1-$area under the ROC curve as the cross-validation measure:
+```{r}
+spar_darwin <- spar.cv(darwin$x, darwin$y,
+                       family = binomial(logit),
+                       nummods = c(5, 10, 20, 50),
+                       type.measure = "1-auc")
+
+```
+The `plot` method for '`spar.cv`' objects displays by default the measure 
+employed in the cross validation (in this case MSE) for a grid of $\lambda$
+values, where the number of models is fixed to the value found to perform 
+best in cross-validation exercise:
+```{r eval=TRUE}
+plot(spar_darwin)
+```
+
+The plot of the coefficients can be interpreted nicely in this example:
+
+```{r eval=TRUE}
+ntasks <- 25
+nfeat <- 18
+reorder_ind <- c(outer((seq_len(ntasks) - 1) * nfeat, seq_len(nfeat), "+"))
+feat_names <- sapply(colnames(darwin$x)[seq_len(nfeat)],
+                     function(name) substr(name, 1, nchar(name) - 1))
+
+plot(spar_darwin,"coefs",coef_order = reorder_ind) + 
+  geom_vline(xintercept = 0.5 + seq_len(ntasks - 1) * ntasks, 
+             alpha = 0.2, linetype = 2) +
+  annotate("text",x = (seq_len(nfeat) - 1) * ntasks + 12,
+           y = 45,label=feat_names, angle = 90,
+           size = 3)
+```
+
+In general we observe that the different features measures across different tasks
+have the same impact on the probability of AD (observable by the blocks of blue or
+red lines).
+
+## Conclusion {#sec-conclusion}
+
+Package [SPAR]{.pkg} provides an implementation for estimating an ensemble of GLMs after performing probabilistic screening and random projection in a high-dimensional setting.
+
+## Computational details {.unnumbered .unlisted}
+
+The results in this paper were obtained using [R]{.proglang} `r paste(R.Version()[6:7], collapse = ".")`. <!-- with the \pkg{MASS}~\Sexpr{packageVersion("MASS")} package. -->
+
+[R]{.proglang} itself and all packages used are available from the Comprehensive [R]{.proglang} Archive Network (CRAN) at \url{https://CRAN.R-project.org/}.
+
+## Acknowledgments {.unnumbered .unlisted}
+
+Roman Parzer and Laura Vana-Gür acknowledge funding from the Austrian Science Fund (FWF) for the project "High-dimensional statistical learning: New methods to advance economic and sustainability policies" (ZK 35), jointly carried out by WU Vienna University of Economics and Business, Paris Lodron University Salzburg, TU Wien, and the Austrian Institute of Economic Research (WIFO).
+
+## References {.unnumbered .unlisted}
+
