@@ -22,7 +22,7 @@ author:
     affiliations:
       - TU Wien
 abstract: |
-  TODO
+  [SPAR]{.pkg} is a package for building predictive generalized linear models (GLMs) with high-dimensional (HD) predictors in [R]{.proglang}. In package [SPAR]{.pkg}, probabilistic variable screening and random projection of the predictors are performed to obtain an ensemble of GLMs, which are then averaged to obtain predictions in an high-dimensional regression setting.
 
 keywords: [random projection, variable screening, ensemble learning, R]
 keywords-formatted: [random projection, variable screening, ensemble learning, "[R]{.proglang}"]
@@ -223,26 +223,179 @@ Methods `print`, `plot`, `coef`, `predict` are available.
 
 ## Illustrations {#sec-illustrations}
 
-### Darwin data set
-
-The Darwin dataset [@CILIA2022darwin] contains a binary response for Alzheimer's disease (AD) together with extracted features from 25 handwriting tests (18 features per task) for 89 AD patients and 85 healthy people ($n=174$).
-
-```{r eval=FALSE}
-spar_darwin <- spar.cv(darwin$x, darwin$y,
-                       family = binomial(logit),
-                       nummods = c(5,10,20,50),
-                       type.measure = "1-auc")
-
-plot(spar_darwin)
-plot(spar_darwin, "coefs")
-```
 
 
 ### Face image data
 
+We illustrate the package on a data set containing $n = 698$
+black and white face images of size $p = 64 \times 64 = 4096$ and the 
+faces' horizontal looking direction angle as the response variable.
+The Isomap face data can be found online on https://web.archive.org/web/20160913051505/http://isomap.
+stanford.edu/datasets.html
+
+```{r}
+library("R.matlab")
+temp <- tempdir()
+download.file("https://web.archive.org/web/20150922051706/http://isomap.stanford.edu/face_data.mat.Z", file.path(temp, "face_data.mat.Z"))
+system(sprintf('uncompress %s', paste0(temp, "/face_data.mat.Z")))
+facedata <- readMat(file.path(temp, "face_data.mat"))
+
+x <- t(facedata$images)
+y <- facedata$poses[1,]
+```
+We can visualize e.g., the first observation in this data set by:
+```{r}
+library(ggplot2)
+i <- 1
+ggplot(data.frame(X = rep(1:64,each=64),Y = rep(64:1,64),
+                  Z = facedata$images[,i]),
+       aes(X, Y, fill = Z)) +
+  geom_tile() +
+  theme_void() +
+  ggtitle(paste0("y = ",round(facedata$poses[1,i],1))) +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5))
+```
+
+We can split the data into training vs test sample:
+```{r}
+set.seed(1234)
+ntot <- length(y)
+ntest <- ntot * 0.25
+testind <- sample(1:ntot, ntest, replace=FALSE)
+xtrain <- as.matrix(x[-testind, ])
+ytrain <- y[-testind]
+xtest <- as.matrix(x[testind, ])
+ytest <- y[testind]
+```
+
+We can now estimate the model on the training data:
+```{r}
+library(SPAR)
+spar_faces <- spar.cv(xtrain, ytrain,
+                      family = gaussian(),
+                      nummods = c(5, 10, 20, 50),
+                      type.measure = "mse")
+spar_faces
+```
+
+The `plot` method for '`spar.cv`' objects displays by default the measure 
+employed in the cross validation (in this case MSE) for a grid of $\lambda$
+values, where the number of models is fixed to the value found to perform 
+best in cross-validation exercise:
+```{r eval=TRUE}
+plot(spar_faces)
+```
+The coefficients of the different variables (in this example pixels) obtained by averaging over the coefficients the marginal models (for optimal $\lambda$ and number of models) are given by:
+```{r}
+face_coef <- coef(spar_faces, opt_par = "best")
+str(face_coef)
+```
+
+The coefficients from each of the marginal models (before averaging) 
+can be plotted using the `plot(..., plot_type = "coefs")`
+```{r}
+plot(spar_faces, "coefs")
+```
+
+The `predict()` function can be applied to the '`spar.cv`' object:
+```{r}
+ynew <- predict(spar_faces, xnew = xtest)
+```
+In the high-dimensional setting it is interesting to look at the relative mean 
+square prediction error which compares the MSE to the MSE of a model containing only an intercept:
+```{r}
+rMSPEconst <- mean((ytest - mean(y))^2) 
+mean((ynew-ytest)^2)/rMSPEconst
+```
+
+Additionally, for this data set, one can visualize the effect of each pixel 
+$\hat\beta_j x^\text{new}_{i,j}$ in predicting the face orientation in a given image e.g., 9th in the test set:
+```{r}
+i <- 9
+plot4 <- ggplot(data.frame(X = rep(1:64, each = 64),
+                           Y = rep(64:1, 64),
+                           effect = xtest[i,] * face_coef$beta), 
+                aes(X, Y, fill= effect)) +
+  geom_tile() +
+  theme_void() +
+  scale_fill_gradient2() +
+  ggtitle(bquote(hat(y) == .(round(ynew[i])))) +
+  theme(plot.title = element_text(hjust = 0.5)) 
+plot4
+```
+
+### Darwin data set
+
+The Darwin dataset [@CILIA2022darwin] contains a binary response for Alzheimer's disease (AD) together with extracted features from 25 handwriting tests (18 features per task) for 89 AD patients and 85 healthy people ($n=174$).
+
+The data set can be downloaded from  https://archive.ics.uci.edu/dataset/732/darwin:
+
+```{r}
+temp <- tempfile()
+download.file("https://archive.ics.uci.edu/static/public/732/darwin.zip", temp)
+darwin_tmp <- read.csv(unzip(temp,  "data.csv"), stringsAsFactors = TRUE)
+```
+
+Before proceeding with the analysis, the data is screened for multivariate outliers
+using the DDC algorithm in package [cellWise]{.pkg}.
+
+
+```{r}
+darwin_orig <- list(
+  x = as.matrix(darwin_tmp[, !(colnames(darwin_tmp) %in% c("ID", "class"))]),
+  y = as.numeric(darwin_tmp$class) - 1)
+
+tmp <- cellWise::DDC(darwin_orig$x,
+                     list(returnBigXimp = TRUE, 
+                          tolProb = 0.999,
+                          silent = TRUE))
+darwin <- list(x = tmp$Ximp,
+               y = darwin_orig$y)
+
+```
+
+We estimate the spar model with binomial family and logit link and 
+use $1-$area under the ROC curve as the cross-validation measure:
+```{r}
+spar_darwin <- spar.cv(darwin$x, darwin$y,
+                       family = binomial(logit),
+                       nummods = c(5, 10, 20, 50),
+                       type.measure = "1-auc")
+
+```
+The `plot` method for '`spar.cv`' objects displays by default the measure 
+employed in the cross validation (in this case MSE) for a grid of $\lambda$
+values, where the number of models is fixed to the value found to perform 
+best in cross-validation exercise:
+```{r eval=TRUE}
+plot(spar_darwin)
+```
+
+The plot of the coefficients can be interpreted nicely in this example:
+
+```{r eval=TRUE}
+ntasks <- 25
+nfeat <- 18
+reorder_ind <- c(outer((seq_len(ntasks) - 1) * nfeat, seq_len(nfeat), "+"))
+feat_names <- sapply(colnames(darwin$x)[seq_len(nfeat)],
+                     function(name) substr(name, 1, nchar(name) - 1))
+
+plot(spar_darwin,"coefs",coef_order = reorder_ind) + 
+  geom_vline(xintercept = 0.5 + seq_len(ntasks - 1) * ntasks, 
+             alpha = 0.2, linetype = 2) +
+  annotate("text",x = (seq_len(nfeat) - 1) * ntasks + 12,
+           y = 45,label=feat_names, angle = 90,
+           size = 3)
+```
+
+In general we observe that the different features measures across different tasks
+have the same impact on the probability of AD (observable by the blocks of blue or
+red lines).
+
 ## Conclusion {#sec-conclusion}
 
-Package [SPAR]{.pkg} provides an implementation for estimating an ensemble of GLMs after performing probabilistic and random projection in a high-dimensional setting.
+Package [SPAR]{.pkg} provides an implementation for estimating an ensemble of GLMs after performing probabilistic screening and random projection in a high-dimensional setting.
 
 ## Computational details {.unnumbered .unlisted}
 
