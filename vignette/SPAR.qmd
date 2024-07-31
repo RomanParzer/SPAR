@@ -88,7 +88,7 @@ distribution function $\Prob(X\leq x|Y)$ [@cui2015model].
 $R^2$ statistics.
 
 To account for multicollinearity among the predictors, which can cause relevant predictors to be marginally uncorrelated with the response, various extensions have been proposed. In a linear regression setting,  @Wang2015HOLP
-propose employing the ridge estimator when the penalty term converges to zero while @cho2012high propose using the tilted correlation, i.e., the correlation of a tilted version of $X_j$ with $y$. For discrete outcomes, joint feature screening @SMLE2014 has been proposed. TODO
+propose employing the ridge estimator when the penalty term converges to zero while @cho2012high propose using the tilted correlation, i.e., the correlation of a tilted version of $X_j$ with $y$. For discrete outcomes, joint feature screening @SMLE2014 has been proposed. 
 
 
 
@@ -117,7 +117,8 @@ scenarios where the data is high-dimensional, non-sparse, and heavy-tailed by pr
 
 An orthonormalization is usually applied  $(\Phi\Phi^\top)^{-1/2}\Phi$.
 Orthonormalization can constitute a computational bottleneck
-for the random projection method, however, in high-dimensions it can be omitted. TODO: citation
+for the random projection method, however, in high-dimensions it can be omitted. 
+<!-- TODO: citation -->
 <!-- For the RH examples, taking $\psi$ too small gives high distortion of sparse vectors \citep{matouvsek2008variants}. Ailon-Chazelle 2006 get around this by using a randomized orthogonal (normalized Hadamard) matrix to ensure w.h.p all data vectors are dense. -->
 
 To speed computations, @ailon2009fast propose the fast Johnson- Lindenstrauss transform (FJLT), where the random projection matrix is given by $\Phi=PHD$ with $P$ random and sparse, $P_{ij} \sim N (0, 1/q)$ with probability $1/q$ and $0$ otherwise, $H$ the normalized Hadamard (orthogonal) matrix $H_{ij} = p^{-1/2}(-1)^{\langle i-1,j-1\rangle}$, where $\langle i, j\rangle$ is the dot-product of the $m$-bit vectors $i$, $j$ expressed in binary, and $D = \text{diag}(\pm 1)$ is a diagonal matrix with random elements $D_{ii}$.
