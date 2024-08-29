@@ -1,11 +1,11 @@
 Type: Package
 Package: SPAR
 Title: Sparse Projected Averaged Regression
-Version: 3.0.0
-Author: Roman Parzer
+Version: 3.1.0
+Author: Roman Parzer and Laura Vana-Guer
 Maintainer: Roman Parzer <romanparzer1@gmail.com>
 Description: Apply Sparse Projected Averaged Regression to
-    High-dimensional Data (see Parzer, Vana-Guer and Filzmoser 2023).
+    High-dimensional Data (see Parzer, Filzmoser, and Vana-Guer 2024).
 License: GPL-3
 Imports: 
     dplyr,
