@@ -131,7 +131,7 @@ spar <- function(x,
 
   scr_coef <- switch(type.screening,
                      "ridge" = screening_ridge_lambda0(z[scr_inds,], yz = yz[scr_inds, ],
-                                                       family = fit_family),
+                                                       family = family),
                      "marglik" = screening_marglik(z[scr_inds,], yz = yz[scr_inds, ],
                                                    family = family),
                      "corr" = screening_corr(z[scr_inds,], yz = yz[scr_inds, ],
