@@ -1,7 +1,7 @@
 Type: Package
 Package: SPAR
 Title: Sparse Projected Averaged Regression
-Version: 3.1.0
+Version: 3.1.1
 Author: Roman Parzer and Laura Vana-Guer
 Maintainer: Roman Parzer <romanparzer1@gmail.com>
 Description: Apply Sparse Projected Averaged Regression to
