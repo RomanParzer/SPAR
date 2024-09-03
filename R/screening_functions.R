@@ -4,7 +4,7 @@ screening_ridge_lambda0 <- function(z, yz, family) {
   z2 <- scale(z,center=colMeans(z),scale=apply(z,2,function(col)sqrt(var(col)*(n-1)/n)))
   lam_max <- 1000 * max(abs(t(yz)%*%z2))/n*family$mu.eta(family$linkfun(mean(yz)))/family$variance(mean(yz))
 
-  glmnet_res <- glmnet::glmnet(x=z, y=yz, family = family, alpha=0,lambda.min.ratio = 1e-7/n / lam_max)
+  glmnet_res <- glmnet::glmnet(x=z, y=yz, family = family, alpha=0,lambda.min.ratio = min(0.01,1e-7/n / lam_max))
   lam <- min(glmnet_res$lambda)
   scr_coef <- coef(glmnet_res,s=lam)[-1]
 
