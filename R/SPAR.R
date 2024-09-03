@@ -246,7 +246,7 @@ spar <- function(x,
 
   if (is.null(lambdas)) {
     if (nlambda>1) {
-      lambdas <- c(0,exp(quantile(log(abs(betas_std@x)),probs=1:(nlambda-1)/(nlambda-1))))
+      lambdas <- c(0,quantile(abs(betas_std@x),probs=1:(nlambda-1)/(nlambda-1)))
     } else {
       lambdas <- c(0)
     }
