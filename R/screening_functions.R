@@ -1,8 +1,9 @@
 screening_ridge_lambda0 <- function(z, yz, family) {
   n <- NROW(z)
   p <- NCOL(z)
-  z2 <- scale(z,center=colMeans(z),scale=apply(z,2,function(col)sqrt(var(col)*(n-1)/n)))
-  lam_max <- 1000 * max(abs(t(yz)%*%z2))/n*family$mu.eta(family$linkfun(mean(yz)))/family$variance(mean(yz))
+  tmp_sc <- apply(z,2,function(col)sqrt(var(col)*(n-1)/n))
+  z2 <- scale(z,center=colMeans(z),scale=tmp_sc)
+  lam_max <- 1000 * max(abs(t(yz)%*%z2[,tmp_sc>0]))/n*family$mu.eta(family$linkfun(mean(yz)))/family$variance(mean(yz))
 
   glmnet_res <- glmnet::glmnet(x=z, y=yz, family = family, alpha=0,lambda.min.ratio = min(0.01,1e-7/n / lam_max))
   lam <- min(glmnet_res$lambda)
