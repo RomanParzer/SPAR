@@ -25,7 +25,7 @@ spar.cv(
 
 \item{y}{quantitative response vector of length n.}
 
-\item{family}{'family'-objected used for glm (except the quasi), default gaussian("identity").}
+\item{family}{'family'-objected used for glm, default gaussian("identity").}
 
 \item{nfolds}{number of folds to use for cross-validation >2, defaults to 10.}
 
@@ -51,7 +51,7 @@ split_data logical to indicate whether data for calculation of scr_coef and fitt
 object of class "spar" with elements
 \itemize{
 \item betas p x max(nummods) matrix of standardized coefficients from each marginal model
-\item scr_coef p-vector of HOLP coefficient used for screening
+\item scr_coef p-vector of coefficients used for screening for standardized predictors
 \item inds list of index-vectors corresponding to variables kept after screening in each marginal model of length max(nummods)
 \item RPMs list of sparse CW projection matrices used in each marginal model of length max(nummods)
 \item val_sum data.frame with CV results (mean and sd validation measure and mean number of active variables) for each element of lambdas and nummods
