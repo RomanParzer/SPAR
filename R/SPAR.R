@@ -491,7 +491,8 @@ plot.spar <- function(spar_res,
       res <- ggplot2::ggplot(data = tmp_df,ggplot2::aes(x=nlam,y=Meas)) +
         ggplot2::geom_point() +
         ggplot2::geom_line() +
-        ggplot2::scale_x_continuous(breaks=seq(1,nrow(spar_res$val_res),1),labels=round(spar_res$val_res$lam,3)) +
+        # ggplot2::scale_x_continuous(breaks=seq(1,nrow(spar_res$val_res),1),labels=round(spar_res$val_res$lam,3)) +
+        ggplot2::scale_x_continuous(breaks=seq(1,nrow(spar_res$val_res),2),labels=formatC(spar_res$val_res$lam[seq(1,nrow(spar_res$val_res),2)], format = "e", digits = 1)) +
         ggplot2::labs(x=expression(lambda),y=spar_res$type.measure) +
         ggplot2::geom_point(data=data.frame(x=tmp_df$nlam[ind_min],y=tmp_df$Meas[ind_min]),ggplot2::aes(x=x,y=y),col="red") +
         ggplot2::ggtitle(paste0(tmp_title,mynummod))
@@ -526,7 +527,8 @@ plot.spar <- function(spar_res,
       res <- ggplot2::ggplot(data = tmp_df,ggplot2::aes(x=nlam,y=numAct)) +
         ggplot2::geom_point() +
         ggplot2::geom_line() +
-        ggplot2::scale_x_continuous(breaks=seq(1,nrow(spar_res$val_res),1),labels=round(spar_res$val_res$lam,3)) +
+        # ggplot2::scale_x_continuous(breaks=seq(1,nrow(spar_res$val_res),1),labels=round(spar_res$val_res$lam,3)) +
+        ggplot2::scale_x_continuous(breaks=seq(1,nrow(spar_res$val_res),2),labels=formatC(spar_res$val_res$lam[seq(1,nrow(spar_res$val_res),2)], format = "e", digits = 1)) +
         ggplot2::labs(x=expression(lambda)) +
         ggplot2::geom_point(data=data.frame(x=tmp_df$nlam[ind_min],y=tmp_df$numAct[ind_min]),ggplot2::aes(x=x,y=y),col="red")+
         ggplot2::ggtitle(paste0(tmp_title,mynummod))
@@ -585,9 +587,8 @@ plot.spar <- function(spar_res,
 print.spar <- function(spar_res) {
   mycoef <- coef(spar_res)
   beta <- mycoef$beta
-  cat(sprintf("SPAR object:\nSmallest Validation Measure reached for nummod=%d, lambda=%.3f leading to %d / %d active predictors.\n",mycoef$nummod,mycoef$lambda,sum(beta!=0),length(beta)))
+  cat(sprintf("SPAR object:\nSmallest Validation Measure reached for nummod=%d, lambda=%s leading to %d / %d active predictors.\n",
+              mycoef$nummod,formatC(mycoef$lambda,digits = 2,format = "e"),sum(beta!=0),length(beta)))
   cat("Summary of those non-zero coefficients:\n")
   print(summary(beta[beta!=0]))
 }
-
-

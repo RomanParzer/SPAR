@@ -305,7 +305,8 @@ plot.spar.cv <- function(spar_res,
       res <- ggplot2::ggplot(data = tmp_df,ggplot2::aes(x=nlam,y=Meas)) +
         ggplot2::geom_point() +
         ggplot2::geom_line() +
-        ggplot2::scale_x_continuous(breaks=seq(1,nrow(my_val_sum),1),labels=round(my_val_sum$lam,3)) +
+        # ggplot2::scale_x_continuous(breaks=seq(1,nrow(my_val_sum),1),labels=round(my_val_sum$lam,3)) +
+        ggplot2::scale_x_continuous(breaks=seq(1,nrow(my_val_sum),2),labels=formatC(my_val_sum$lam[seq(1,nrow(my_val_sum),2)], format = "e", digits = 1)) +
         ggplot2::labs(x=expression(lambda),y=spar_res$type.measure) +
         ggplot2::geom_point(data=data.frame(x=tmp_df$nlam[ind_min],y=tmp_df$Meas[ind_min]),ggplot2::aes(x=x,y=y),col="red") +
         ggplot2::ggtitle(paste0(tmp_title,mynummod)) +
@@ -362,7 +363,8 @@ plot.spar.cv <- function(spar_res,
       res <- ggplot2::ggplot(data = tmp_df,ggplot2::aes(x=nlam,y=numAct)) +
         ggplot2::geom_point() +
         ggplot2::geom_line() +
-        ggplot2::scale_x_continuous(breaks=seq(1,nrow(my_val_sum),1),labels=round(my_val_sum$lam,3)) +
+        # ggplot2::scale_x_continuous(breaks=seq(1,nrow(my_val_sum),1),labels=round(my_val_sum$lam,3)) +
+        ggplot2::scale_x_continuous(breaks=seq(1,nrow(my_val_sum),2),labels=formatC(my_val_sum$lam[seq(1,nrow(my_val_sum),2)], format = "e", digits = 1)) +
         ggplot2::labs(x=expression(lambda)) +
         ggplot2::geom_point(ggplot2::aes(x = x, y = y),
                             color=2,show.legend = FALSE,
@@ -433,14 +435,13 @@ plot.spar.cv <- function(spar_res,
 print.spar.cv <- function(spar_res) {
   mycoef_best <- coef(spar_res,opt_par = "best")
   mycoef_1se <- coef(spar_res,opt_par = "1se")
-  cat(sprintf("SPAR.cv object:\nSmallest CV-Meas %.1f reached for nummod=%d, lambda=%.3f leading to %d / %d active predictors.\n",
-              min(spar_res$val_sum$mMeas),mycoef_best$nummod,mycoef_best$lambda,sum(mycoef_best$beta!=0),length(mycoef_best$beta)))
+  cat(sprintf("SPAR.cv object:\nSmallest CV-Meas %.1f reached for nummod=%d, lambda=%s leading to %d / %d active predictors.\n",
+              min(spar_res$val_sum$mMeas),mycoef_best$nummod,formatC(mycoef_best$lambda,digits = 2,format = "e"),sum(mycoef_best$beta!=0),length(mycoef_best$beta)))
   cat("Summary of those non-zero coefficients:\n")
   print(summary(mycoef_best$beta[mycoef_best$beta!=0]))
-  cat(sprintf("\nSparsest coefficient within one standard error of best CV-Meas reached for nummod=%d, lambda=%.3f \nleading to %d / %d active predictors with CV-Meas %.1f.\n",
-              mycoef_1se$nummod,mycoef_1se$lambda,sum(mycoef_1se$beta!=0),length(mycoef_1se$beta),
+  cat(sprintf("\nSparsest coefficient within one standard error of best CV-Meas reached for nummod=%d, lambda=%s \nleading to %d / %d active predictors with CV-Meas %.1f.\n",
+              mycoef_1se$nummod,formatC(mycoef_1se$lambda,digits = 2,format = "e"),sum(mycoef_1se$beta!=0),length(mycoef_1se$beta),
               spar_res$val_sum$mMeas[spar_res$val_sum$nummod==mycoef_1se$nummod & spar_res$val_sum$lam==mycoef_1se$lambda]))
   cat("Summary of those non-zero coefficients:\n")
   print(summary(mycoef_1se$beta[mycoef_1se$beta!=0]))
 }
-
