@@ -1,8 +1,8 @@
 ---
 title: "[SPAR]{.pkg}: Sparse Projected Averaged Regression in [R]{.proglang}"
 format:
-    #jss-pdf:
-    #    keep-tex: true
+    jss-pdf:
+       keep-tex: true
     jss-html: default
 author:
   - name: Roman Parzer
@@ -37,7 +37,7 @@ bibliography: SPAR.bib
 Random projection is a computationally-efficient method which linearly maps a set of points in high dimensions into a much lower-dimensional space while approximately preserving pairwise distances. For very large $p$, random projection can suffer from overfitting, as too many irrelevant predictors are being considered for prediction purposes [@Dunson2020TargRandProj]. Therefore, screening out irrelevant variables before performing the random projection is advisable in order to tackle this issue. The screening can be performed in a probabilistic fashion, by randomly sampling covariates for inclusion in the model based on probabilities proportional to an importance measure (as opposed to random subspace sampling employed in e.g., random forests). Finally, in practice the information from multiple such screening and projections can be combined by averaging, in order to reduce the variance introduced by the random sampling (of both projections and screening indicators) [@Thanei2017RPforHDR].
 
 Several packages which provide functionality for random projections are available for [R]{.proglang}. Package [RandPro]{.pkg} [@RandProR; @SIDDHARTH2020100629] allows for four different random projection matrices to be applied to the predictor matrix before employing one of $k$\~nearest neighbor, support vector machine or naive Bayes classifier. Package [SPCAvRP]{.pkg} [@SPCAvRPR] implements sparse principal component analysis, based on the aggregation of eigenvector information from "carefully-selected" axis-aligned random projections of the sample covariance matrix. Package [RPEnsembleR]{.pkg} [@RPEnsembleR] implements the same idea of "carefully-selected" random projections when building an ensemble of classifiers.
-For [Python]{.proglang} @Python the [sklearn.random_projection]{.pkg} module implements two types of unstructured random matrix, namely Gaussian random matrix and sparse random matrix.
+For [Python]{.proglang} @Python the [sklearn.random\\_projection]{.pkg} module implements two types of unstructured random matrix, namely Gaussian random matrix and sparse random matrix.
 
 On the other hand, there are a multitude of packages dealing with variable screening on the Comprehensive [R]{.proglang} Archive Network (CRAN).
 The (iterative) sure independence screening procedure and extensions in @Fan2007SISforUHD, @Fan2010sisglms, @fan2010high are implemented in package [SIS]{.pkg} [@SISR], which also provides functionality for estimating a penalized generalized linear model or a cox regression model for the variables picked by the screening procedure.
@@ -83,7 +83,7 @@ is performed based on the log-likelihood of the GLM containing only $X_j$  as a 
 
 A rich stream of literature focuses on developing semi- or non-parametric alternatives to SIS which should be more robust to model misspecification. For linear regression, approaches include using the ranked correlation [@zhu2011model], (conditional) distance correlation [@li2012feature,@wang2015conditional]. or quantile correlation [@ma2016robust].
 For GLMs, @fan2011nonparametric extend @Fan2010sisglms by fitting a generalized additive model with B-splines. Further extensions for discrete (or categorical) outcomes include the fused Kolmogorov filter [@mai2013kolmogorov], using the mean conditional variance, i.e., the expectation in $X_j$ of the variance in the response of the conditional cumulative
-distribution function $\Prob(X\leq x|Y)$ [@cui2015model].
+distribution function $\mathbb{P}(X\leq x|Y)$ [@cui2015model].
 @ke2023sufficient propose a model free method where the contribution of each individual predictor is quantified marginally and conditionally in the presence of the control variables as well as the other candidates by reproducing-kernel-based $R^2$ and partial 
 $R^2$ statistics.
 
@@ -126,7 +126,7 @@ To speed computations, @ailon2009fast propose the fast Johnson- Lindenstrauss tr
 @Clarkson2013LowRankApproxShort propose a sparse embedding matrix ${\Phi=BD}$, where $B\in\{0,1\}^{m \times p}$ is random binary matrix and $D$ is a $p\times p$ diagonal matrix with $(D_{ii}+1)/2\sim \text{Unif}\{0,1\}$, and prove that the dimension $m$ is bounded by
 a polynomial in $r\varepsilon^{-1}$ for $0 <\varepsilon< 1$ and $r$ being the rank of $X$. While this is generally larger than that of FJLT, the sparse embedding matrix requires less time to compute $\Phi X$ compared to other subspace embeddings.
 
-@parzer2023sparse propose employing ${D_{ii}=\hat \alpha}$ in the sparse embedding matrix of @Clarkson2013LowRankApproxShort, $\hat \alpha$ is a screening coefficient in the regression such as the ridge or the HOLP coefficients, and show that the proposed projection increases the predictive performance in 
+@parzer2024sparse propose employing ${D_{ii}=\hat \alpha}$ in the sparse embedding matrix of @Clarkson2013LowRankApproxShort, $\hat \alpha$ is a screening coefficient in the regression such as the ridge or the HOLP coefficients, and show that the proposed projection increases the predictive performance in 
 a linear regression setting.
 
 
@@ -173,9 +173,7 @@ a linear regression setting.
 
 -   combine via **simple average** $\hat \beta = \sum_{k=1}^M\hat \beta^k / M$
 
--   \item
-
-    output the estimated coefficients and predictions for the chosen $M$ and $\lambda$
+-   output the estimated coefficients and predictions for the chosen $M$ and $\lambda$
 
 ## Software {#sec-software}
 
@@ -201,7 +199,7 @@ Most important arguments:
 
 -   `type.rpm` type of random projection matrix to be employed; one of `"cwdatadriven"`, `"cw"` @Clarkson2013LowRankApproxShort, `"gaussian"`, `"sparse"`.
 
--   `nscreen` max number of variables kept after screening in each marginal model; defaults to $2n$.
+<!-- -   `nscreen` max number of variables kept after screening in each marginal model; defaults to $2n$. -->
 
 -   `type.screening` measure by which the coefficients are screened; `"ridge"` performs screening based on ridge regression, `"marglik"` marginal likelihood of fitting a GLM for each predictor, `"corr"` correlation of the response with each predictor.
 
@@ -265,8 +263,12 @@ ntot <- length(y)
 ntest <- ntot * 0.25
 testind <- sample(1:ntot, ntest, replace=FALSE)
 xtrain <- as.matrix(x[-testind, ])
+const_col_ind <- which(apply(xtrain,2,sd)<0.01)
+if (length(const_col_ind)>0) {
+  xtrain <- xtrain[,-const_col_ind]
+}
 ytrain <- y[-testind]
-xtest <- as.matrix(x[testind, ])
+xtest <- as.matrix(x[testind, -const_col_ind])
 ytest <- y[testind]
 ```
 
@@ -274,10 +276,30 @@ We can now estimate the model on the training data:
 ```{r}
 library(SPAR)
 spar_faces <- spar.cv(xtrain, ytrain,
-                      family = gaussian(),
+                      family = gaussian("identity"),
                       nummods = c(5, 10, 20, 50),
                       type.measure = "mse")
 spar_faces
+# undebug(spar)
+# 
+# eig <- eigen(tcrossprod(z),symmetric = TRUE)
+# myinv <- tcrossprod(eig$vectors[,eig$values>1e-8]%*%diag(1/sqrt(eig$values[eig$values>1e-8])))
+# HOLP <- as.numeric(crossprod(z,myinv%*%yz))
+# 
+# n <- NROW(z)
+# p <- NCOL(z)
+# tmp_sc <- apply(z,2,function(col)sqrt(var(col)*(n-1)/n))
+# z2 <- scale(z,center=colMeans(z),scale=tmp_sc)
+# lam_max <- 1000 * max(abs(t(yz)%*%z2[,tmp_sc>0]))/n*family$mu.eta(family$linkfun(mean(yz)))/family$variance(mean(yz))
+# dev.ratio_cutoff <- 0.999
+# glmnet_res <- glmnet::glmnet(x=z, y=yz, family = family, alpha=0,lambda.min.ratio = min(0.01,1e-4 / lam_max))
+# lam <- min(glmnet_res$lambda[glmnet_res$dev.ratio<=dev.ratio_cutoff])
+# scr_coef <- coef(glmnet_res,s=lam)[-1]
+# scr_coef
+# 
+# apply(glmnet_res$beta,2,function(tmpcoef)cor(tmpcoef,HOLP))
+# 
+# cor(scr_coef,HOLP)
 ```
 
 The `plot` method for '`spar.cv`' objects displays by default the measure 
@@ -286,6 +308,7 @@ values, where the number of models is fixed to the value found to perform
 best in cross-validation exercise:
 ```{r eval=TRUE}
 plot(spar_faces)
+# plot(spar_faces,plot_type = "Val_numAct")
 ```
 The coefficients of the different variables (in this example pixels) obtained by averaging over the coefficients the marginal models (for optimal $\lambda$ and number of models) are given by:
 ```{r}
@@ -314,16 +337,21 @@ Additionally, for this data set, one can visualize the effect of each pixel
 $\hat\beta_j x^\text{new}_{i,j}$ in predicting the face orientation in a given image e.g., 9th in the test set:
 ```{r}
 i <- 9
+shap_vals <- numeric(64^2)
+shap_vals[-const_col_ind] <- xtest[i,] * face_coef$beta
 plot4 <- ggplot(data.frame(X = rep(1:64, each = 64),
                            Y = rep(64:1, 64),
-                           effect = xtest[i,] * face_coef$beta), 
+                           effect = shap_vals), 
                 aes(X, Y, fill= effect)) +
   geom_tile() +
   theme_void() +
   scale_fill_gradient2() +
-  ggtitle(bquote(hat(y) == .(round(ynew[i])))) +
+  ggtitle(paste0("yhat=",round(ynew[i],2),", y=",round(ytest[i],2))) +
   theme(plot.title = element_text(hjust = 0.5)) 
 plot4
+
+# y[testind[i]]
+# sum(xtest[i,] * face_coef$beta) + face_coef$intercept
 ```
 
 ### Darwin data set
