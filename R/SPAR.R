@@ -76,18 +76,19 @@ spar <- function(x,
   z <- scale(x,center = xcenter,scale = xscale)
   yz <- scale(y,center = ycenter,scale = yscale)
 
-  if (p < n/2) {
+  if (p < n) {
     HOLPcoef <- tryCatch( solve(crossprod(z),crossprod(z,yz)),
                                error=function(error_message) {
                                  return(solve(crossprod(z)+(sqrt(p)+sqrt(n))*diag(p),crossprod(z,yz)))
                                })
-  } else if (p < 2*n) {
-    HOLPcoef <- crossprod(z,solve(tcrossprod(z)+(sqrt(p)+sqrt(n))*diag(n),yz))
   } else {
-    solve_res <- tryCatch( solve(tcrossprod(z),yz),
-                           error=function(error_message) {
-                             return(solve(tcrossprod(z)+(sqrt(p)+sqrt(n))*diag(n),yz))
-                           })
+    eig <- eigen(tcrossprod(z),symmetric = TRUE)
+    if (sum(eig$values>1e-8) >= (n-1)) {
+      myinv <- tcrossprod(eig$vectors[,eig$values>1e-8]%*%diag(1/sqrt(eig$values[eig$values>1e-8])))
+      solve_res <- myinv%*%yz
+    } else {
+      solve_res <- solve(tcrossprod(z)+(sqrt(p)+sqrt(n))*diag(n),yz)
+    }
     HOLPcoef <- crossprod(z,solve_res)
   }
   inc_probs <- abs(HOLPcoef)
@@ -152,7 +153,7 @@ spar <- function(x,
     } else {
       lambdas <- c(0)
     }
-    
+
   } else {
     nlambda <- length(lambdas)
   }
