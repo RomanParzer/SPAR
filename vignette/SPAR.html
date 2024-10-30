@@ -353,146 +353,83 @@ Table&nbsp;1: Overview of implemented random projection matrices.
 <h3 data-number="4.1" class="anchored" data-anchor-id="face-image-data"><span class="header-section-number">4.1</span> Face image data</h3>
 <p>We illustrate the package on a data set containing <span class="math inline">\(n = 698\)</span> black and white face images of size <span class="math inline">\(p = 64 \times 64 = 4096\)</span> and the faces’ horizontal looking direction angle as the response variable. The Isomap face data can be found online on https://web.archive.org/web/20160913051505/http://isomap. stanford.edu/datasets.html</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"R.matlab"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>R.matlab v3.7.0 (2022-08-25 21:52:34 UTC) successfully loaded. See ?R.matlab for help.</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>
-Attaching package: 'R.matlab'</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>The following objects are masked from 'package:base':
-
-    getOption, isOpen</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>temp <span class="ot">&lt;-</span> <span class="fu">tempdir</span>()</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">download.file</span>(<span class="st">"https://web.archive.org/web/20150922051706/http://isomap.stanford.edu/face_data.mat.Z"</span>, <span class="fu">file.path</span>(temp, <span class="st">"face_data.mat.Z"</span>))</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="fu">system</span>(<span class="fu">sprintf</span>(<span class="st">'uncompress %s'</span>, <span class="fu">paste0</span>(temp, <span class="st">"/face_data.mat.Z"</span>)))</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>facedata <span class="ot">&lt;-</span> <span class="fu">readMat</span>(<span class="fu">file.path</span>(temp, <span class="st">"face_data.mat"</span>))</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">t</span>(facedata<span class="sc">$</span>images)</span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>y <span class="ot">&lt;-</span> facedata<span class="sc">$</span>poses[<span class="dv">1</span>,]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"R.matlab"</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>temp <span class="ot">&lt;-</span> <span class="fu">tempdir</span>()</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="fu">download.file</span>(<span class="st">"https://web.archive.org/web/20150922051706/http://isomap.stanford.edu/face_data.mat.Z"</span>, <span class="fu">file.path</span>(temp, <span class="st">"face_data.mat.Z"</span>))</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="fu">system</span>(<span class="fu">sprintf</span>(<span class="st">'uncompress %s'</span>, <span class="fu">paste0</span>(temp, <span class="st">"/face_data.mat.Z"</span>)))</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>facedata <span class="ot">&lt;-</span> <span class="fu">readMat</span>(<span class="fu">file.path</span>(temp, <span class="st">"face_data.mat"</span>))</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">t</span>(facedata<span class="sc">$</span>images)</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>y <span class="ot">&lt;-</span> facedata<span class="sc">$</span>poses[<span class="dv">1</span>,]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>We can visualize e.g., the first observation in this data set by:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>i <span class="ot">&lt;-</span> <span class="dv">1</span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="fu">data.frame</span>(<span class="at">X =</span> <span class="fu">rep</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">64</span>,<span class="at">each=</span><span class="dv">64</span>),<span class="at">Y =</span> <span class="fu">rep</span>(<span class="dv">64</span><span class="sc">:</span><span class="dv">1</span>,<span class="dv">64</span>),</span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>                  <span class="at">Z =</span> facedata<span class="sc">$</span>images[,i]),</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>       <span class="fu">aes</span>(X, Y, <span class="at">fill =</span> Z)) <span class="sc">+</span></span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_tile</span>() <span class="sc">+</span></span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_void</span>() <span class="sc">+</span></span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="fu">paste0</span>(<span class="st">"y = "</span>,<span class="fu">round</span>(facedata<span class="sc">$</span>poses[<span class="dv">1</span>,i],<span class="dv">1</span>))) <span class="sc">+</span></span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>,</span>
-<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>        <span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">hjust =</span> <span class="fl">0.5</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="SPAR_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid figure-img" width="672"></p>
-</figure>
-</div>
-</div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>i <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="fu">data.frame</span>(<span class="at">X =</span> <span class="fu">rep</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">64</span>,<span class="at">each=</span><span class="dv">64</span>),<span class="at">Y =</span> <span class="fu">rep</span>(<span class="dv">64</span><span class="sc">:</span><span class="dv">1</span>,<span class="dv">64</span>),</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>                  <span class="at">Z =</span> facedata<span class="sc">$</span>images[,i]),</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>       <span class="fu">aes</span>(X, Y, <span class="at">fill =</span> Z)) <span class="sc">+</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_tile</span>() <span class="sc">+</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_void</span>() <span class="sc">+</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="fu">paste0</span>(<span class="st">"y = "</span>,<span class="fu">round</span>(facedata<span class="sc">$</span>poses[<span class="dv">1</span>,i],<span class="dv">1</span>))) <span class="sc">+</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>,</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>        <span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">hjust =</span> <span class="fl">0.5</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>We can split the data into training vs test sample:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1234</span>)</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>ntot <span class="ot">&lt;-</span> <span class="fu">length</span>(y)</span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>ntest <span class="ot">&lt;-</span> ntot <span class="sc">*</span> <span class="fl">0.25</span></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>testind <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span>ntot, ntest, <span class="at">replace=</span><span class="cn">FALSE</span>)</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>xtrain <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(x[<span class="sc">-</span>testind, ])</span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>ytrain <span class="ot">&lt;-</span> y[<span class="sc">-</span>testind]</span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>xtest <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(x[testind, ])</span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>ytest <span class="ot">&lt;-</span> y[testind]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1234</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>ntot <span class="ot">&lt;-</span> <span class="fu">length</span>(y)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>ntest <span class="ot">&lt;-</span> ntot <span class="sc">*</span> <span class="fl">0.25</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>testind <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span>ntot, ntest, <span class="at">replace=</span><span class="cn">FALSE</span>)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>xtrain <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(x[<span class="sc">-</span>testind, ])</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>ytrain <span class="ot">&lt;-</span> y[<span class="sc">-</span>testind]</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>xtest <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(x[testind, ])</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>ytest <span class="ot">&lt;-</span> y[testind]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>We can now estimate the model on the training data:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(SPAR)</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>spar_faces <span class="ot">&lt;-</span> <span class="fu">spar.cv</span>(xtrain, ytrain,</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>                      <span class="at">family =</span> <span class="fu">gaussian</span>(),</span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>                      <span class="at">nummods =</span> <span class="fu">c</span>(<span class="dv">5</span>, <span class="dv">10</span>, <span class="dv">20</span>, <span class="dv">50</span>),</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>                      <span class="at">type.measure =</span> <span class="st">"mse"</span>)</span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>spar_faces</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>SPAR.cv object:
-Smallest CV-Meas 11.9 reached for nummod=50, lambda=0.000 leading to 3746 / 4096 active predictors.
-Summary of those non-zero coefficients:
-     Min.   1st Qu.    Median      Mean   3rd Qu.      Max. 
--2156.873    -0.119     0.001     1.907     0.133  7204.064 
-
-Sparsest coefficient within one standard error of best CV-Meas reached for nummod=5, lambda=0.006 
-leading to 1477 / 4096 active predictors with CV-Meas 19.4.
-Summary of those non-zero coefficients:
-     Min.   1st Qu.    Median      Mean   3rd Qu.      Max. 
--1359.584    -0.594     0.139     5.946     0.633  7625.846 </code></pre>
-</div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(SPAR)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>spar_faces <span class="ot">&lt;-</span> <span class="fu">spar.cv</span>(xtrain, ytrain,</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>                      <span class="at">family =</span> <span class="fu">gaussian</span>(),</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>                      <span class="at">nummods =</span> <span class="fu">c</span>(<span class="dv">5</span>, <span class="dv">10</span>, <span class="dv">20</span>, <span class="dv">50</span>),</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>                      <span class="at">type.measure =</span> <span class="st">"mse"</span>)</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>spar_faces</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>The <code>plot</code> method for ‘<code>spar.cv</code>’ objects displays by default the measure employed in the cross validation (in this case MSE) for a grid of <span class="math inline">\(\lambda\)</span> values, where the number of models is fixed to the value found to perform best in cross-validation exercise:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(spar_faces)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="SPAR_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid figure-img" width="672"></p>
-</figure>
-</div>
-</div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(spar_faces)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>The coefficients of the different variables (in this example pixels) obtained by averaging over the coefficients the marginal models (for optimal <span class="math inline">\(\lambda\)</span> and number of models) are given by:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>face_coef <span class="ot">&lt;-</span> <span class="fu">coef</span>(spar_faces, <span class="at">opt_par =</span> <span class="st">"best"</span>)</span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(face_coef)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>List of 4
- $ intercept: num -18.8
- $ beta     : num [1:4096] -1.2566 -0.0403 0.0463 0.0776 -0.1828 ...
- $ nummod   : num 50
- $ lambda   : num 0</code></pre>
-</div>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>face_coef <span class="ot">&lt;-</span> <span class="fu">coef</span>(spar_faces, <span class="at">opt_par =</span> <span class="st">"best"</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(face_coef)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>The coefficients from each of the marginal models (before averaging) can be plotted using the <code>plot(..., plot_type = "coefs")</code></p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(spar_faces, <span class="st">"coefs"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="SPAR_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid figure-img" width="672"></p>
-</figure>
-</div>
-</div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(spar_faces, <span class="st">"coefs"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>The <code>predict()</code> function can be applied to the ‘<code>spar.cv</code>’ object:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>ynew <span class="ot">&lt;-</span> <span class="fu">predict</span>(spar_faces, <span class="at">xnew =</span> xtest)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>ynew <span class="ot">&lt;-</span> <span class="fu">predict</span>(spar_faces, <span class="at">xnew =</span> xtest)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>In the high-dimensional setting it is interesting to look at the relative mean square prediction error which compares the MSE to the MSE of a model containing only an intercept:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>rMSPEconst <span class="ot">&lt;-</span> <span class="fu">mean</span>((ytest <span class="sc">-</span> <span class="fu">mean</span>(y))<span class="sc">^</span><span class="dv">2</span>) </span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>((ynew<span class="sc">-</span>ytest)<span class="sc">^</span><span class="dv">2</span>)<span class="sc">/</span>rMSPEconst</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>[1] 0.01398966</code></pre>
-</div>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>rMSPEconst <span class="ot">&lt;-</span> <span class="fu">mean</span>((ytest <span class="sc">-</span> <span class="fu">mean</span>(y))<span class="sc">^</span><span class="dv">2</span>) </span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>((ynew<span class="sc">-</span>ytest)<span class="sc">^</span><span class="dv">2</span>)<span class="sc">/</span>rMSPEconst</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Additionally, for this data set, one can visualize the effect of each pixel <span class="math inline">\(\hat\beta_j x^\text{new}_{i,j}\)</span> in predicting the face orientation in a given image e.g., 9th in the test set:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>i <span class="ot">&lt;-</span> <span class="dv">9</span></span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>plot4 <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(<span class="fu">data.frame</span>(<span class="at">X =</span> <span class="fu">rep</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">64</span>, <span class="at">each =</span> <span class="dv">64</span>),</span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>                           <span class="at">Y =</span> <span class="fu">rep</span>(<span class="dv">64</span><span class="sc">:</span><span class="dv">1</span>, <span class="dv">64</span>),</span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>                           <span class="at">effect =</span> xtest[i,] <span class="sc">*</span> face_coef<span class="sc">$</span>beta), </span>
-<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>                <span class="fu">aes</span>(X, Y, <span class="at">fill=</span> effect)) <span class="sc">+</span></span>
-<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_tile</span>() <span class="sc">+</span></span>
-<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_void</span>() <span class="sc">+</span></span>
-<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_gradient2</span>() <span class="sc">+</span></span>
-<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="fu">bquote</span>(<span class="fu">hat</span>(y) <span class="sc">==</span> .(<span class="fu">round</span>(ynew[i])))) <span class="sc">+</span></span>
-<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">hjust =</span> <span class="fl">0.5</span>)) </span>
-<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>plot4</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="SPAR_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid figure-img" width="672"></p>
-</figure>
-</div>
-</div>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>i <span class="ot">&lt;-</span> <span class="dv">9</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>plot4 <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(<span class="fu">data.frame</span>(<span class="at">X =</span> <span class="fu">rep</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">64</span>, <span class="at">each =</span> <span class="dv">64</span>),</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>                           <span class="at">Y =</span> <span class="fu">rep</span>(<span class="dv">64</span><span class="sc">:</span><span class="dv">1</span>, <span class="dv">64</span>),</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>                           <span class="at">effect =</span> xtest[i,] <span class="sc">*</span> face_coef<span class="sc">$</span>beta), </span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>                <span class="fu">aes</span>(X, Y, <span class="at">fill=</span> effect)) <span class="sc">+</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_tile</span>() <span class="sc">+</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_void</span>() <span class="sc">+</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_gradient2</span>() <span class="sc">+</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="fu">bquote</span>(<span class="fu">hat</span>(y) <span class="sc">==</span> .(<span class="fu">round</span>(ynew[i])))) <span class="sc">+</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">hjust =</span> <span class="fl">0.5</span>)) </span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>plot4</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="darwin-data-set" class="level3" data-number="4.2">
@@ -500,67 +437,48 @@ Summary of those non-zero coefficients:
 <p>The Darwin dataset <span class="citation" data-cites="CILIA2022darwin">(<a href="#ref-CILIA2022darwin" role="doc-biblioref">Cilia et al. 2022</a>)</span> contains a binary response for Alzheimer’s disease (AD) together with extracted features from 25 handwriting tests (18 features per task) for 89 AD patients and 85 healthy people (<span class="math inline">\(n=174\)</span>).</p>
 <p>The data set can be downloaded from https://archive.ics.uci.edu/dataset/732/darwin:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>()</span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="fu">download.file</span>(<span class="st">"https://archive.ics.uci.edu/static/public/732/darwin.zip"</span>, temp)</span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>darwin_tmp <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="fu">unzip</span>(temp,  <span class="st">"data.csv"</span>), <span class="at">stringsAsFactors =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>temp <span class="ot">&lt;-</span> <span class="fu">tempfile</span>()</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="fu">download.file</span>(<span class="st">"https://archive.ics.uci.edu/static/public/732/darwin.zip"</span>, temp)</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>darwin_tmp <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="fu">unzip</span>(temp,  <span class="st">"data.csv"</span>), <span class="at">stringsAsFactors =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Before proceeding with the analysis, the data is screened for multivariate outliers using the DDC algorithm in package <code>cellWise</code>.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>darwin_orig <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">x =</span> <span class="fu">as.matrix</span>(darwin_tmp[, <span class="sc">!</span>(<span class="fu">colnames</span>(darwin_tmp) <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"ID"</span>, <span class="st">"class"</span>))]),</span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">y =</span> <span class="fu">as.numeric</span>(darwin_tmp<span class="sc">$</span>class) <span class="sc">-</span> <span class="dv">1</span>)</span>
-<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>tmp <span class="ot">&lt;-</span> cellWise<span class="sc">::</span><span class="fu">DDC</span>(darwin_orig<span class="sc">$</span>x,</span>
-<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>                     <span class="fu">list</span>(<span class="at">returnBigXimp =</span> <span class="cn">TRUE</span>, </span>
-<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>                          <span class="at">tolProb =</span> <span class="fl">0.999</span>,</span>
-<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>                          <span class="at">silent =</span> <span class="cn">TRUE</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code> 
- The final data set we will analyze has 174 rows and 446 columns.
- </code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>darwin <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">x =</span> tmp<span class="sc">$</span>Ximp,</span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">y =</span> darwin_orig<span class="sc">$</span>y)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>darwin_orig <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">x =</span> <span class="fu">as.matrix</span>(darwin_tmp[, <span class="sc">!</span>(<span class="fu">colnames</span>(darwin_tmp) <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"ID"</span>, <span class="st">"class"</span>))]),</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">y =</span> <span class="fu">as.numeric</span>(darwin_tmp<span class="sc">$</span>class) <span class="sc">-</span> <span class="dv">1</span>)</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>tmp <span class="ot">&lt;-</span> cellWise<span class="sc">::</span><span class="fu">DDC</span>(darwin_orig<span class="sc">$</span>x,</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>                     <span class="fu">list</span>(<span class="at">returnBigXimp =</span> <span class="cn">TRUE</span>, </span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>                          <span class="at">tolProb =</span> <span class="fl">0.999</span>,</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>                          <span class="at">silent =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>darwin <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">x =</span> tmp<span class="sc">$</span>Ximp,</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>               <span class="at">y =</span> darwin_orig<span class="sc">$</span>y)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>We estimate the spar model with binomial family and logit link and use <span class="math inline">\(1-\)</span>area under the ROC curve as the cross-validation measure:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>spar_darwin <span class="ot">&lt;-</span> <span class="fu">spar.cv</span>(darwin<span class="sc">$</span>x, darwin<span class="sc">$</span>y,</span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>                       <span class="at">family =</span> <span class="fu">binomial</span>(logit),</span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>                       <span class="at">nummods =</span> <span class="fu">c</span>(<span class="dv">5</span>, <span class="dv">10</span>, <span class="dv">20</span>, <span class="dv">50</span>),</span>
-<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>                       <span class="at">type.measure =</span> <span class="st">"1-auc"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>spar_darwin <span class="ot">&lt;-</span> <span class="fu">spar.cv</span>(darwin<span class="sc">$</span>x, darwin<span class="sc">$</span>y,</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>                       <span class="at">family =</span> <span class="fu">binomial</span>(logit),</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>                       <span class="at">nummods =</span> <span class="fu">c</span>(<span class="dv">5</span>, <span class="dv">10</span>, <span class="dv">20</span>, <span class="dv">50</span>),</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>                       <span class="at">type.measure =</span> <span class="st">"1-auc"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>The <code>plot</code> method for ‘<code>spar.cv</code>’ objects displays by default the measure employed in the cross validation (in this case MSE) for a grid of <span class="math inline">\(\lambda\)</span> values, where the number of models is fixed to the value found to perform best in cross-validation exercise:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(spar_darwin)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="SPAR_files/figure-html/unnamed-chunk-16-1.png" class="img-fluid figure-img" width="672"></p>
-</figure>
-</div>
-</div>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(spar_darwin)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>The plot of the coefficients can be interpreted nicely in this example:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>ntasks <span class="ot">&lt;-</span> <span class="dv">25</span></span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>nfeat <span class="ot">&lt;-</span> <span class="dv">18</span></span>
-<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>reorder_ind <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">outer</span>((<span class="fu">seq_len</span>(ntasks) <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">*</span> nfeat, <span class="fu">seq_len</span>(nfeat), <span class="st">"+"</span>))</span>
-<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>feat_names <span class="ot">&lt;-</span> <span class="fu">sapply</span>(<span class="fu">colnames</span>(darwin<span class="sc">$</span>x)[<span class="fu">seq_len</span>(nfeat)],</span>
-<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>                     <span class="cf">function</span>(name) <span class="fu">substr</span>(name, <span class="dv">1</span>, <span class="fu">nchar</span>(name) <span class="sc">-</span> <span class="dv">1</span>))</span>
-<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(spar_darwin,<span class="st">"coefs"</span>,<span class="at">coef_order =</span> reorder_ind) <span class="sc">+</span> </span>
-<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="fl">0.5</span> <span class="sc">+</span> <span class="fu">seq_len</span>(ntasks <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">*</span> ntasks, </span>
-<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>             <span class="at">alpha =</span> <span class="fl">0.2</span>, <span class="at">linetype =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
-<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"text"</span>,<span class="at">x =</span> (<span class="fu">seq_len</span>(nfeat) <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">*</span> ntasks <span class="sc">+</span> <span class="dv">12</span>,</span>
-<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>           <span class="at">y =</span> <span class="dv">45</span>,<span class="at">label=</span>feat_names, <span class="at">angle =</span> <span class="dv">90</span>,</span>
-<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a>           <span class="at">size =</span> <span class="dv">3</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="SPAR_files/figure-html/unnamed-chunk-17-1.png" class="img-fluid figure-img" width="672"></p>
-</figure>
-</div>
-</div>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>ntasks <span class="ot">&lt;-</span> <span class="dv">25</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>nfeat <span class="ot">&lt;-</span> <span class="dv">18</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>reorder_ind <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">outer</span>((<span class="fu">seq_len</span>(ntasks) <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">*</span> nfeat, <span class="fu">seq_len</span>(nfeat), <span class="st">"+"</span>))</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>feat_names <span class="ot">&lt;-</span> <span class="fu">sapply</span>(<span class="fu">colnames</span>(darwin<span class="sc">$</span>x)[<span class="fu">seq_len</span>(nfeat)],</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>                     <span class="cf">function</span>(name) <span class="fu">substr</span>(name, <span class="dv">1</span>, <span class="fu">nchar</span>(name) <span class="sc">-</span> <span class="dv">1</span>))</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(spar_darwin,<span class="st">"coefs"</span>,<span class="at">coef_order =</span> reorder_ind) <span class="sc">+</span> </span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="fl">0.5</span> <span class="sc">+</span> <span class="fu">seq_len</span>(ntasks <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">*</span> ntasks, </span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>             <span class="at">alpha =</span> <span class="fl">0.2</span>, <span class="at">linetype =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"text"</span>,<span class="at">x =</span> (<span class="fu">seq_len</span>(nfeat) <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">*</span> ntasks <span class="sc">+</span> <span class="dv">12</span>,</span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>           <span class="at">y =</span> <span class="dv">45</span>,<span class="at">label=</span>feat_names, <span class="at">angle =</span> <span class="dv">90</span>,</span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>           <span class="at">size =</span> <span class="dv">3</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>In general we observe that the different features measures across different tasks have the same impact on the probability of AD (observable by the blocks of blue or red lines).</p>
 </section>
@@ -657,7 +575,7 @@ Li, Dongjin, Debarshi Chakraborty, Somak Dutta, and Vivekananda Roy. 2024. <em>B
 Li, Ping, Trevor J. Hastie, and Kenneth W. Church. 2006. <span>“Very Sparse Random Projections.”</span> In <em>Proceedings of the 12th ACM SIGKDD International Conference on Knowledge Discovery and Data Mining</em>, 287–96. KDD ’06. New York, NY, USA: Association for Computing Machinery. https://doi.org/<a href="https://doi.org/10.1145/1150402.1150436">https://doi.org/10.1145/1150402.1150436</a>.
 </div>
 <div id="ref-li2007nonlinear" class="csl-entry" role="listitem">
-Li, Ping, Trevor J Hastie, and Kenneth W Church. 2007. <span>“Nonlinear Estimators and Tail Bounds for Dimension Reduction in <span>L</span>1 Using <span>C</span>auchy Random Projections.”</span> <em>Journal of Machine Learning Research</em> 8 (Oct): 2497–2532.
+Li, Ping, Trevor J Hastie, and Kenneth W Church. 2007. <span>“Nonlinear Estimators and Tail Bounds for Dimension Reduction in <span>L</span>1 Using <span>C</span>auchy Random Projections.”</span> <em>Journal of Machine Learning Research</em> 8 (Oct): 2497–2532. <a href="https://jmlr.csail.mit.edu/papers/v8/li07b.html">https://jmlr.csail.mit.edu/papers/v8/li07b.html</a>.
 </div>
 <div id="ref-pkg:VariableScreening" class="csl-entry" role="listitem">
 Li, Runze, Liying Huang, and John Dziak. 2022. <em>VariableScreening: High-Dimensional Screening for Semiparametric Longitudinal Regression</em>. <a href="https://CRAN.R-project.org/package=VariableScreening">https://CRAN.R-project.org/package=VariableScreening</a>.

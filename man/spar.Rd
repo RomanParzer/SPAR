@@ -18,6 +18,7 @@ spar(
   type.screening = c("ridge", "marglik", "corr"),
   inds = NULL,
   RPMs = NULL,
+  rp = NULL,
   control = list(rpm = list(mslow = ceiling(log(ncol(x))), msup = ceiling(nrow(x)/2)),
     scr = list(nscreen = 2 * nrow(x), split_data = FALSE))
 )

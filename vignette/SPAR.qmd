@@ -234,7 +234,7 @@ faces' horizontal looking direction angle as the response variable.
 The Isomap face data can be found online on https://web.archive.org/web/20160913051505/http://isomap.
 stanford.edu/datasets.html
 
-```{r}
+```{r eval=FALSE}
 library("R.matlab")
 temp <- tempdir()
 download.file("https://web.archive.org/web/20150922051706/http://isomap.stanford.edu/face_data.mat.Z", file.path(temp, "face_data.mat.Z"))
@@ -245,7 +245,7 @@ x <- t(facedata$images)
 y <- facedata$poses[1,]
 ```
 We can visualize e.g., the first observation in this data set by:
-```{r}
+```{r eval=FALSE}
 library(ggplot2)
 i <- 1
 ggplot(data.frame(X = rep(1:64,each=64),Y = rep(64:1,64),
@@ -259,7 +259,7 @@ ggplot(data.frame(X = rep(1:64,each=64),Y = rep(64:1,64),
 ```
 
 We can split the data into training vs test sample:
-```{r}
+```{r eval=FALSE}
 set.seed(1234)
 ntot <- length(y)
 ntest <- ntot * 0.25
@@ -271,7 +271,7 @@ ytest <- y[testind]
 ```
 
 We can now estimate the model on the training data:
-```{r}
+```{r eval=FALSE}
 library(SPAR)
 spar_faces <- spar.cv(xtrain, ytrain,
                       family = gaussian(),
@@ -284,35 +284,35 @@ The `plot` method for '`spar.cv`' objects displays by default the measure
 employed in the cross validation (in this case MSE) for a grid of $\lambda$
 values, where the number of models is fixed to the value found to perform 
 best in cross-validation exercise:
-```{r eval=TRUE}
+```{r eval=FALSE}
 plot(spar_faces)
 ```
 The coefficients of the different variables (in this example pixels) obtained by averaging over the coefficients the marginal models (for optimal $\lambda$ and number of models) are given by:
-```{r}
+```{r eval=FALSE}
 face_coef <- coef(spar_faces, opt_par = "best")
 str(face_coef)
 ```
 
 The coefficients from each of the marginal models (before averaging) 
 can be plotted using the `plot(..., plot_type = "coefs")`
-```{r}
+```{r eval=FALSE}
 plot(spar_faces, "coefs")
 ```
 
 The `predict()` function can be applied to the '`spar.cv`' object:
-```{r}
+```{r eval=FALSE}
 ynew <- predict(spar_faces, xnew = xtest)
 ```
 In the high-dimensional setting it is interesting to look at the relative mean 
 square prediction error which compares the MSE to the MSE of a model containing only an intercept:
-```{r}
+```{r eval=FALSE}
 rMSPEconst <- mean((ytest - mean(y))^2) 
 mean((ynew-ytest)^2)/rMSPEconst
 ```
 
 Additionally, for this data set, one can visualize the effect of each pixel 
 $\hat\beta_j x^\text{new}_{i,j}$ in predicting the face orientation in a given image e.g., 9th in the test set:
-```{r}
+```{r eval=FALSE}
 i <- 9
 plot4 <- ggplot(data.frame(X = rep(1:64, each = 64),
                            Y = rep(64:1, 64),
@@ -332,7 +332,7 @@ The Darwin dataset [@CILIA2022darwin] contains a binary response for Alzheimer's
 
 The data set can be downloaded from  https://archive.ics.uci.edu/dataset/732/darwin:
 
-```{r}
+```{r eval=FALSE}
 temp <- tempfile()
 download.file("https://archive.ics.uci.edu/static/public/732/darwin.zip", temp)
 darwin_tmp <- read.csv(unzip(temp,  "data.csv"), stringsAsFactors = TRUE)
@@ -342,7 +342,7 @@ Before proceeding with the analysis, the data is screened for multivariate outli
 using the DDC algorithm in package [cellWise]{.pkg}.
 
 
-```{r}
+```{r eval=FALSE}
 darwin_orig <- list(
   x = as.matrix(darwin_tmp[, !(colnames(darwin_tmp) %in% c("ID", "class"))]),
   y = as.numeric(darwin_tmp$class) - 1)
@@ -358,7 +358,7 @@ darwin <- list(x = tmp$Ximp,
 
 We estimate the spar model with binomial family and logit link and 
 use $1-$area under the ROC curve as the cross-validation measure:
-```{r}
+```{r eval=FALSE}
 spar_darwin <- spar.cv(darwin$x, darwin$y,
                        family = binomial(logit),
                        nummods = c(5, 10, 20, 50),
@@ -369,13 +369,13 @@ The `plot` method for '`spar.cv`' objects displays by default the measure
 employed in the cross validation (in this case MSE) for a grid of $\lambda$
 values, where the number of models is fixed to the value found to perform 
 best in cross-validation exercise:
-```{r eval=TRUE}
+```{r eval=F}
 plot(spar_darwin)
 ```
 
 The plot of the coefficients can be interpreted nicely in this example:
 
-```{r eval=TRUE}
+```{r eval=F}
 ntasks <- 25
 nfeat <- 18
 reorder_ind <- c(outer((seq_len(ntasks) - 1) * nfeat, seq_len(nfeat), "+"))

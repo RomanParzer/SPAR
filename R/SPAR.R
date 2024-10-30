@@ -102,6 +102,9 @@
 #' @importFrom stats coef fitted gaussian predict rnorm quantile residuals sd var cor glm
 #' @importFrom Matrix Matrix solve crossprod tcrossprod rowMeans
 #' @importFrom Rdpack reprompt
+#' @importFrom rlang list2
+#' @importFrom glmnet glmnet
+#'
 spar <- function(x,
                  y,
                  family = gaussian("identity"),
@@ -115,6 +118,7 @@ spar <- function(x,
                  type.screening = c("ridge", "marglik", "corr"),
                  inds = NULL,
                  RPMs = NULL,
+                 rp = NULL,
                  control = list(rpm = list(mslow = ceiling(log(ncol(x))),
                                            msup = ceiling(nrow(x)/2)),
                                 scr = list(nscreen = 2*nrow(x), split_data = FALSE))) {
@@ -226,6 +230,7 @@ spar <- function(x,
   intercepts <- numeric(max_num_mod)
   betas_std <- Matrix::Matrix(data=c(0),actual_p,max_num_mod,sparse = TRUE)
 
+
   drawRPMs <- FALSE
   if (is.null(RPMs)) {
     RPMs <- vector("list",length=max_num_mod)
@@ -236,6 +241,15 @@ spar <- function(x,
   if (is.null(inds)) {
     inds <- vector("list",length=max_num_mod)
     drawinds <- TRUE
+  }
+
+  ## Update with data only at the beginning, not in each RP!
+  if (!is.null(rp)) {
+    if (attr(rp, "data")) {
+      rp <- rp$update_data_rp(rp,
+                              data = list(x = z[scr_inds,],
+                                          y = yz[scr_inds, ]))
+    }
   }
 
   for (i in 1:max_num_mod) {
@@ -258,25 +272,36 @@ spar <- function(x,
         RPM <- Matrix::Matrix(diag(1,m),sparse=TRUE)
         RPMs[[i]] <- RPM
       } else {
-        RPM <- switch(
-          type.rpm,
-          "cwdatadriven" = generate_cw_rp(m = m, p = p_use, coef = scr_coef[ind_use]/max_inc_probs),
-          "cw"           = generate_cw_rp(m = m, p = p_use,
-                                          coef = sample(c(-1,1), p_use, replace = TRUE)),
-          "gaussian"     = generate_gaussian_rp(m = m, p = p_use),
-          "sparse"       = generate_sparse_rp(m = m, p = p_use, psi = control$rpm$psi))
-        # RPM <- generate_RPM(m,p_use,coef=scr_coef[ind_use]/max_inc_probs)
+        if (!is.null(rp)) {
+          RPM    <- get_rp(rp, m = m, included_vector = ind_use)
+        } else {
+          RPM <- switch(
+            type.rpm,
+            "cwdatadriven" = generate_cw_rp(m = m, p = p_use,
+                                            coef = scr_coef[ind_use]/max_inc_probs),
+            "cw"           = generate_cw_rp(m = m, p = p_use,
+                                            coef = NULL),
+            "gaussian"     = generate_gaussian_rp(m = m, p = p_use),
+            "sparse"       = generate_sparse_rp(m = m, p = p_use, psi = control$rpm$psi))
+        }
         RPMs[[i]] <- RPM
       }
     } else {
       RPM <- RPMs[[i]]
-      if (type.rpm == "cwdatadriven")  RPM@x <- scr_coef[ind_use]/max_inc_probs
+      if (!is.null(rp)) {
+        if (rp$name == "rp_cw" && attr(rp, "data")) {
+          RPM@x <- attr(rp, "diagvals")[ind_use]
+        }
+      } else {
+        if (type.rpm == "cwdatadriven")  RPM@x <- scr_coef[ind_use]/max_inc_probs
+      }
       ## TODO: think about this
     }
-
     znew <- Matrix::tcrossprod(z[mar_inds,ind_use],RPM)
+    # znew <- slam::tcrossprod_simple_triplet_matrix(z[mar_inds,ind_use],RPM)
     if (family$family=="gaussian" & family$link=="identity") {
-      mar_coef <- tryCatch( Matrix::solve(Matrix::crossprod(znew),Matrix::crossprod(znew,yz[mar_inds])),
+      mar_coef <- tryCatch( Matrix::solve(Matrix::crossprod(znew),
+                                          Matrix::crossprod(znew,yz[mar_inds])),
                             error=function(error_message) {
                               return(Matrix::solve(Matrix::crossprod(znew)+0.01*diag(ncol(znew)),
                                                    Matrix::crossprod(znew,yz[mar_inds])))
@@ -370,7 +395,9 @@ spar <- function(x,
               val_res = val_res, val_set = val_set,
               nus = nus, nummods = nummods,
               ycenter = ycenter, yscale = yscale, xcenter = xcenter, xscale = xscale,
-              family = family, type.measure = type.measure, type.rpm = type.rpm,
+              family = family, type.measure = type.measure,
+              type.rpm = type.rpm,
+              rp = rp,
               type.screening = type.screening)
   attr(res,"class") <- "spar"
 
