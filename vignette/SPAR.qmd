@@ -1,9 +1,9 @@
 ---
 title: "[SPAR]{.pkg}: Sparse Projected Averaged Regression in [R]{.proglang}"
 format:
-    #jss-pdf:
-    #    keep-tex: true
-    jss-html: default
+    jss-pdf:
+        keep-tex: true
+    # jss-html: default
 author:
   - name: Roman Parzer
     affiliations:
@@ -22,7 +22,10 @@ author:
     affiliations:
       - TU Wien
 abstract: |
-  [SPAR]{.pkg} is a package for building predictive generalized linear models (GLMs) with high-dimensional (HD) predictors in [R]{.proglang}. In package [SPAR]{.pkg}, probabilistic variable screening and random projection of the predictors are performed to obtain an ensemble of GLMs, which are then averaged to obtain predictions in an high-dimensional regression setting.
+  [SPAR]{.pkg} is a package for building ensembles of predictive generalized linear models (GLMs) with high-dimensional (HD) predictors in [R]{.proglang} by making use of probabilistic variable screening and random projection tools.
+  The package design is focused on extensibility, where the 
+  screening and random projections are implemented as classes with convenient 
+  constructor functions, allowing users to easily implement new procedures.
 
 keywords: [random projection, variable screening, ensemble learning, R]
 keywords-formatted: [random projection, variable screening, ensemble learning, "[R]{.proglang}"]
@@ -34,10 +37,11 @@ bibliography: SPAR.bib
 
 [SPAR]{.pkg} is a package for building predictive generalized linear models (GLMs) with high-dimensional (HD) predictors in [R]{.proglang}. In package [SPAR]{.pkg}, probabilistic variable screening and random projection of the predictors are performed to obtain an ensemble of GLMs, which are then averaged to obtain predictions in an high-dimensional regression setting.
 
-Random projection is a computationally-efficient method which linearly maps a set of points in high dimensions into a much lower-dimensional space while approximately preserving pairwise distances. For very large $p$, random projection can suffer from overfitting, as too many irrelevant predictors are being considered for prediction purposes [@Dunson2020TargRandProj]. Therefore, screening out irrelevant variables before performing the random projection is advisable in order to tackle this issue. The screening can be performed in a probabilistic fashion, by randomly sampling covariates for inclusion in the model based on probabilities proportional to an importance measure (as opposed to random subspace sampling employed in e.g., random forests). Finally, in practice the information from multiple such screening and projections can be combined by averaging, in order to reduce the variance introduced by the random sampling (of both projections and screening indicators) [@Thanei2017RPforHDR].
+Random projection is a computationally-efficient method which linearly maps a set of points in high dimensions into a much lower-dimensional space while approximately preserving pairwise distances. 
+For very large $p$, random projection can suffer from noise accumulation, as too many irrelevant predictors are being considered for prediction purposes [@Dunson2020TargRandProj]. Therefore, screening out irrelevant variables before performing the random projection is advisable in order to tackle this issue. The screening can be performed in a probabilistic fashion, by randomly sampling covariates for inclusion in the model based on probabilities proportional to an importance measure (as opposed to random subspace sampling employed in e.g., random forests). Finally, in practice, the information from multiple such screening and projections can be combined by averaging, in order to reduce the variance introduced by the random sampling (of both projections and screening indicators) [@Thanei2017RPforHDR].
 
 Several packages which provide functionality for random projections are available for [R]{.proglang}. Package [RandPro]{.pkg} [@RandProR; @SIDDHARTH2020100629] allows for four different random projection matrices to be applied to the predictor matrix before employing one of $k$\~nearest neighbor, support vector machine or naive Bayes classifier. Package [SPCAvRP]{.pkg} [@SPCAvRPR] implements sparse principal component analysis, based on the aggregation of eigenvector information from "carefully-selected" axis-aligned random projections of the sample covariance matrix. Package [RPEnsembleR]{.pkg} [@RPEnsembleR] implements the same idea of "carefully-selected" random projections when building an ensemble of classifiers.
-For [Python]{.proglang} @Python the [sklearn.random_projection]{.pkg} module implements two types of unstructured random matrix, namely Gaussian random matrix and sparse random matrix.
+For [Python]{.proglang} @Python the [sklearn.random\\_projection]{.pkg} module implements two types of unstructured random matrix, namely Gaussian random matrix and sparse random matrix.
 
 On the other hand, there are a multitude of packages dealing with variable screening on the Comprehensive [R]{.proglang} Archive Network (CRAN).
 The (iterative) sure independence screening procedure and extensions in @Fan2007SISforUHD, @Fan2010sisglms, @fan2010high are implemented in package [SIS]{.pkg} [@SISR], which also provides functionality for estimating a penalized generalized linear model or a cox regression model for the variables picked by the screening procedure.

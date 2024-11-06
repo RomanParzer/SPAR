@@ -16,6 +16,8 @@
 #' @param y quantitative response vector of length n.
 #' @param family  a \code{\link[stats]{"family"}} object used for the marginal generalized linear model,
 #'        default \code{gaussian("identity")}.
+## ' @param rp function creating a randomprojection object.
+## ' @param scrcoef unction creating a screeningcoef object
 #' @param xval optional matrix of predictor variables observations used for
 #'        validation of threshold nu and number of models; \code{x} is used
 #'        if not provided.
@@ -119,6 +121,7 @@ spar <- function(x,
                  inds = NULL,
                  RPMs = NULL,
                  rp = NULL,
+                 scrcoef = NULL,
                  control = list(rpm = list(mslow = ceiling(log(ncol(x))),
                                            msup = ceiling(nrow(x)/2)),
                                 scr = list(nscreen = 2*nrow(x), split_data = FALSE))) {
@@ -179,14 +182,17 @@ spar <- function(x,
   }
 
   yz <- scale(y,center = ycenter,scale = yscale)
-
-  scr_coef <- switch(type.screening,
-                     "ridge" = screening_ridge_lambda0(z[scr_inds,], yz = yz[scr_inds, ],
-                                                       family = family),
-                     "marglik" = screening_marglik(z[scr_inds,], yz = yz[scr_inds, ],
-                                                   family = family),
-                     "corr" = screening_corr(z[scr_inds,], yz = yz[scr_inds, ],
-                                             family = family))
+  if (is.null(scrcoef)) {
+    scr_coef <- switch(type.screening,
+                       "ridge" = screening_ridge_lambda0(z[scr_inds,], yz = yz[scr_inds, ],
+                                                         family = family),
+                       "marglik" = screening_marglik(z[scr_inds,], yz = yz[scr_inds, ],
+                                                     family = family),
+                       "corr" = screening_corr(z[scr_inds,], yz = yz[scr_inds, ],
+                                               family = family))
+  } else {
+    scr_coef <- get_scrcoef(scrcoef, data = list(x = z, y = yz))
+  }
   # if (family$family=="gaussian" & family$link=="identity") {
   #   fit_family <- "gaussian"  # why??
   #   ycenter <- mean(y)

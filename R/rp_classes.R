@@ -75,7 +75,7 @@ generate_gaussian <- function(rp, m, included_vector) {
   p <- length(included_vector)
   vals <- rnorm(m * p)
   RM <- matrix(vals, nrow = m, ncol = p)
-  RM <- Matrix::Matrix(RM, sparse = TRUE)
+  RM <- Matrix(RM, sparse = TRUE)
   return(RM)
 }
 
@@ -113,7 +113,7 @@ generate_sparse <- function(rp, m, included_vector) {
               prob = c(psi/2, 1 - psi, psi/2), replace=TRUE)
   RM <- matrix(v/sqrt(psi), nrow = m, ncol = p)
   RM <- RM[rowSums(abs(RM)) > 0, ]
-  RM <- Matrix::Matrix(RM, sparse = TRUE)
+  RM <- Matrix(RM, sparse = TRUE)
   return(RM)
 }
 
@@ -124,14 +124,16 @@ generate_sparse <- function(rp, m, included_vector) {
 #' projection matrix
 #' @return object of class randomprojection
 #' @description
-#' The entries of the matrix are generated based on CW 2013
-#'
+#' The entries of the matrix are generated based on \insertCite{Clarkson2013LowRankApprox}{SPAR}.
+#' @references{
+#'   \insertRef{Clarkson2013LowRankApprox}{SPAR}
+#' }
 #' @export
 rp_cw <- function(...) {
   out <- list(name = "rp_cw",
               generate_rp_fun = generate_cw,
               update_data_rp = update_data_cw)
-  attr <- rlang::list2(...)
+  attr <- list2(...)
   attributes(out) <- c(attributes(out), attr)
   if (is.null(attr(out, "data"))) attr(out, "data") <- FALSE
   class(out) <- c("randomprojection")
@@ -156,14 +158,15 @@ generate_cw <- function(rp, m, included_vector) {
       counter <- counter + 1
     }
   }
-  RM <- Matrix::Matrix(0, nrow = m - counter, ncol = p,sparse = TRUE)
+  RM <- Matrix(0, nrow = m - counter, ncol = p,sparse = TRUE)
   RM@i <- as.integer(goal_dims - 1)
   RM@p <- 0:p
   RM@x <- diagvals
   return(RM)
 }
 
-update_data_cw <- function(rp, data = list(x = x, y = y)) {
+update_data_cw <- function(rp, data) {
+  ## data should be list(x = x, y = y)
   if (is.null(data$x) || is.null(data$y)) stop("data must be a list of x, y.")
   z <- data$x
   yz <- data$y
@@ -178,7 +181,7 @@ update_data_cw <- function(rp, data = list(x = x, y = y)) {
   } else {
     dev.ratio_cutoff <- 0.8
   }
-  glmnet_res <- glmnet::glmnet(x=z, y=yz, family = family, alpha=0,lambda.min.ratio = min(0.01,1e-4 / lam_max))
+  glmnet_res <- glmnet(x=z, y=yz, family = family, alpha=0,lambda.min.ratio = min(0.01,1e-4 / lam_max))
   lam <- min(glmnet_res$lambda[glmnet_res$dev.ratio<=dev.ratio_cutoff])
   scr_coef <- coef(glmnet_res,s=lam)[-1]
   inc_probs <- abs(scr_coef)

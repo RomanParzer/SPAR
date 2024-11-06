@@ -25,7 +25,8 @@ Imports:
     tidyr,
     tidyselect
     Rdpack,
-    rlang
+    rlang,
+    glmnet
 RdMacros: Rdpack
 Encoding: UTF-8
 LazyData: true
