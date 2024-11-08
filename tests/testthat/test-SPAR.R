@@ -19,7 +19,8 @@ test_that("Coef is more sparse for higher threshold", {
   y <- rnorm(10)
   spar_res <- spar(x,y)
   sparcoef <- coef(spar_res)
-  sparcoef2 <- coef(spar_res,lambda = spar_res$val_res$lam[which(spar_res$val_res$lam==sparcoef$lambda)+1])
+  sparcoef2 <- coef(spar_res,
+                    nu = spar_res$val_res$nu[which(spar_res$val_res$nu==sparcoef$nu)+1])
   expect_equal(all(which(sparcoef$beta==0) %in% which(sparcoef2$beta==0)),TRUE)
 })
 
@@ -45,10 +46,10 @@ test_that("Returned coef and preds are correct for fixed screening and projectio
   sparcoef <- coef(spar_res)
   pred <- predict(spar_res,xnew=xnew)
 
-  expect_equal(sparcoef$lambda,0.002324331,tolerance = 1e-6)
+  expect_equal(sparcoef$nu,0.002432288,tolerance = 1e-6)
   expect_equal(sparcoef$beta[53],0)
-  expect_equal(sparcoef$beta[1],0.1384109,tolerance = 1e-6)
-  expect_equal(pred[1],20.78687,tolerance = 1e-5)
+  expect_equal(sparcoef$beta[1],0.1355489, tolerance = 1e-6)
+  expect_equal(pred[1],20.62153,tolerance = 1e-5)
 })
 
 test_that("Returned coef and preds are correct for fixed screening and projections for binomial(logit)", {
@@ -73,10 +74,10 @@ test_that("Returned coef and preds are correct for fixed screening and projectio
   sparcoef <- coef(spar_res)
   pred <- predict(spar_res,xnew=xnew)
 
-  expect_equal(sparcoef$lambda,0.009781171,tolerance = 1e-6)
+  expect_equal(sparcoef$nu,0.009446247,tolerance = 1e-6)
   expect_equal(sparcoef$beta[11],0)
-  expect_equal(sparcoef$beta[1],0.04584074,tolerance = 1e-6)
-  expect_equal(pred[1],0.9675592,tolerance = 1e-5)
+  expect_equal(sparcoef$beta[1],0.05079038,tolerance = 1e-6)
+  expect_equal(pred[1],0.9738668,tolerance = 1e-5)
 })
 
 test_that("Columns with zero sd get ceofficient 0", {

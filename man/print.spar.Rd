@@ -7,7 +7,7 @@
 \method{print}{spar}(x, ...)
 }
 \arguments{
-\item{x}{result of spar function of class "spar".}
+\item{x}{result of  \code{spar()} function of class  \code{"spar"}.}
 
 \item{...}{further arguments passed to or from other methods}
 }

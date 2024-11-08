@@ -7,7 +7,7 @@
 \method{print}{spar.cv}(x, ...)
 }
 \arguments{
-\item{x}{result of spar.cv function of class "spar.cv".}
+\item{x}{result of  \code{spar.cv()} function of class  \code{"spar.cv"}.}
 
 \item{...}{further arguments passed to or from other methods}
 }
