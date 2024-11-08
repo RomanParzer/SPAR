@@ -67,8 +67,8 @@ spar.cv <- function(x, y,
                     rp = NULL,
                     scrcoef = NULL,
                     nfolds = 10,
-                    nlambda = 20,
-                    lambdas = NULL,
+                    nnu = 20,
+                    nus = NULL,
                     nummods = c(20),
                     measure = c("deviance","mse","mae","class","1-auc")
 ) {
@@ -83,7 +83,7 @@ spar.cv <- function(x, y,
 
   SPARres <- spar(x, y, family = family,
                   rp = rp, scrcoef = scrcoef,
-                  nlambda = nlambda,
+                  nnu = nnu,
                   nummods = nummods,
                   measure = measure)
 
@@ -96,14 +96,14 @@ spar.cv <- function(x, y,
                         xval = x[fold_ind,SPARres$xscale>0],
                         yval = y[fold_ind],
                         rp = rp, scrcoef = scrcoef,
-                        lambdas = SPARres$lambdas,
+                        nus = SPARres$nus,
                         inds = SPARres$inds, RPMs = SPARres$RPMs,
                         nummods = nummods,
                         measure = measure)
     val_res <- rbind(val_res,foldSPARres$val_res)
   }
 
-  val_sum <- dplyr::group_by(val_res, nlam, lam, nummod)
+  val_sum <- dplyr::group_by(val_res, nnu, nu, nummod)
   suppressMessages(
     val_sum <- summarise(val_sum,
                          mMeas = mean(Meas,na.rm=TRUE),
@@ -114,7 +114,7 @@ spar.cv <- function(x, y,
   res <- list(betas = SPARres$betas, intercepts = SPARres$intercepts,
               scr_coef = SPARres$scr_coef, inds = SPARres$inds,
               RPMs = SPARres$RPMs,
-              val_sum = val_sum, lambdas = SPARres$lambdas,
+              val_sum = val_sum, nus = SPARres$nus,
               nummods=nummods,
               family = family,
               measure = measure,

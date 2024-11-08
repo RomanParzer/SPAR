@@ -100,7 +100,7 @@ spar <- function(x, y,
                  rp = NULL,
                  scrcoef = NULL,
                  xval = NULL, yval = NULL,
-                 nlambda = 20, lambdas = NULL,
+                 nnu = 20, nus = NULL,
                  nummods = c(20),
                  measure = c("deviance","mse","mae","class","1-auc"),
                  inds = NULL, RPMs = NULL) {
@@ -300,19 +300,19 @@ spar <- function(x, y,
 
   }
 
-  if (is.null(lambdas)) {
-    if (nlambda>1) {
-      lambdas <- c(0, quantile(abs(betas_std@x),
-                               probs=seq_len(nlambda-1)/(nlambda-1)))
+  if (is.null(nus)) {
+    if (nnu>1) {
+      nus <- c(0, quantile(abs(betas_std@x),
+                               probs=seq_len(nnu-1)/(nnu-1)))
     } else {
-      lambdas <- 0
+      nus <- 0
     }
   } else {
-    nlambda <- length(lambdas)
+    nnu <- length(nus)
   }
 
   ## Validation set
-  val_res <- data.frame(nlam = NULL, lam = NULL,
+  val_res <- data.frame(nnu = NULL, nu = NULL,
                         nummod = NULL,numAct = NULL, Meas = NULL)
   if (!is.null(yval) && !is.null(xval)) {
     val_set <- TRUE
@@ -355,8 +355,8 @@ spar <- function(x, y,
   for (nummod in nummods) {
     coef <- betas_std[,1:nummod,drop=FALSE]
     abscoef <- abs(coef)
-    tabres <- sapply(1:nlambda, function(l){
-      thresh <- lambdas[l]
+    tabres <- sapply(1:nnu, function(l){
+      thresh <- nus[l]
       tmp_coef <- coef
       tmp_coef[abscoef<thresh] <- 0
 
@@ -372,7 +372,7 @@ spar <- function(x, y,
         val.meas(yval,eta_hat)
       )
     })
-    rownames(tabres) <- c("nlam","lam","nummod","numAct","Meas")
+    rownames(tabres) <- c("nnu","nu","nummod","numAct","Meas")
     val_res <- rbind(val_res,data.frame(t(tabres)))
   }
   betas <- Matrix(data=c(0),p,max_num_mod,sparse = TRUE)
@@ -381,7 +381,7 @@ spar <- function(x, y,
   res <- list(betas = betas, intercepts = intercepts,
               scr_coef = scr_coef, inds = inds, RPMs = RPMs,
               val_res = val_res, val_set = val_set,
-              lambdas = lambdas, nummods = nummods,
+              nus = nus, nummods = nummods,
               ycenter = ycenter, yscale = yscale,
               xcenter = xcenter, xscale = xscale,
               family = family,
@@ -429,7 +429,7 @@ coef.spar <- function(object,
       stop("Number of models needs to be among the previously fitted values when nu is not provided!")
     }
     tmp_val_res <- object$val_res[object$val_res$nummod==nummod,]
-    nu <- tmp_val_res$lam[which.min(tmp_val_res$Meas)]
+    nu <- tmp_val_res$nu[which.min(tmp_val_res$Meas)]
   } else {
     if (length(nummod)!=1 | length(nu)!=1) {
       stop("Length of nummod and nu must be 1!")
@@ -563,22 +563,22 @@ plot.spar <- function(x,
       tmp_df <- subset(spar_res$val_res,nummod==mynummod)
       ind_min <- which.min(tmp_df$Meas)
 
-      res <- ggplot2::ggplot(data = tmp_df, ggplot2::aes(x=tmp_df$nlam,y=tmp_df$Meas)) +
+      res <- ggplot2::ggplot(data = tmp_df, ggplot2::aes(x=tmp_df$nnu,y=tmp_df$Meas)) +
         ggplot2::geom_point() +
         ggplot2::geom_line() +
-        # ggplot2::scale_x_continuous(breaks=seq(1,nrow(spar_res$val_res),1),labels=round(spar_res$val_res$lam,3)) +
-        ggplot2::scale_x_continuous(breaks=seq(1,nrow(spar_res$val_res),2),labels=formatC(spar_res$val_res$lam[seq(1,nrow(spar_res$val_res),2)], format = "e", digits = 1)) +
+        # ggplot2::scale_x_continuous(breaks=seq(1,nrow(spar_res$val_res),1),labels=round(spar_res$val_res$nu,3)) +
+        ggplot2::scale_x_continuous(breaks=seq(1,nrow(spar_res$val_res),2),labels=formatC(spar_res$val_res$nu[seq(1,nrow(spar_res$val_res),2)], format = "e", digits = 1)) +
         ggplot2::labs(x=expression(nu),y=spar_res$type.measure) +
-        ggplot2::geom_point(data=data.frame(x=tmp_df$nlam[ind_min],y=tmp_df$Meas[ind_min]),ggplot2::aes(x=x,y=y),col="red") +
+        ggplot2::geom_point(data=data.frame(x=tmp_df$nnu[ind_min],y=tmp_df$Meas[ind_min]),ggplot2::aes(x=x,y=y),col="red") +
         ggplot2::ggtitle(paste0(tmp_title,mynummod))
     } else {
       if (is.null(nu)) {
-        nu <- spar_res$val_res$lam[which.min(spar_res$val_res$Meas)]
+        nu <- spar_res$val_res$nu[which.min(spar_res$val_res$Meas)]
         tmp_title <- "Fixed optimal "
       } else {
         tmp_title <- "Fixed given "
       }
-      tmp_df <- subset(spar_res$val_res,lam==nu)
+      tmp_df <- subset(spar_res$val_res,nu==nu)
       ind_min <- which.min(tmp_df$Meas)
 
       res <- ggplot2::ggplot(data = tmp_df,ggplot2::aes(x=tmp_df$nummod,y=tmp_df$Meas)) +
@@ -600,22 +600,22 @@ plot.spar <- function(x,
       tmp_df <- subset(spar_res$val_res,nummod==mynummod)
       ind_min <- which.min(tmp_df$Meas)
 
-      res <- ggplot2::ggplot(data = tmp_df,ggplot2::aes(x=nlam,y=numAct)) +
+      res <- ggplot2::ggplot(data = tmp_df,ggplot2::aes(x=nnu,y=numAct)) +
         ggplot2::geom_point() +
         ggplot2::geom_line() +
-        # ggplot2::scale_x_continuous(breaks=seq(1,nrow(spar_res$val_res),1),labels=round(spar_res$val_res$lam,3)) +
-        ggplot2::scale_x_continuous(breaks=seq(1,nrow(spar_res$val_res),2),labels=formatC(spar_res$val_res$lam[seq(1,nrow(spar_res$val_res),2)], format = "e", digits = 1)) +
+        # ggplot2::scale_x_continuous(breaks=seq(1,nrow(spar_res$val_res),1),labels=round(spar_res$val_res$nu,3)) +
+        ggplot2::scale_x_continuous(breaks=seq(1,nrow(spar_res$val_res),2),labels=formatC(spar_res$val_res$nu[seq(1,nrow(spar_res$val_res),2)], format = "e", digits = 1)) +
         ggplot2::labs(x=expression(nu)) +
-        ggplot2::geom_point(data=data.frame(x=tmp_df$nlam[ind_min],y=tmp_df$numAct[ind_min]),ggplot2::aes(x=x,y=y),col="red")+
+        ggplot2::geom_point(data=data.frame(x=tmp_df$nnu[ind_min],y=tmp_df$numAct[ind_min]),ggplot2::aes(x=x,y=y),col="red")+
         ggplot2::ggtitle(paste0(tmp_title,mynummod))
     } else {
       if (is.null(nu)) {
-        nu <- spar_res$val_res$lam[which.min(spar_res$val_res$Meas)]
+        nu <- spar_res$val_res$nu[which.min(spar_res$val_res$Meas)]
         tmp_title <- "Fixed optimal "
       } else {
         tmp_title <- "Fixed given "
       }
-      tmp_df <- subset(spar_res$val_res,lam==nu)
+      tmp_df <- subset(spar_res$val_res,nu==nu)
       ind_min <- which.min(tmp_df$Meas)
 
       res <- ggplot2::ggplot(data = tmp_df,ggplot2::aes(x=nummod,y=numAct)) +
