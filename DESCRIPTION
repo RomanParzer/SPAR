@@ -21,10 +21,8 @@ Imports:
     ROCR,
     Rdpack,
     ggplot2,
-    glmnet,
     tidyr,
     tidyselect,
-    Rdpack,
     rlang,
     glmnet
 RdMacros: Rdpack

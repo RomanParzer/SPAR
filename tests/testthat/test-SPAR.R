@@ -2,7 +2,7 @@
 test_that("Results has right class", {
   x <- matrix(rnorm(300), ncol = 30)
   y <- rnorm(10)
-  spar_res <- spar(x,y)
+  spar_res <- spar(x, y)
   expect_equal(class(spar_res),"spar")
 })
 
@@ -42,9 +42,11 @@ test_that("Returned coef and preds are correct for fixed screening and projectio
   RP2@p <- 0:nsc
   RP2@x <- (-1)^(1:nsc)
 
-  spar_res <- spar(x,y,nummods=c(2),inds = list(1:(2*nrow(x)),500+1:(2*nrow(x))),RPMs = list(RP1,RP2))
+  spar_res <- spar(x,y,nummods=c(2),inds = list(1:(2*nrow(x)),
+                                                500+1:(2*nrow(x))),
+                   RPMs = list(RP1,RP2))
   sparcoef <- coef(spar_res)
-  pred <- predict(spar_res,xnew=xnew)
+  pred     <- predict(spar_res,xnew=xnew)
 
   expect_equal(sparcoef$nu,0.002432288,tolerance = 1e-6)
   expect_equal(sparcoef$beta[53],0)

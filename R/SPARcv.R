@@ -64,8 +64,8 @@
 #' @export
 spar.cv <- function(x, y,
                     family = gaussian("identity"),
-                    rp = NULL,
-                    scrcoef = NULL,
+                    rp = rp_cw(data = TRUE),
+                    scrcoef = screen_ridge(),
                     nfolds = 10,
                     nnu = 20,
                     nus = NULL,
@@ -105,7 +105,7 @@ spar.cv <- function(x, y,
 
   val_sum <- dplyr::group_by(val_res, nnu, nu, nummod)
   suppressMessages(
-    val_sum <- summarise(val_sum,
+    val_sum <-  dplyr::summarise(val_sum,
                          mMeas = mean(Meas,na.rm=TRUE),
                          sdMeas = sd(Meas,na.rm=TRUE),
                          mNumAct = mean(numAct,na.rm=TRUE))
@@ -342,7 +342,7 @@ plot.spar.cv <- function(x,
         ggplot2::geom_line() +
         # ggplot2::scale_x_continuous(breaks=seq(1,nrow(my_val_sum),1),labels=round(my_val_sum$nu,3)) +
         ggplot2::scale_x_continuous(breaks=seq(1,nrow(my_val_sum),2),labels=formatC(my_val_sum$nu[seq(1,nrow(my_val_sum),2)], format = "e", digits = 1)) +
-        ggplot2::labs(x=expression(nu),y=spar_res$type.measure) +
+        ggplot2::labs(x=expression(nu),y=spar_res$measure) +
         ggplot2::geom_point(data=data.frame(x=tmp_df$nnu[ind_min],y=tmp_df$Meas[ind_min]),ggplot2::aes(x=x,y=y),col="red") +
         ggplot2::ggtitle(paste0(tmp_title,mynummod)) +
         ggplot2::geom_ribbon(ggplot2::aes(ymin=Meas-sdMeas,ymax=Meas+sdMeas),alpha=0.2,linetype=2,show.legend = FALSE) +
@@ -369,7 +369,7 @@ plot.spar.cv <- function(x,
       res <- ggplot2::ggplot(data = tmp_df,ggplot2::aes(x=nummod,y=Meas)) +
         ggplot2::geom_point() +
         ggplot2::geom_line() +
-        ggplot2::labs(y=spar_res$type.measure) +
+        ggplot2::labs(y=spar_res$measure) +
         ggplot2::geom_point(data=data.frame(x=tmp_df$nummod[ind_min],y=tmp_df$Meas[ind_min]),ggplot2::aes(x=x,y=y),col="red")+
         ggplot2::ggtitle(substitute(paste(txt,nu,"=",v),list(txt=tmp_title,v=round(nu,3)))) +
         ggplot2::geom_ribbon(ggplot2::aes(ymin=Meas-sdMeas,ymax=Meas+sdMeas),alpha=0.2,linetype=2,show.legend = FALSE)+

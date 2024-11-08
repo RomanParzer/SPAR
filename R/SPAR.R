@@ -97,8 +97,8 @@
 #'
 spar <- function(x, y,
                  family = gaussian("identity"),
-                 rp = NULL,
-                 scrcoef = NULL,
+                 rp = rp_cw(data=TRUE),
+                 scrcoef = screen_ridge(),
                  xval = NULL, yval = NULL,
                  nnu = 20, nus = NULL,
                  nummods = c(20),
@@ -274,7 +274,7 @@ spar <- function(x, y,
     } else {
       RPM <- RPMs[[i]]
       if (!is.null(rp$update_rpm_w_data)) {
-        RPM <- rp$update_rpm_w_data(RPM, rp)
+        RPM <- rp$update_rpm_w_data(RPM, rp, included_vector = ind_use)
       }
     }
 
@@ -568,7 +568,7 @@ plot.spar <- function(x,
         ggplot2::geom_line() +
         # ggplot2::scale_x_continuous(breaks=seq(1,nrow(spar_res$val_res),1),labels=round(spar_res$val_res$nu,3)) +
         ggplot2::scale_x_continuous(breaks=seq(1,nrow(spar_res$val_res),2),labels=formatC(spar_res$val_res$nu[seq(1,nrow(spar_res$val_res),2)], format = "e", digits = 1)) +
-        ggplot2::labs(x=expression(nu),y=spar_res$type.measure) +
+        ggplot2::labs(x=expression(nu),y=spar_res$measure) +
         ggplot2::geom_point(data=data.frame(x=tmp_df$nnu[ind_min],y=tmp_df$Meas[ind_min]),ggplot2::aes(x=x,y=y),col="red") +
         ggplot2::ggtitle(paste0(tmp_title,mynummod))
     } else {
@@ -584,7 +584,7 @@ plot.spar <- function(x,
       res <- ggplot2::ggplot(data = tmp_df,ggplot2::aes(x=tmp_df$nummod,y=tmp_df$Meas)) +
         ggplot2::geom_point() +
         ggplot2::geom_line() +
-        ggplot2::labs(y=spar_res$type.measure) +
+        ggplot2::labs(y=spar_res$measure) +
         ggplot2::geom_point(data=data.frame(x=tmp_df$nummod[ind_min],y=tmp_df$Meas[ind_min]),
                             ggplot2::aes(x=x,y=y),col="red")+
         ggplot2::ggtitle(substitute(paste(txt,nu,"=",v),list(txt=tmp_title,v=round(nu,3))))

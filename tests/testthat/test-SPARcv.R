@@ -43,7 +43,7 @@ test_that("Columns with zero sd get ceofficient 0", {
   x[,c(1,11,111)] <- 2
   y <- example_data$y
 
-  spar_res <- spar.cv(x,y,type.measure = "mae")
+  spar_res <- spar.cv(x,y,measure = "mae")
   sparcoef <- coef(spar_res)
   expect_equal(sparcoef$beta[c(1,11,111)],c(0,0,0))
 })

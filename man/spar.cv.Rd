@@ -8,15 +8,13 @@ spar.cv(
   x,
   y,
   family = gaussian("identity"),
+  rp = rp_cw(data = TRUE),
+  scrcoef = screen_ridge(),
   nfolds = 10,
   nnu = 20,
   nus = NULL,
   nummods = c(20),
-  type.measure = c("deviance", "mse", "mae", "class", "1-auc"),
-  type.rpm = c("cwdatadriven", "cw", "gaussian", "sparse"),
-  type.screening = c("ridge", "marglik", "corr"),
-  control = list(rpm = list(mslow = ceiling(log(ncol(x))), msup = ceiling(nrow(x)/2)),
-    scr = list(nscreen = 2 * nrow(x), split_data = FALSE))
+  measure = c("deviance", "mse", "mae", "class", "1-auc")
 )
 }
 \arguments{
@@ -26,6 +24,10 @@ spar.cv(
 
 \item{family}{a \code{\link[stats]{"family"}} object used for the marginal generalized linear model,
 default \code{gaussian("identity")}.}
+
+\item{rp}{function creating a randomprojection object.}
+
+\item{scrcoef}{unction creating a screeningcoef object}
 
 \item{nfolds}{number of folds to use for cross-validation; should be greater than 2, defaults to 10.}
 
@@ -39,35 +41,12 @@ marginal coefficient are used.}
 \item{nummods}{vector of numbers of marginal models to consider for
 validation; defaults to \code{c(20)}.}
 
-\item{type.measure}{loss to use for validation; defaults to \code{"deviance"}
+\item{measure}{loss to use for validation; defaults to \code{"deviance"}
 available for all families. Other options are \code{"mse"} or \code{"mae"}
 (between responses and predicted means, for all families),
 \code{"class"} (misclassification error) and
 \code{"1-auc"} (one minus area under the ROC curve) both just for
 binomial family.}
-
-\item{type.rpm}{type of random projection matrix to be employed;
-one of \code{"cwdatadriven"},
-\code{"cw"} \insertCite{Clarkson2013LowRankApprox}{SPAR},
-\code{"gaussian"}, \code{"sparse"} \insertCite{ACHLIOPTAS2003JL}{SPAR};
-defaults to \code{"cwdatadriven"}.}
-
-\item{type.screening}{type of screening coefficients; one of \code{"ridge"},
-\code{"marglik"}, \code{"corr"}; defaults to \code{"ridge"} which is
-based on the ridge coefficients where the penalty converges to zero.}
-
-\item{control}{a list two elements: \code{rpm} and \code{scr}.
-Element \code{rpm} contains a list of optional arguments to be passed to
-functions creating the random projection matrices. Here \code{mslow} is a
-lower bound for uniform random goal dimensions in
-marginal models; defaults to \eqn{\log(p)};
-\code{msup} is upper bound for uniform random goal dimensions in marginal models;
-defaults to n/2.
-Element \code{scr} contains a list of optional arguments to be passed to
-functions performing screening: \code{nscreen} is the number of variables to keep after screening 2n;
-\code{split_data} logical to indicate whether data for calculation of screening coefficient
-and fitting of mar mods should be split 1/4 to 3/4 to avoid overfitting;
-default \code{FALSE}.}
 }
 \value{
 object of class \code{"spar.cv"} with elements

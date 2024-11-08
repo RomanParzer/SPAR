@@ -11,7 +11,8 @@ rp_gaussian(...)
 projection matrix}
 }
 \value{
-object of class randomprojection
+object of class randomprojection with is a list with elements name,
+generate_rp_fun, update_data_fun, control
 }
 \description{
 No arguments need to be passed. The entries of the matrix are generated from

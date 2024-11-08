@@ -4,7 +4,13 @@
 \alias{constructor_rp}
 \title{Constructor function for building randomprojection objects}
 \usage{
-constructor_rp(name, generate_fun, update_data_fun = NULL)
+constructor_rp(
+  name,
+  generate_fun,
+  update_data_fun = NULL,
+  update_rpm_w_data = NULL,
+  control = list(mslow = NULL, msup = NULL)
+)
 }
 \arguments{
 \item{name}{character}
@@ -21,6 +27,16 @@ information from the data. This
 function should have with arguments \code{rp}, which is a randomprojection
 object and \code{data}, which is a list containing \code{x} (the matrix of predictors)
 and \code{y} the vector of responses.}
+
+\item{update_rpm_w_data}{function for updating the random projection matrix with data.
+This can be used for the case where a list of random projection matrices is
+provided by argument \code{RPMs}. In this case, the random structure is kept
+fixed, but the data-dependent part gets updated with the provided data. Defaults
+to NULL. If not provided, the values of the provided RPMs do not change.}
+
+\item{control}{list of controls for random projection. Can include minimum and
+maximum dimension for the projection defaults to
+\code{list(mslow = NULL, msup = NULL)}}
 }
 \value{
 a function which in turn creates an object of class randomprojection
