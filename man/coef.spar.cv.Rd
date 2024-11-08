@@ -4,10 +4,10 @@
 \alias{coef.spar.cv}
 \title{coef.spar.cv}
 \usage{
-\method{coef}{spar.cv}(spar_res, opt_par = c("best", "1se"), nummod = NULL, lambda = NULL)
+\method{coef}{spar.cv}(object, opt_par = c("best", "1se"), nummod = NULL, lambda = NULL, ...)
 }
 \arguments{
-\item{spar_res}{result of spar.cv function of class "spar.cv".}
+\item{object}{result of spar.cv function of class "spar.cv".}
 
 \item{opt_par}{one of c("1se","best"), chooses whether to select the best pair of lambdas and nummods according to CV-Meas, or the sparsest solution within one sd of that optimal CV-Meas;
 ignored when nummod and lambda are given}
@@ -15,6 +15,8 @@ ignored when nummod and lambda are given}
 \item{nummod}{optional number of models used to form coefficients}
 
 \item{lambda}{optional threshold level used to form coefficients}
+
+\item{...}{further arguments passed to or from other methods}
 }
 \value{
 List of coefficients with elements

@@ -42,7 +42,7 @@ spar(
 \item{type.measure}{loss to use for validation; defaults to "deviance" available for all families. Other options are "mse" or "mae" (between responses and predicted means, for all families),
 "class" (misclassification error) and "1-auc" (one minus area under the ROC curve) both just for "binomial" family.}
 
-\item{type.rpm}{type of random projection matrix to be employed; one of "cwdatadriven", "cw", "gaussian", "sparse"; defaults to "cwdatadriven".}
+\item{type.rpm}{type of random projection matrix to be employed; one of "cwdatadriven", "cw" \insertCite{Clarkson2013LowRankApprox}{SPAR}, "gaussian", "sparse" \insertCite{ACHLIOPTAS2003JL}{SPAR}; defaults to "cwdatadriven".}
 
 \item{type.screening}{type of screening coefficients; one of "ridge", "marglik", "corr"; defaults to "ridge" which is based on the ridge coefficients where the penalty converges to zero.}
 
@@ -71,8 +71,10 @@ object of class "spar" with elements
 }
 }
 \description{
-Apply Sparse Projected Averaged Regression to High-dimensional Data (see Parzer, Vana-Guer and Filzmoser 2023).
-This function performs the procedure for given thresholds lambda and numbers of marginal models, and acts as a help-function for the full cross-validated procedure \link{spar.cv}.
+Apply Sparse Projected Averaged Regression to High-dimensional Data
+\insertCite{parzer2024lm}{SPAR} \insertCite{parzer2024glms}{SPAR}.
+This function performs the procedure for given thresholds lambda and numbers
+of marginal models, and acts as a help-function for the full cross-validated procedure \link{spar.cv}.
 }
 \examples{
 \dontrun{
@@ -86,6 +88,17 @@ plot(spar_res)
 plot(spar_res,"Val_Meas","nummod")
 plot(spar_res,"Val_numAct","lambda")
 plot(spar_res,"coefs",prange=c(1,400))}
+}
+\references{
+{
+\insertRef{parzer2024lm}{SPAR}
+
+\insertRef{parzer2024glms}{SPAR}
+
+\insertRef{Clarkson2013LowRankApprox}{SPAR}
+
+\insertRef{ACHLIOPTAS2003JL}{SPAR}
+}
 }
 \seealso{
 \link{spar.cv},\link{coef.spar},\link{predict.spar},\link{plot.spar},\link{print.spar}

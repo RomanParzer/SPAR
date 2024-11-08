@@ -6,8 +6,10 @@
 
 #' Sparse Projected Averaged Regression
 #'
-#' Apply Sparse Projected Averaged Regression to High-dimensional Data (see Parzer, Vana-Guer and Filzmoser 2023).
-#' This function performs the procedure for given thresholds lambda and numbers of marginal models, and acts as a help-function for the full cross-validated procedure [spar.cv].
+#' Apply Sparse Projected Averaged Regression to High-dimensional Data
+#' \insertCite{parzer2024lm}{SPAR} \insertCite{parzer2024glms}{SPAR}.
+#' This function performs the procedure for given thresholds lambda and numbers
+#' of marginal models, and acts as a help-function for the full cross-validated procedure [spar.cv].
 #'
 #' @param x n x p numeric matrix of predictor variables.
 #' @param y quantitative response vector of length n.
@@ -19,7 +21,7 @@
 #' @param nummods vector of numbers of marginal models to consider for validation; defaults to c(20).
 #' @param type.measure loss to use for validation; defaults to "deviance" available for all families. Other options are "mse" or "mae" (between responses and predicted means, for all families),
 #' "class" (misclassification error) and "1-auc" (one minus area under the ROC curve) both just for "binomial" family.
-#' @param type.rpm  type of random projection matrix to be employed; one of "cwdatadriven", "cw", "gaussian", "sparse"; defaults to "cwdatadriven".
+#' @param type.rpm  type of random projection matrix to be employed; one of "cwdatadriven", "cw" \insertCite{Clarkson2013LowRankApprox}{SPAR}, "gaussian", "sparse" \insertCite{ACHLIOPTAS2003JL}{SPAR}; defaults to "cwdatadriven".
 #' @param type.screening  type of screening coefficients; one of "ridge", "marglik", "corr"; defaults to "ridge" which is based on the ridge coefficients where the penalty converges to zero.
 #' @param inds optional list of index-vectors corresponding to variables kept after screening in each marginal model of length max(nummods),dimensions need to fit those of RPMs.
 #' @param RPMs optional list of sparse CW projection matrices used in each marginal model of length max(nummods), diagonal elements will be overwritten with a coefficient only depending on the given x and y.
@@ -40,6 +42,15 @@
 #'  \item xcenter p-vector of empirical means of initial predictor variables
 #'  \item xscale p-vector of empirical standard deviations of initial predictor variables
 #' }
+#' @references{
+#'   \insertRef{parzer2024lm}{SPAR}
+#'
+#'   \insertRef{parzer2024glms}{SPAR}
+#'
+#'   \insertRef{Clarkson2013LowRankApprox}{SPAR}
+#'
+#'   \insertRef{ACHLIOPTAS2003JL}{SPAR}
+#' }
 #' @examples
 #' \dontrun{
 #' data("example_data")
@@ -54,7 +65,9 @@
 #' plot(spar_res,"coefs",prange=c(1,400))}
 #' @seealso [spar.cv],[coef.spar],[predict.spar],[plot.spar],[print.spar]
 #' @export
-#' @importFrom stats coef fitted gaussian predict rnorm quantile residuals sd var
+#' @importFrom stats coef fitted gaussian predict rnorm quantile residuals sd var cor glm
+#' @importFrom Matrix Matrix solve crossprod tcrossprod rowMeans
+#' @importFrom Rdpack reprompt
 spar <- function(x,
                  y,
                  family = gaussian("identity"),
@@ -331,9 +344,10 @@ spar <- function(x,
 #' coef.spar
 #'
 #' Extract coefficients from spar object
-#' @param spar_res result of spar function of class "spar".
+#' @param object result of spar function of class "spar".
 #' @param nummod number of models used to form coefficients; value with minimal validation Meas is used if not provided.
 #' @param lambda threshold level used to form coefficients; value with minimal validation Meas is used if not provided.
+#' @param ... further arguments passed to or from other methods
 #' @return List of coefficients with elements
 #' \itemize{
 #'  \item intercept
@@ -343,25 +357,25 @@ spar <- function(x,
 #' }
 #' @export
 
-coef.spar <- function(spar_res,
+coef.spar <- function(object,
                       nummod = NULL,
-                      lambda = NULL) {
+                      lambda = NULL, ...) {
   if (is.null(nummod) & is.null(lambda)) {
-    best_ind <- which.min(spar_res$val_res$Meas)
-    par <- spar_res$val_res[best_ind,]
+    best_ind <- which.min(object$val_res$Meas)
+    par <- object$val_res[best_ind,]
     nummod <- par$nummod
     lambda <- par$lam
   } else if (is.null(nummod)) {
-    if (!lambda %in% spar_res$val_res$lam) {
+    if (!lambda %in% object$val_res$lam) {
       stop("Lambda needs to be among the previously fitted values when nummod is not provided!")
     }
-    tmp_val_res <- spar_res$val_res[spar_res$val_res$lam==lambda,]
+    tmp_val_res <- object$val_res[object$val_res$lam==lambda,]
     nummod <- tmp_val_res$nummod[which.min(tmp_val_res$Meas)]
   } else if (is.null(lambda)) {
-    if (!nummod %in% spar_res$val_res$nummod) {
+    if (!nummod %in% object$val_res$nummod) {
       stop("Number of models needs to be among the previously fitted values when lambda is not provided!")
     }
-    tmp_val_res <- spar_res$val_res[spar_res$val_res$nummod==nummod,]
+    tmp_val_res <- object$val_res[object$val_res$nummod==nummod,]
     lambda <- tmp_val_res$lam[which.min(tmp_val_res$Meas)]
   } else {
     if (length(nummod)!=1 | length(lambda)!=1) {
@@ -369,71 +383,72 @@ coef.spar <- function(spar_res,
     }
   }
 
-  if (nummod > ncol(spar_res$betas)) {
+  if (nummod > ncol(object$betas)) {
     warning("Number of models is too high, maximum of fitted is used instead!")
-    nummod <- ncol(spar_res$betas)
+    nummod <- ncol(object$betas)
   }
 
   # calc for chosen parameters
-  final_coef <- spar_res$betas[spar_res$xscale>0,1:nummod,drop=FALSE]
+  final_coef <- object$betas[object$xscale>0,1:nummod,drop=FALSE]
   final_coef[abs(final_coef)<lambda] <- 0
-  p <- length(spar_res$xscale)
+  p <- length(object$xscale)
   beta <- numeric(p)
-  beta[spar_res$xscale>0] <- spar_res$yscale*Matrix::rowMeans(final_coef)/(spar_res$xscale[spar_res$xscale>0])
-  intercept <- spar_res$ycenter + mean(spar_res$intercepts[1:nummod]) - sum(spar_res$xcenter*beta)
+  beta[object$xscale>0] <- object$yscale*Matrix::rowMeans(final_coef)/(object$xscale[object$xscale>0])
+  intercept <- object$ycenter + mean(object$intercepts[1:nummod]) - sum(object$xcenter*beta)
   return(list(intercept=intercept,beta=beta,nummod=nummod,lambda=lambda))
 }
 
 #' predict.spar
 #'
 #' Predict responses for new predictors from spar object
-#' @param spar_res result of spar function of class "spar".
+#' @param object result of spar function of class "spar".
 #' @param xnew matrix of new predictor variables; must have same number of columns as x.
 #' @param type the type of required predictions; either on response level (default) or on link level
 #' @param avg_type type of averaging the marginal models; either on link (default) or on response level
 #' @param nummod number of models used to form coefficients; value with minimal validation Meas is used if not provided.
 #' @param lambda threshold level used to form coefficients; value with minimal validation Meas is used if not provided.
 #' @param coef optional; result of coef.spar, can be used if coef.spar has already been called.
+#' @param ... further arguments passed to or from other methods
 #' @return Vector of predictions
 #' @export
 
-predict.spar <- function(spar_res,
+predict.spar <- function(object,
                          xnew,
                          type = c("response","link"),
                          avg_type = c("link","response"),
                          nummod = NULL,
                          lambda = NULL,
-                         coef = NULL) {
-  if (ncol(xnew)!=length(spar_res$xscale)) {
+                         coef = NULL, ...) {
+  if (ncol(xnew)!=length(object$xscale)) {
     stop("xnew must have same number of columns as initial x!")
   }
   type <- match.arg(type)
   avg_type <- match.arg(avg_type)
   if (is.null(coef)) {
-    coef <- coef(spar_res,nummod,lambda)
+    coef <- coef(object,nummod,lambda)
   }
   if (avg_type=="link") {
     if (type=="link") {
       res <- as.numeric(xnew%*%coef$beta + coef$intercept)
     } else {
       eta <- as.numeric(xnew%*%coef$beta + coef$intercept)
-      res <- spar_res$family$linkinv(eta)
+      res <- object$family$linkinv(eta)
     }
   } else {
     if (type=="link") {
       res <- as.numeric(xnew%*%coef$beta + coef$intercept)
     } else {
       # do diff averaging
-      final_coef <- spar_res$betas[spar_res$xscale>0,1:coef$nummod,drop=FALSE]
+      final_coef <- object$betas[object$xscale>0,1:coef$nummod,drop=FALSE]
       final_coef[abs(final_coef)<coef$lambda] <- 0
 
       preds <- sapply(1:coef$nummod,function(j){
         tmp_coef <- final_coef[,j]
-        beta <- numeric(length(spar_res$xscale))
-        beta[spar_res$xscale>0] <- spar_res$yscale*tmp_coef/(spar_res$xscale[spar_res$xscale>0])
-        intercept <- spar_res$ycenter + spar_res$intercepts[j]  - sum(spar_res$xcenter*beta)
+        beta <- numeric(length(object$xscale))
+        beta[object$xscale>0] <- object$yscale*tmp_coef/(object$xscale[object$xscale>0])
+        intercept <- object$ycenter + object$intercepts[j]  - sum(object$xcenter*beta)
         eta <- as.numeric(xnew%*%beta + coef$intercept)
-        spar_res$family$linkinv(eta)
+        object$family$linkinv(eta)
       })
       res <- rowMeans(preds)
     }
@@ -444,7 +459,7 @@ predict.spar <- function(spar_res,
 #' plot.spar
 #'
 #' Plot errors or number of active variables over different thresholds or number of models of spar result, or residuals vs fitted
-#' @param spar_res result of spar function of class "spar".
+#' @param x result of spar function of class "spar".
 #' @param plot_type one of c("Val_Measure","Val_numAct","res-vs-fitted","coefs").
 #' @param plot_along one of c("lambda","nummod"); ignored when plot_type="res-vs-fitted".
 #' @param nummod fixed value for nummod when plot_along="lambda" for plot_type="Val_Measure" or "Val_numAct"; same as for \code{\link{predict.spar}} when plot_type="res-vs-fitted".
@@ -453,11 +468,12 @@ predict.spar <- function(spar_res,
 #' @param yfit data used for predictions in "res-vs-fitted".
 #' @param prange optional vector of length 2 for "coefs"-plot to give the limits of the predictors' plot range; defaults to c(1,p).
 #' @param coef_order optional index vector of length p for "coefs"-plot to give the order of the predictors; defaults to 1:p.
+#' @param ... further arguments passed to or from other methods
 #' @return ggplot2 object
 #' @import ggplot2
 #' @export
 
-plot.spar <- function(spar_res,
+plot.spar <- function(x,
                       plot_type = c("Val_Measure","Val_numAct","res-vs-fitted","coefs"),
                       plot_along = c("lambda","nummod"),
                       nummod = NULL,
@@ -465,7 +481,8 @@ plot.spar <- function(spar_res,
                       xfit = NULL,
                       yfit = NULL,
                       prange = NULL,
-                      coef_order = NULL) {
+                      coef_order = NULL, ...) {
+  spar_res <- x
   plot_type <- match.arg(plot_type)
   plot_along <- match.arg(plot_along)
   mynummod <- nummod
@@ -473,8 +490,9 @@ plot.spar <- function(spar_res,
     if (is.null(xfit) | is.null(yfit)) {
       stop("xfit and yfit need to be provided for res-vs-fitted plot!")
     }
-    pred <- predict(spar_res,xfit,nummod,lambda)
-    res <- ggplot2::ggplot(data = data.frame(fitted=pred,residuals=yfit-pred),ggplot2::aes(x=fitted,y=residuals)) +
+    pred <- predict(spar_res, xfit, nummod, lambda)
+    res <- ggplot2::ggplot(data = data.frame(fitted=pred,residuals=yfit-pred),
+                           ggplot2::aes(x=fitted,y=residuals)) +
       ggplot2::geom_point() +
       ggplot2::geom_hline(yintercept = 0,linetype=2,linewidth=0.5)
   } else if (plot_type=="Val_Measure") {
@@ -485,10 +503,11 @@ plot.spar <- function(spar_res,
       } else {
         tmp_title <- "Fixed given nummod="
       }
-      tmp_df <- dplyr::filter(spar_res$val_res,nummod==mynummod)
+
+      tmp_df <- subset(spar_res$val_res,nummod==mynummod)
       ind_min <- which.min(tmp_df$Meas)
 
-      res <- ggplot2::ggplot(data = tmp_df,ggplot2::aes(x=nlam,y=Meas)) +
+      res <- ggplot2::ggplot(data = tmp_df, ggplot2::aes(x=tmp_df$nlam,y=tmp_df$Meas)) +
         ggplot2::geom_point() +
         ggplot2::geom_line() +
         # ggplot2::scale_x_continuous(breaks=seq(1,nrow(spar_res$val_res),1),labels=round(spar_res$val_res$lam,3)) +
@@ -503,14 +522,15 @@ plot.spar <- function(spar_res,
       } else {
         tmp_title <- "Fixed given "
       }
-      tmp_df <- dplyr::filter(spar_res$val_res,lam==lambda)
+      tmp_df <- subset(spar_res$val_res,lam==lambda)
       ind_min <- which.min(tmp_df$Meas)
 
-      res <- ggplot2::ggplot(data = tmp_df,ggplot2::aes(x=nummod,y=Meas)) +
+      res <- ggplot2::ggplot(data = tmp_df,ggplot2::aes(x=tmp_df$nummod,y=tmp_df$Meas)) +
         ggplot2::geom_point() +
         ggplot2::geom_line() +
         ggplot2::labs(y=spar_res$type.measure) +
-        ggplot2::geom_point(data=data.frame(x=tmp_df$nummod[ind_min],y=tmp_df$Meas[ind_min]),ggplot2::aes(x=x,y=y),col="red")+
+        ggplot2::geom_point(data=data.frame(x=tmp_df$nummod[ind_min],y=tmp_df$Meas[ind_min]),
+                            ggplot2::aes(x=x,y=y),col="red")+
         ggplot2::ggtitle(substitute(paste(txt,lambda,"=",v),list(txt=tmp_title,v=round(lambda,3))))
     }
   } else if (plot_type=="Val_numAct") {
@@ -521,7 +541,7 @@ plot.spar <- function(spar_res,
       } else {
         tmp_title <- "Fixed given nummod="
       }
-      tmp_df <- dplyr::filter(spar_res$val_res,nummod==mynummod)
+      tmp_df <- subset(spar_res$val_res,nummod==mynummod)
       ind_min <- which.min(tmp_df$Meas)
 
       res <- ggplot2::ggplot(data = tmp_df,ggplot2::aes(x=nlam,y=numAct)) +
@@ -539,7 +559,7 @@ plot.spar <- function(spar_res,
       } else {
         tmp_title <- "Fixed given "
       }
-      tmp_df <- dplyr::filter(spar_res$val_res,lam==lambda)
+      tmp_df <- subset(spar_res$val_res,lam==lambda)
       ind_min <- which.min(tmp_df$Meas)
 
       res <- ggplot2::ggplot(data = tmp_df,ggplot2::aes(x=nummod,y=numAct)) +
@@ -581,14 +601,17 @@ plot.spar <- function(spar_res,
 #' print.spar
 #'
 #' Print summary of spar result
-#' @param spar_res result of spar function of class "spar".
+#' @param x result of spar function of class "spar".
+#' @param ... further arguments passed to or from other methods
 #' @return text summary
 #' @export
-print.spar <- function(spar_res) {
-  mycoef <- coef(spar_res)
+print.spar <- function(x, ...) {
+  mycoef <- coef(x)
   beta <- mycoef$beta
-  cat(sprintf("SPAR object:\nSmallest Validation Measure reached for nummod=%d, lambda=%s leading to %d / %d active predictors.\n",
-              mycoef$nummod,formatC(mycoef$lambda,digits = 2,format = "e"),sum(beta!=0),length(beta)))
+  cat(sprintf("SPAR object:\nSmallest Validation Measure reached for nummod=%d,
+              lambda=%s leading to %d / %d active predictors.\n",
+              mycoef$nummod, formatC(mycoef$lambda,digits = 2,format = "e"),
+              sum(beta!=0),length(beta)))
   cat("Summary of those non-zero coefficients:\n")
   print(summary(beta[beta!=0]))
 }

@@ -5,17 +5,18 @@
 \title{predict.spar}
 \usage{
 \method{predict}{spar}(
-  spar_res,
+  object,
   xnew,
   type = c("response", "link"),
   avg_type = c("link", "response"),
   nummod = NULL,
   lambda = NULL,
-  coef = NULL
+  coef = NULL,
+  ...
 )
 }
 \arguments{
-\item{spar_res}{result of spar function of class "spar".}
+\item{object}{result of spar function of class "spar".}
 
 \item{xnew}{matrix of new predictor variables; must have same number of columns as x.}
 
@@ -28,6 +29,8 @@
 \item{lambda}{threshold level used to form coefficients; value with minimal validation Meas is used if not provided.}
 
 \item{coef}{optional; result of coef.spar, can be used if coef.spar has already been called.}
+
+\item{...}{further arguments passed to or from other methods}
 }
 \value{
 Vector of predictions

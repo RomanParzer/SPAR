@@ -12,7 +12,6 @@ spar.cv(
   nlambda = 20,
   lambdas = NULL,
   nummods = c(20),
-  split_data = FALSE,
   type.measure = c("deviance", "mse", "mae", "class", "1-auc"),
   type.rpm = c("cwdatadriven", "cw", "gaussian", "sparse"),
   type.screening = c("ridge", "marglik", "corr"),

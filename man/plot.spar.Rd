@@ -5,7 +5,7 @@
 \title{plot.spar}
 \usage{
 \method{plot}{spar}(
-  spar_res,
+  x,
   plot_type = c("Val_Measure", "Val_numAct", "res-vs-fitted", "coefs"),
   plot_along = c("lambda", "nummod"),
   nummod = NULL,
@@ -13,11 +13,12 @@
   xfit = NULL,
   yfit = NULL,
   prange = NULL,
-  coef_order = NULL
+  coef_order = NULL,
+  ...
 )
 }
 \arguments{
-\item{spar_res}{result of spar function of class "spar".}
+\item{x}{result of spar function of class "spar".}
 
 \item{plot_type}{one of c("Val_Measure","Val_numAct","res-vs-fitted","coefs").}
 
@@ -34,6 +35,8 @@
 \item{prange}{optional vector of length 2 for "coefs"-plot to give the limits of the predictors' plot range; defaults to c(1,p).}
 
 \item{coef_order}{optional index vector of length p for "coefs"-plot to give the order of the predictors; defaults to 1:p.}
+
+\item{...}{further arguments passed to or from other methods}
 }
 \value{
 ggplot2 object
