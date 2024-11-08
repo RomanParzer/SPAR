@@ -24,9 +24,8 @@
 
 \item{plot_along}{one of \code{c("nu","nummod")}; ignored when  \code{plot_type="res-vs-fitted"}.}
 
-\item{nummod}{fixed value for nummod when  \code{plot_along="nu"}
-for  \code{plot_type="Val_Measure"} or  \code{"Val_numAct}";
-same as for \code{\link{predict.spar}} when  \code{plot_type="res-vs-fitted"}.}
+\item{nummod}{fixed value for number of models when  \code{plot_along="nu"}
+for  \code{plot_type="Val_Measure"} or  \code{"Val_numAct"}; same as for \code{\link{predict.spar}} when  \code{plot_type="res-vs-fitted"}.}
 
 \item{nu}{fixed value for \eqn{\nu} when  \code{plot_along="nummod"} for
 \code{plot_type="Val_Measure"} or  \code{"Val_numAct"}; same as for \code{\link{predict.spar}} when  \code{plot_type="res-vs-fitted"}.}

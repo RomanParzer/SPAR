@@ -23,7 +23,7 @@ Imports:
     ggplot2,
     glmnet,
     tidyr,
-    tidyselect
+    tidyselect,
     Rdpack,
     rlang,
     glmnet

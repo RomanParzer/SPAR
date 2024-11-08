@@ -183,7 +183,9 @@ a linear regression setting.
 
 ## Software {#sec-software}
 
-The two main functions are:
+### Functionality
+
+The two main functions in the package are:
 
 ```{r eval=FALSE}
 spar(x, y, family = gaussian(), ...)
@@ -224,6 +226,29 @@ Methods `print`, `plot`, `coef`, `predict` are available.
 | `cw`                  | sparse embedding matrix      |  
 | `cwdatadriven`        | data driven sparse embedding matrix |
 : Overview of implemented random projection matrices. {#tbl-overviewrp}
+
+
+
+### Extensibility
+
+The user can implement their own screening and random projections. 
+We exemplify how a new screening coefficients based on 
+
+Variable screening via RaSE
+```{r}
+data <- example_data
+library("RaSEn")
+
+generate_scr_rasen <- function(scrcoef, data) {
+  ra_screen <- RaSEn::RaScreen(xtrain = data$x, 
+                       ytrain = data$y,
+                       model = "lm", k = 3,
+                       criterion = 'bic')
+  coefs <- ra_screen$selected.perc 
+  coefs
+}
+```
+
 
 
 ## Illustrations {#sec-illustrations}
@@ -404,7 +429,7 @@ Package [SPAR]{.pkg} provides an implementation for estimating an ensemble of GL
 
 ## Computational details {.unnumbered .unlisted}
 
-The results in this paper were obtained using [R]{.proglang} `r paste(R.Version()[6:7], collapse = ".")`. <!-- with the \pkg{MASS}~\Sexpr{packageVersion("MASS")} package. -->
+The results in this paper were obtained using [R]{.proglang} `r paste(R.Version()[6:7], collapse = ".")`.
 
 [R]{.proglang} itself and all packages used are available from the Comprehensive [R]{.proglang} Archive Network (CRAN) at \url{https://CRAN.R-project.org/}.
 
