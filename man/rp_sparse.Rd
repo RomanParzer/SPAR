@@ -4,7 +4,7 @@
 \alias{rp_sparse}
 \title{Sparse random projection matrix}
 \usage{
-rp_sparse(...)
+rp_sparse(..., control = list())
 }
 \arguments{
 \item{...}{includes arguments which can be passed as attributes to the random

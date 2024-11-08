@@ -144,7 +144,7 @@
 \makeatletter
 \makeatother
 \makeatletter
-\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[breakable, enhanced, frame hidden, sharp corners, boxrule=0pt, borderline west={3pt}{0pt}{shadecolor}, interior hidden]}{\end{tcolorbox}}\fi
+\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[frame hidden, borderline west={3pt}{0pt}{shadecolor}, sharp corners, interior hidden, enhanced, breakable, boxrule=0pt]}{\end{tcolorbox}}\fi
 \makeatother
 
 \ifLuaTeX
@@ -225,6 +225,10 @@ Laura Vana Gür\\
 \begin{document}
 \maketitle
 
+
+\begin{verbatim}
+options(prompt="R>", continue=" ")
+\end{verbatim}
 
 \section{Introduction}\label{sec-intro}
 
@@ -532,7 +536,11 @@ increases the predictive performance in a linear regression setting.
 
 \section{Software}\label{sec-software}
 
-\subsection{Functionality}\label{functionality}
+The package can be loaded by:
+
+\begin{verbatim}
+library("SPAR")
+\end{verbatim}
 
 The two main functions in the package are:
 
@@ -604,10 +612,163 @@ Name & Random projection method \\
 matrices.}\label{tbl-overviewrp}\tabularnewline
 \end{longtable}
 
-\subsection{Extensibility}\label{extensibility}
+\subsection{Screening coefficients}\label{screening-coefficients}
 
-The user can implement their own screening and random projections. We
-exemplify how a new screening coefficients based on
+The objects for creating screening coefficients are implemented as
+\proglang{S}3 classes ``\texttt{screeningcoef}''.
+
+They are created by functions which take \texttt{...} and a list of
+controls \texttt{control} as arguments. These functions return an object
+of class ``\texttt{screeningcoef}'' which in turn is a list with three
+elements:
+
+\begin{itemize}
+\item
+  \texttt{name},
+\item
+  \texttt{generate\_scrcoef} function for generating the screening
+  coefficient. This function should have with arguments
+  \texttt{scrcoef}, which is a ``\texttt{screeningcoef}'' object,
+  \texttt{data}, which is a list of \texttt{x} (matrix of predictors
+  used as input in \texttt{spar()} and \texttt{spar.cv()}) and
+  \texttt{y} (vector of responses used in \texttt{spar()}). It returns a
+  vector of screening coefficients of length \(p\).
+\item
+  \texttt{control}, which is the control list in \texttt{screen\_*}.
+  These controls are arguments which are needed in
+  \texttt{generate\_scrcoef} in order to generate the desired screening
+  coefficients.
+\end{itemize}
+
+Further arguments related to screening can be passed through
+\texttt{...}, which will then be saved as attributes of the
+``\texttt{screeningcoef}'' object. More specifically, the following are
+employed in function \texttt{spar()}:
+
+\begin{itemize}
+\item
+  \texttt{nscreen} integer giving the number of variables to be retained
+  after screening; defaults to \(2n\)
+\item
+  \texttt{split\_data}, boolean which indicates whether 1/4 of the data
+  should be used for computing the screening coefficient and the rest
+  3/4 for estimating the SPAR algorithm; defaults to \texttt{FALSE}
+\item
+  \texttt{type} character -- either \texttt{"prob"} (indicating that
+  probabilistic screening should be employed) or \texttt{"fixed"}
+  (indicating that a fixed set of \texttt{nscreen} variables should be
+  employed across the ensemble; defaults to \texttt{type\ =\ "prob"}.
+\end{itemize}
+
+For illustration purposes, consider the implemented function
+\texttt{screen\_marglik}, which is used to define a screening procedure
+based on the coefficients of univariate marginal GLMs between each
+predictor and the response.
+
+\begin{verbatim}
+unclass(screen_marglik())
+\end{verbatim}
+
+\begin{verbatim}
+$name
+[1] "screen_marglik"
+
+$generate_scrcoef
+function(scrcoef, data) {
+  y <- data$y
+  x <- data$x
+  if (is.null(scrcoef$control$family)) {
+    scrcoef$control$family <- attr(scrcoef, "family")
+  }
+  coefs <- apply(x, 2, function(xj){
+    glm_res <- do.call(function(...) glm(y ~ xj,  ...),
+                       scrcoef$control)
+    glm_res$coefficients[2]
+  })
+  coefs
+}
+<environment: namespace:SPAR>
+
+$control
+list()
+
+attr(,"split_data")
+[1] FALSE
+attr(,"type")
+[1] "prob"
+\end{verbatim}
+
+Function \texttt{generate\_scrcoef\_marglik} defines the generation of
+the screening coefficient. It considers the controls in
+\texttt{scrcoef\$control} when calling the \texttt{stats::glm()}
+function. Given that the proposed framework estimates GLMs for the
+marginal models, the \texttt{spar()} function assigns its
+\texttt{family} argument as an attribute for the \texttt{screeningcoef}
+object. In \texttt{generate\_scrcoef\_marglik}, we employ the marginal
+model \texttt{family} if the control list argument does not contain any
+particular family.
+
+For convenience, a constructor function
+\texttt{constructor\_screeningcoef()} is provided, which can be used to
+create the \texttt{screen\_*} functions.
+
+Extensibility
+
+The user can implement their own screening and random projections.
+
+We exemplify how new screening coefficients implemented in package
+\pkg{VariableScreening} can easily be used in the framework of
+\pkg{SPAR}.
+
+We start by defining the function for generating the screening
+coefficients using the \texttt{screenIID()} function in
+\pkg{VariableScreening}.
+
+\begin{verbatim}
+generate_scr_sirs <- function(scrcoef, data) {
+  res_screen <- do.call(function(...) 
+    VariableScreening::screenIID(data$x, data$y, ...), 
+    scrcoef$control)
+  coefs <- res_screen$measurement
+  coefs
+}
+\end{verbatim}
+
+Note that \texttt{screenIID()} also takes method as an argument. To
+allow for flexibility, we do not fix the method in
+\texttt{generate\_scr\_sirs} but rather allow the user to pass a method
+through the \texttt{control} argument in the \texttt{screen\_*}
+function. This function is created using
+\texttt{constructor\_screeningcoef}
+
+\begin{verbatim}
+screen_sirs <- constructor_screeningcoef(
+  "screen_sirs", 
+  generate_scrcoef = generate_scr_sirs)
+\end{verbatim}
+
+We now call the \texttt{spar()} function with the newly created
+screening procedure. We consider method SIRS of \citet{zhu2011model},
+which ranks the predictors by their correlation with the rank-ordered
+response:
+
+\begin{verbatim}
+set.seed(123)      
+spar_example <- spar(example_data$x, example_data$y,
+                     scrcoef = screen_sirs(type = "fixed",
+                                           control=list(method = "SIRS")),
+                     measure = "mse")
+print(spar_example)
+\end{verbatim}
+
+\begin{verbatim}
+SPAR object:
+Smallest Validation Measure reached for nummod=20,
+              nu=1.75e-03 leading to 396 / 2000 active predictors.
+Summary of those non-zero coefficients:
+      Min.    1st Qu.     Median       Mean    3rd Qu.       Max. 
+-0.6918230 -0.0928444  0.0009116  0.0943062  0.1777889  2.0089709 
+\end{verbatim}
 
 \section{Illustrations}\label{sec-illustrations}
 

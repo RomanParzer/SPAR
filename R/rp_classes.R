@@ -22,28 +22,29 @@
 #' maximum dimension for the projection defaults to
 #' \code{list(mslow = NULL, msup = NULL)}
 #' @return a function which in turn creates an object of class randomprojection
-#' @description
-#' No arguments need to be passed. The entries of the matrix are generated from
-#' a standard normal distribution.
 #'
 #' @export
-constructor_rp <- function(name, generate_fun, update_data_fun = NULL,
-                           update_rpm_w_data = NULL,
-                           control = list(mslow = NULL, msup = NULL)) {
+constructor_randomprojection <- function(name, generate_fun,
+                                         update_data_fun = NULL,
+                                         update_rpm_w_data = NULL,
+                                         control = list()) {
   ## Checks
   stopifnot(names(formals(generate_fun)) %in% c("rp", "m", "included_vector"))
   if (!is.null(update_data_fun)) {
     stopifnot(names(formals(update_data_fun)) %in% c("rp", "data"))
   }
   ## Function to return
-  function(...) {
+  function(..., control = list()) {
     out <- list(name = name,
                 generate_rp_fun = generate_fun,
                 update_data_fun = update_data_fun,
                 control = control)
     attr <- list2(...)
     attributes(out) <- c(attributes(out), attr)
-    if (is.null(attr(out, "data"))) attr(out, "data") <- FALSE
+    if (is.null(attr(out, "use_data"))) {
+      attr(out, "use_data") <- ifelse(is.null(out$update_data_fun),
+                                      FALSE, TRUE)
+    }
     class(out) <- c("randomprojection")
     return(out)
   }
@@ -61,7 +62,16 @@ get_rp <- function(rp, m, included_vector) {
   return(RM)
 }
 
+#'
 #' Gaussian random projection matrix
+#'
+generate_gaussian <- function(rp, m, included_vector) {
+  p <- length(included_vector)
+  vals <- rnorm(m * p)
+  RM <- matrix(vals, nrow = m, ncol = p)
+  RM <- Matrix(RM, sparse = TRUE)
+  return(RM)
+}
 #'
 #' Creates an object class randomprojection using arguments passed by user.
 #' @param ... includes arguments which can be passed as attributes to the random
@@ -73,24 +83,29 @@ get_rp <- function(rp, m, included_vector) {
 #' a standard normal distribution.
 #'
 #' @export
-rp_gaussian <- function(...) {
-  out <- list(name = "rp_gaussian",
-              generate_rp_fun = generate_gaussian,
-              control = list(mslow = NULL, msup = NULL))
-  attr <- list2(...)
-  attributes(out) <- c(attributes(out), attr)
-  attr(out, "data") <- FALSE
-  class(out) <- c("randomprojection")
-  return(out)
-}
-generate_gaussian <- function(rp, m, included_vector) {
+#'
+rp_gaussian <- constructor_randomprojection(
+  "rp_gaussian",
+  generate_fun = generate_gaussian
+)
+
+#'
+#' Sparse random projection matrix
+#'
+generate_sparse <- function(rp, m, included_vector) {
   p <- length(included_vector)
-  vals <- rnorm(m * p)
-  RM <- matrix(vals, nrow = m, ncol = p)
+  psi <- attr(rp, "psi")
+  if (is.null(psi)) psi <- 1
+  if (psi > 1 | psi <= 0) stop("For a sparse rpm, psi should lie in interval (0,1].")
+  v <- sample(c(-1, 0, 1), size = m * p,
+              prob = c(psi/2, 1 - psi, psi/2), replace=TRUE)
+  RM <- matrix(v/sqrt(psi), nrow = m, ncol = p)
+  RM <- RM[rowSums(abs(RM)) > 0, ]
   RM <- Matrix(RM, sparse = TRUE)
   return(RM)
 }
 
+#'
 #' Sparse random projection matrix
 #'
 #' Creates an object class randomprojection using arguments passed by user.
@@ -106,62 +121,23 @@ generate_gaussian <- function(rp, m, included_vector) {
 #'   \insertRef{ACHLIOPTAS2003JL}{SPAR}
 #' }
 #' @export
-rp_sparse <- function(...) {
-  out <- list(name = "rp_sparse",
-              generate_rp_fun = generate_sparse,
-              control = list(mslow = NULL, msup = NULL))
-  attr <- list2(...)
-  attributes(out) <- c(attributes(out), attr)
-  if (is.null(attr(out, "psi"))) attr(out, "psi") <- 1
-  attr(out, "data") <- FALSE
-  class(out) <- c("randomprojection")
-  return(out)
-}
+rp_sparse <- constructor_randomprojection(
+  "rp_sparse",
+  generate_fun = generate_sparse
+)
 
-generate_sparse <- function(rp, m, included_vector) {
-  p <- length(included_vector)
-  psi <- attr(rp, "psi")
-  if (psi > 1 | psi <= 0) stop("For a sparse rpm, psi should lie in interval (0,1].")
-  v <- sample(c(-1, 0, 1), size = m * p,
-              prob = c(psi/2, 1 - psi, psi/2), replace=TRUE)
-  RM <- matrix(v/sqrt(psi), nrow = m, ncol = p)
-  RM <- RM[rowSums(abs(RM)) > 0, ]
-  RM <- Matrix(RM, sparse = TRUE)
-  return(RM)
-}
 
+#'
 #' Sparse embedding matrix
 #'
-#' Creates an object class randomprojection using arguments passed by user.
-#' @param ... includes arguments which can be passed as attributes to the random
-#' projection matrix
-#' @return object of class randomprojection
-#' @description
-#' The entries of the matrix are generated based on \insertCite{Clarkson2013LowRankApprox}{SPAR}.
-#' @references{
-#'   \insertRef{Clarkson2013LowRankApprox}{SPAR}
-#' }
-#' @export
-rp_cw <- function(...) {
-  out <- list(name = "rp_cw",
-              generate_rp_fun = generate_cw,
-              update_data_rp = update_data_cw,
-              update_rpm_w_data = update_rpm_w_data_cw,
-              control = list(mslow = NULL, msup = NULL))
-  attr <- list2(...)
-  attributes(out) <- c(attributes(out), attr)
-  if (is.null(attr(out, "data"))) attr(out, "data") <- FALSE
-  class(out) <- c("randomprojection")
-  return(out)
-}
-
 generate_cw <- function(rp, m, included_vector) {
   p <- length(included_vector)
-  use_data <- attr(rp, "data")
+  use_data <- attr(rp, "use_data")
   if (!use_data) {
     diagvals <- sample(c(-1, 1), p, replace = TRUE)
   } else {
-    if (is.null(attr(rp, "diagvals"))) stop("Must provide vector of coefficients for data-driven RP.")
+    if (is.null(attr(rp, "diagvals")))
+      stop("Must provide vector of coefficients for data-driven RP.")
     diagvals <- attr(rp, "diagvals")[included_vector]
   }
   goal_dims <- sample(m, p, replace = TRUE)
@@ -187,18 +163,31 @@ update_data_cw <- function(rp, data) {
   yz <- data$y
   n <- NROW(z)
   p <- NCOL(z)
-  family <- attr(rp, "family")
-  tmp_sc <- apply(z,2,function(col)sqrt(var(col)*(n-1)/n))
-  z2 <- scale(z,center=colMeans(z),scale=tmp_sc)
-  ytZ <- crossprod(yz, z2[,tmp_sc>0])
-  lam_max <- 1000 * max(abs(ytZ))/n*family$mu.eta(family$linkfun(mean(yz)))/family$variance(mean(yz))
+  if (is.null(rp$control$family)) {
+    rp$control$family <- attr(rp, "family")
+  }
+  family <- rp$control$family
+
   if (family$family=="gaussian") {
     dev.ratio_cutoff <- 0.999
   } else {
     dev.ratio_cutoff <- 0.8
   }
-  glmnet_res <- glmnet(x=z, y=yz, family = family, alpha=0,
-                       lambda.min.ratio = min(0.01,1e-4 / lam_max))
+
+  if (is.null(rp$control$alpha)) rp$control$alpha <-  0
+  if (is.null(rp$control$lambda.min.ratio)) {
+    tmp_sc <- apply(z, 2, function(col) sqrt(var(col)*(n-1)/n))
+    z2 <- scale(z, center = colMeans(z), scale = tmp_sc)
+    ytZ <- crossprod(yz, z2[,tmp_sc > 0])
+    lam_max <- 1000 * max(abs(ytZ))/n * family$mu.eta(family$linkfun(mean(yz)))/
+      family$variance(mean(yz))
+    rp$control$lambda.min.ratio <- min(0.01, 1e-4 / lam_max)
+  }
+
+  control_glmnet <- rp$control[names(rp$control)  %in% names(formals(glmnet))]
+  glmnet_res <- do.call(function(...)
+    glmnet(x=z, y=yz, ...), control_glmnet)
+
   lam <- min(glmnet_res$lambda[glmnet_res$dev.ratio<=dev.ratio_cutoff])
   scr_coef <- coef(glmnet_res,s=lam)[-1]
   inc_probs <- abs(scr_coef)
@@ -211,5 +200,23 @@ update_rpm_w_data_cw <- function(rpm, rp, included_vector) {
   rpm@x <-  attr(rp, "diagvals")[included_vector]
   return(rpm)
 }
-
+#'
+#' Sparse embedding matrix
+#'
+#' Creates an object class randomprojection using arguments passed by user.
+#' @param ... includes arguments which can be passed as attributes to the random
+#' projection matrix
+#' @return object of class randomprojection
+#' @description
+#' The entries of the matrix are generated based on \insertCite{Clarkson2013LowRankApprox}{SPAR}.
+#' @references{
+#'   \insertRef{Clarkson2013LowRankApprox}{SPAR}
+#' }
+#' @export
+rp_cw <- constructor_randomprojection(
+  "rp_cw",
+  generate_fun = generate_cw,
+  update_data_fun = update_data_cw,
+  update_rpm_w_data = update_rpm_w_data_cw
+)
 

@@ -8,8 +8,8 @@ spar(
   x,
   y,
   family = gaussian("identity"),
-  rp = rp_cw(data = TRUE),
-  scrcoef = screen_ridge(),
+  rp = NULL,
+  scrcoef = NULL,
   xval = NULL,
   yval = NULL,
   nnu = 20,
@@ -17,7 +17,8 @@ spar(
   nummods = c(20),
   measure = c("deviance", "mse", "mae", "class", "1-auc"),
   inds = NULL,
-  RPMs = NULL
+  RPMs = NULL,
+  ...
 )
 }
 \arguments{
@@ -30,7 +31,7 @@ default \code{gaussian("identity")}.}
 
 \item{rp}{function creating a randomprojection object.}
 
-\item{scrcoef}{unction creating a screeningcoef object}
+\item{scrcoef}{function creating a screeningcoef object}
 
 \item{xval}{optional matrix of predictor variables observations used for
 validation of threshold nu and number of models; \code{x} is used
@@ -56,9 +57,15 @@ available for all families. Other options are \code{"mse"} or \code{"mae"}
 \code{"1-auc"} (one minus area under the ROC curve) both just for
 binomial family.}
 
+\item{inds}{optional list of index-vectors corresponding to variables kept
+after screening in each marginal model of length \code{max(nummods)};
+dimensions need to fit those of RPMs.}
+
 \item{RPMs}{optional list of projection matrices used in each
 marginal model of length \code{max(nummods)}, diagonal elements will be
 overwritten with a coefficient only depending on the given \code{x} and \code{y}.}
+
+\item{...}{further arguments mainly to ensure back-compatibility}
 }
 \value{
 object of class \code{"spar"} with elements

@@ -8,13 +8,14 @@ spar.cv(
   x,
   y,
   family = gaussian("identity"),
-  rp = rp_cw(data = TRUE),
-  scrcoef = screen_ridge(),
+  rp = NULL,
+  scrcoef = NULL,
   nfolds = 10,
   nnu = 20,
   nus = NULL,
   nummods = c(20),
-  measure = c("deviance", "mse", "mae", "class", "1-auc")
+  measure = c("deviance", "mse", "mae", "class", "1-auc"),
+  ...
 )
 }
 \arguments{
@@ -47,6 +48,8 @@ available for all families. Other options are \code{"mse"} or \code{"mae"}
 \code{"class"} (misclassification error) and
 \code{"1-auc"} (one minus area under the ROC curve) both just for
 binomial family.}
+
+\item{...}{further arguments mainly to ensure back-compatibility}
 }
 \value{
 object of class \code{"spar.cv"} with elements

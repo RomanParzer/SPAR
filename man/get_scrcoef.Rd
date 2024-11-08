@@ -7,10 +7,10 @@
 get_scrcoef(scrcoef, data)
 }
 \arguments{
+\item{scrcoef}{an object of class screeningcoef}
+
 \item{data}{list of  \code{x} which is a matrix of covariates and
 \code{y} which is the response vector}
-
-\item{screeningcoef}{an object of class randomprojection}
 }
 \description{
 Function which generates the screening coefficients

@@ -183,7 +183,10 @@ a linear regression setting.
 
 ## Software {#sec-software}
 
-### Functionality
+The package can be loaded by:
+```{r}
+library("SPAR")
+```
 
 The two main functions in the package are:
 
@@ -227,30 +230,274 @@ Methods `print`, `plot`, `coef`, `predict` are available.
 | `cwdatadriven`        | data driven sparse embedding matrix |
 : Overview of implemented random projection matrices. {#tbl-overviewrp}
 
+### Screening coefficients
 
+The objects for creating screening coefficients are implemented as \proglang{S}3
+classes "`screeningcoef`". 
 
-### Extensibility
+They are created by functions which take `...` and a list of controls `control`
+as arguments. 
+These functions return an object of class "`screeningcoef`"
+which in turn is a list with three elements: 
+  
+  * `name`, 
+  
+  * `generate_scrcoef` function for generating the screening coefficient. This
+  function should have with arguments `scrcoef`, which is a 
+  "`screeningcoef`" object,  `data`, 
+  which is a list of `x` (matrix of predictors used as input in `spar()` and 
+  `spar.cv()`) and `y` (vector of responses used in  `spar()`). It returns a
+  vector of screening coefficients of length $p$.
+  
+  * `control`, which is the control list in `screen_*`. These controls are 
+  arguments which are needed in `generate_scrcoef` in order to generate the desired 
+  screening coefficients.
+  
+Further arguments related to screening can be passed through `...`, which will
+then be saved as attributes of the "`screeningcoef`" object.
+More specifically, the following are employed in function `spar()`:
 
-The user can implement their own screening and random projections. 
-We exemplify how a new screening coefficients based on 
+  * `nscreen` integer giving the number of variables to be retained after screening; defaults to $2n$
+  
+  * `split_data`, boolean which indicates whether 1/4 of the data should be used for computing the screening coefficient and the rest 3/4 for estimating the SPAR algorithm; defaults to `FALSE` 
+  
+  * `type` character -- either `"prob"` (indicating that probabilistic screening
+  should be employed)  or `"fixed"` (indicating that a fixed set of `nscreen`
+  variables should be employed across the ensemble; defaults to `type = "prob"`.
 
-Variable screening via RaSE
+For illustration purposes, consider the implemented function
+`screen_marglik`, which is used to define a screening procedure 
+based on the coefficients of univariate marginal GLMs between each predictor 
+and the response. 
 ```{r}
-data <- example_data
-library("RaSEn")
+unclass(screen_marglik())
+```
+Function `generate_scrcoef_marglik` defines the generation of the screening coefficient. It considers the controls in `scrcoef$control` when calling
+the `stats::glm()` function. Given that the proposed framework 
+estimates GLMs for the marginal models, the `spar()` function
+assigns its `family` argument as an attribute for the `screeningcoef`
+object. In `generate_scrcoef_marglik`, we employ the marginal model
+`family` if the control list argument does not contain any particular family.
 
-generate_scr_rasen <- function(scrcoef, data) {
-  ra_screen <- RaSEn::RaScreen(xtrain = data$x, 
-                       ytrain = data$y,
-                       model = "lm", k = 3,
-                       criterion = 'bic')
-  coefs <- ra_screen$selected.perc 
-  coefs
-}
+For convenience, a constructor function `constructor_screeningcoef()`
+is provided, which can be used to create the `screen_*` functions.  
+
+The following functions are implemented in [SPAR]{.pkg} 
+
+* `screen_marglik()` - computes the screening coefficients by the coefficient of $x_j$ in a univariate GLM using the `stats::glm()` function.  It allows to pass a list of controls through the `control` argument to `stats::glm` such as weights, family, offsets.
+
+* `screen_corr()` - computes the screening coefficients by the correlation between 
+$y$ and $x_j$ using the function `stats::cor()`. It allows to pass a list of controls through the `control` argument to `stats::cor` such as the method.
+
+* `screen_ridge()` - computes by default the screening coefficients by the ridge coefficient 
+where the penalty $\lambda$ is very small [see @parzer2024glms]. The function 
+relies on `glmnet::glmnet()` and, while it assumes by default $\alpha = 0$ and 
+a small penalty, it allows to pass a list of controls through the `control` argument to `glmnet::glmnet()` such as `alpha = 1`.
+
+### Random projections
+
+Similar to the screening procedure, 
+the objects for creating random projections are implemented as \proglang{S}3
+classes "`randomprojection`" and are created by functions which take `...` and a list of controls `control` as arguments. 
+
+These functions return an object of class "`randomprojection`"
+which in turn is a list with three elements: 
+  
+  * `name`, 
+  
+  * `generate_rp_fun` function for generating the random projection matrix. This
+    function should have with arguments \code{rp}, which is a "`randomprojection`"
+    object, \code{m}, the target dimension and a vector of indexes
+    \code{included_vector} which shows the column index of the original variables
+    in the \code{x} matrix to be projected using the random projection. 
+    This is needed due to the fact that screening can be employed pre-projection.
+    It returns a sparse random projection matrix with \code{m} rows and 
+    \code{length(included_vector)} columns.
+
+  * `update_data_rp` function with attributes relying with information from the data. This is relevant for the data driven random projections. This
+function should have with arguments \code{rp}, which is a randomprojection
+object and \code{data}, which is a list containing `x` (the matrix of predictors used as input in `spar()` and `spar.cv`) and `y` the vector of responses.
+  
+  * `update_rpm_w_data` function for updating the random projection matrix with data.
+  This can be used for the case where a list of random projection matrices is
+  provided by argument \code{RPMs}. In this case, the random structure is kept
+  fixed, but the data-dependent part gets updated with the provided data. Defaults
+  to NULL. If not provided, the values of the provided RPMs do not change.
+
+  * `control`, which is the control list in `screen_*`. These controls are 
+  arguments which are needed in `generate_scrcoef` in order to generate the desired 
+  screening coefficients.
+  
+Further arguments related to the random projection
+can be passed through `...`, which will
+then be saved as attributes of the "`randomprojection`" object.
+
+More specifically, the following are employed for all in "`randomprojection`" 
+objects in function `spar()`:
+
+  * `mslow`: integer giving the minimum dimension to which the predictors should
+  be projected; defaults to $\log(p)$
+  
+  * `msup`: integer giving the maximum dimension to which the predictors should
+  be projected; defaults to $n/2$
+  
+  * `use_data`: boolean indicating whether the random projection is data driven.
+  
+Note that for random projection matrices which satisfy the JL lemma, `mslow`
+can be determined by employing the result of the JL lemma, which gives a lower bound on the  goal dimension in order to preserve the distances between 
+all pairs of points within a factor $(1 \pm \epsilon)$: 
+$m>\frac{24}{3\epsilon^2-2\epsilon^3}\log n$.
+
+For illustration purposes, consider the implemented function
+`rp_gaussian`, which is a random projection with entries draws from the 
+standard normal distribution.
+
+```{r}
+rp_gaussian()
 ```
 
 
+## Extensibility
 
+
+The user can implement their own screening and random projections. 
+
+###  Screening coefficients
+
+We exemplify how new screening coefficients implemented in package 
+[VariableScreening]{.pkg} can easily be used in the framework of
+[SPAR]{.pkg}. 
+
+We start by defining the function for generating the screening coefficients
+using the `screenIID()` function in [VariableScreening]{.pkg}.
+```{r}
+generate_scr_sirs <- function(scrcoef, data) {
+  res_screen <- do.call(function(...) 
+    VariableScreening::screenIID(data$x, data$y, ...), 
+    scrcoef$control)
+  coefs <- res_screen$measurement
+  coefs
+}
+```
+Note that `screenIID()` also takes method as an argument. 
+To allow for flexibility, we do not
+fix the method in `generate_scr_sirs` but rather allow the user to 
+pass a method through the `control` argument in the `screen_*` function.
+This function is created using `constructor_screeningcoef`:
+```{r}
+screen_sirs <- constructor_screeningcoef(
+  "screen_sirs", 
+  generate_scrcoef = generate_scr_sirs)
+```
+
+We now call the `spar()` function with the newly created screening procedure.
+We consider method SIRS of @zhu2011model, which ranks the predictors by their correlation with the rank-ordered response and we do not perform probabilistic variable
+screening but employ the top $2n$ variables in each marginal model.
+```{r}
+set.seed(123)      
+spar_example <- spar(example_data$x, example_data$y,
+                     scrcoef = screen_sirs(type = "fixed",
+                                           control=list(method = "SIRS")),
+                     measure = "mse")
+print(spar_example)
+```
+
+### Random projections
+
+We exemplify how new random projections can be implemented
+in the framework of [SPAR]{.pkg}. 
+
+We implement the random projection of @cannings2017random, 
+who propose using the Haar measure for generating the random projections. 
+They simulate matrices from Haar measure by 
+independently drawing each entry of a matrix $Q$ from a
+standard normal distribution, and then to take the projection matrix to 
+be the transpose of the matrix of left singular vectors in
+the singular value decomposition of $Q$.
+Moreover, they suggest using "good" random projections, 
+
+```{r eval=FALSE}
+update_data_cannings <- function(rp, data) {
+  attr(rp, "data") <- data
+  rp
+}
+generate_cannings <- function(rp, m, included_vector) {
+  p <- length(included_vector)
+  if (is.null(rp$control$B2)) rp$control$B2 <- 50
+  x <- attr(rp, "data")$x[, included_vector]
+  y <- attr(rp, "data")$y
+  
+  ## Sample for all B2 cases 
+  B2 <- rp$control$B2
+  n <- nrow(x)
+  id_test <- sample(n, size = n %/% 4)
+  xtrain <- x[-id_test, ]
+  xtest <- x[id_test,]
+  ytrain <- y[-id_test]
+  ytest <- y[id_test]
+  ## Update with family argument of SPAR if not available
+  if (is.null(rp$control$family)) {
+    rp$control$family <- attr(rp, "family")
+  }
+  family <- rp$control$family
+  control_glm <-
+    rp$control[names(rp$control)  %in% names(formals(glm.fit))]
+
+  error_all <- lapply(seq_len(B2), FUN = function(s){
+    R0 <- matrix(1/sqrt(p) * rnorm(p * m), nrow = p, ncol = m)
+    RM <- qr.Q(qr(R0))[, seq_len(m)]
+    RM <- Matrix(t(RM), sparse = TRUE)
+    xrp <- tcrossprod(xtrain, RM)
+    mod <- do.call(function(...) 
+      glm.fit(x =  cbind(1, xrp), y = ytrain, ...), control_glm)
+    eta_test <- drop(cbind(1, tcrossprod(xtest, RM)) %*% mod$coefficients)
+    pred <- family$linkinv(eta_test)
+    if (family$family == "binomial") {
+      pred <- (pred > 0.5) + 0
+      out <- mean(pred != ytest)
+    } else {
+      out <- mean((pred - ytest)^2)
+    }
+    list(RM, out)
+  })
+  id_best <- which.min(sapply(error_all, "[[", 2))
+  RM <- error_all[[id_best]][[1]]
+  return(RM)
+}
+
+rp_cannings <- constructor_randomprojection(
+  "rp_cannings",
+  generate_fun = generate_cannings,
+  update_data_fun = update_data_cannings
+)
+```
+
+We can now estimate SPAR
+```{r}
+set.seed(123)      
+ystar <- ( example_data$y > 0 ) + 0
+ystarval <- ( example_data$ytest > 0 ) + 0
+spar_example_1 <- spar(
+  x=example_data$x, y=ystar,
+  xval = example_data$xtest, yval = ystarval,
+  family = binomial(),
+  nummods = 100, 
+  scrcoef = screen_marglik(type = "fixed"),
+  rp = rp_cannings(control = list(B2 = 50))
+)
+
+spar_example_2 <- spar(x = example_data$x, y = ystar,
+  family = binomial(),
+  scrcoef = screen_marglik(type = "fixed"),
+  rp = rp_cw(data = TRUE),
+  nummods = 100, 
+  xval = example_data$xtest, yval = ystarval
+)
+spar_example_1$val_res
+spar_example_2$val_res
+```
+
+            
 ## Illustrations {#sec-illustrations}
 
 

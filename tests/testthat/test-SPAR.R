@@ -115,7 +115,7 @@ test_that("Get errors for mslow > msup", {
 test_that("Get errors for msup > nscreen", {
   x <- matrix(rnorm(300), ncol = 30)
   y <- rnorm(10)
-  expect_error(spar(x,y,nscreen=18,msup = 20))
+  expect_error(spar(x,y,nscreen=18, msup = 20))
 })
 
 test_that("Get errors for to small length of inds and RPMs lists", {
@@ -149,7 +149,7 @@ test_that("Get errors for prediction when xnew has wrong dimensions", {
 test_that("Get errors for classification validation measure for non-binomial family", {
   x <- example_data$x
   y <- example_data$y
-  expect_error(spar(x,y,type.measure = "1-auc"))
+  expect_error(spar(x,y,measure = "1-auc"))
 })
 
 

@@ -31,9 +31,7 @@
 # #' @param type.screening  type of screening coefficients; one of \code{"ridge"},
 # #'        \code{"marglik"}, \code{"corr"}; defaults to \code{"ridge"} which is
 # #'        based on the ridge coefficients where the penalty converges to zero.
-# #' @param inds optional list of index-vectors corresponding to variables kept
-# #' after screening in each marginal model of length \code{max(nummods)};
-# #' dimensions need to fit those of RPMs.
+#' @param ... further arguments mainly to ensure back-compatibility
 #' @returns object of class \code{"spar.cv"} with elements
 #' \itemize{
 #'  \item betas p x  \code{max(nummods)} matrix of standardized coefficients from each marginal model
@@ -64,13 +62,14 @@
 #' @export
 spar.cv <- function(x, y,
                     family = gaussian("identity"),
-                    rp = rp_cw(data = TRUE),
-                    scrcoef = screen_ridge(),
+                    rp = NULL,
+                    scrcoef = NULL,
                     nfolds = 10,
                     nnu = 20,
                     nus = NULL,
                     nummods = c(20),
-                    measure = c("deviance","mse","mae","class","1-auc")
+                    measure = c("deviance","mse","mae","class","1-auc"),
+                    ...
 ) {
 
   stopifnot("matrix" %in% class(x) |"data.frame" %in% class(x))
@@ -85,7 +84,7 @@ spar.cv <- function(x, y,
                   rp = rp, scrcoef = scrcoef,
                   nnu = nnu,
                   nummods = nummods,
-                  measure = measure)
+                  measure = measure, ...)
 
   val_res <- SPARres$val_res
   folds <- sample(cut(seq_len(n), breaks = nfolds, labels=FALSE))
@@ -99,7 +98,7 @@ spar.cv <- function(x, y,
                         nus = SPARres$nus,
                         inds = SPARres$inds, RPMs = SPARres$RPMs,
                         nummods = nummods,
-                        measure = measure)
+                        measure = measure, ...)
     val_res <- rbind(val_res,foldSPARres$val_res)
   }
 

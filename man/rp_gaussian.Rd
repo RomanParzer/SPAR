@@ -2,9 +2,9 @@
 % Please edit documentation in R/rp_classes.R
 \name{rp_gaussian}
 \alias{rp_gaussian}
-\title{Gaussian random projection matrix}
+\title{Creates an object class randomprojection using arguments passed by user.}
 \usage{
-rp_gaussian(...)
+rp_gaussian(..., control = list())
 }
 \arguments{
 \item{...}{includes arguments which can be passed as attributes to the random
@@ -17,7 +17,4 @@ generate_rp_fun, update_data_fun, control
 \description{
 No arguments need to be passed. The entries of the matrix are generated from
 a standard normal distribution.
-}
-\details{
-Creates an object class randomprojection using arguments passed by user.
 }

@@ -4,7 +4,7 @@
 \alias{rp_cw}
 \title{Sparse embedding matrix}
 \usage{
-rp_cw(...)
+rp_cw(..., control = list())
 }
 \arguments{
 \item{...}{includes arguments which can be passed as attributes to the random
