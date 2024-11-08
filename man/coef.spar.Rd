@@ -4,14 +4,14 @@
 \alias{coef.spar}
 \title{coef.spar}
 \usage{
-\method{coef}{spar}(object, nummod = NULL, lambda = NULL, ...)
+\method{coef}{spar}(object, nummod = NULL, nu = NULL, ...)
 }
 \arguments{
 \item{object}{result of spar function of class "spar".}
 
 \item{nummod}{number of models used to form coefficients; value with minimal validation Meas is used if not provided.}
 
-\item{lambda}{threshold level used to form coefficients; value with minimal validation Meas is used if not provided.}
+\item{nu}{threshold level used to form coefficients; value with minimal validation Meas is used if not provided.}
 
 \item{...}{further arguments passed to or from other methods}
 }
@@ -21,7 +21,7 @@ List of coefficients with elements
 \item intercept
 \item beta
 \item nummod
-\item lambda
+\item nu
 }
 }
 \description{

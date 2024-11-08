@@ -7,9 +7,9 @@
 \method{plot}{spar}(
   x,
   plot_type = c("Val_Measure", "Val_numAct", "res-vs-fitted", "coefs"),
-  plot_along = c("lambda", "nummod"),
+  plot_along = c("nu", "nummod"),
   nummod = NULL,
-  lambda = NULL,
+  nu = NULL,
   xfit = NULL,
   yfit = NULL,
   prange = NULL,
@@ -18,23 +18,28 @@
 )
 }
 \arguments{
-\item{x}{result of spar function of class "spar".}
+\item{x}{result of spar function of class  \code{"spar"}.}
 
-\item{plot_type}{one of c("Val_Measure","Val_numAct","res-vs-fitted","coefs").}
+\item{plot_type}{one of  \code{c("Val_Measure","Val_numAct","res-vs-fitted","coefs")}.}
 
-\item{plot_along}{one of c("lambda","nummod"); ignored when plot_type="res-vs-fitted".}
+\item{plot_along}{one of \code{c("nu","nummod")}; ignored when  \code{plot_type="res-vs-fitted"}.}
 
-\item{nummod}{fixed value for nummod when plot_along="lambda" for plot_type="Val_Measure" or "Val_numAct"; same as for \code{\link{predict.spar}} when plot_type="res-vs-fitted".}
+\item{nummod}{fixed value for nummod when  \code{plot_along="nu"}
+for  \code{plot_type="Val_Measure"} or  \code{"Val_numAct}";
+same as for \code{\link{predict.spar}} when  \code{plot_type="res-vs-fitted"}.}
 
-\item{lambda}{fixed value for lambda when plot_along="nummod" for plot_type="Val_Measure" or "Val_numAct"; same as for \code{\link{predict.spar}} when plot_type="res-vs-fitted".}
+\item{nu}{fixed value for \eqn{\nu} when  \code{plot_along="nummod"} for
+\code{plot_type="Val_Measure"} or  \code{"Val_numAct"}; same as for \code{\link{predict.spar}} when  \code{plot_type="res-vs-fitted"}.}
 
-\item{xfit}{data used for predictions in "res-vs-fitted".}
+\item{xfit}{data used for predictions in  \code{"res-vs-fitted"}.}
 
-\item{yfit}{data used for predictions in "res-vs-fitted".}
+\item{yfit}{data used for predictions in  \code{"res-vs-fitted"}.}
 
-\item{prange}{optional vector of length 2 for "coefs"-plot to give the limits of the predictors' plot range; defaults to c(1,p).}
+\item{prange}{optional vector of length 2 for  \code{"coefs"}-plot to give
+the limits of the predictors' plot range; defaults to  \code{c(1, p)}.}
 
-\item{coef_order}{optional index vector of length p for "coefs"-plot to give the order of the predictors; defaults to 1:p.}
+\item{coef_order}{optional index vector of length p for "coefs"-plot to give
+the order of the predictors; defaults to  \code{1 : p}.}
 
 \item{...}{further arguments passed to or from other methods}
 }
