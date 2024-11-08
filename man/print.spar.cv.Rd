@@ -4,10 +4,12 @@
 \alias{print.spar.cv}
 \title{print.spar.cv}
 \usage{
-\method{print}{spar.cv}(spar_res)
+\method{print}{spar.cv}(x, ...)
 }
 \arguments{
-\item{spar_res}{result of spar.cv function of class "spar.cv".}
+\item{x}{result of  \code{spar.cv()} function of class  \code{"spar.cv"}.}
+
+\item{...}{further arguments passed to or from other methods}
 }
 \value{
 text summary

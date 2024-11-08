@@ -24,11 +24,11 @@ test_that("Coef is more sparse for 1se rule", {
   expect_equal(all(which(sparcoef$beta==0) %in% which(sparcoef2$beta==0)),TRUE)
 })
 
-test_that("Validated lambda values are same as the ones for initial SPAR fit", {
+test_that("Validated nu values are same as the ones for initial SPAR fit", {
   x <- data.frame(matrix(rnorm(300), ncol = 30))
   y <- rnorm(10)
   spar_res <- spar.cv(x,y,nummods=c(10,15))
-  expect_equal(unique(spar_res$val_sum$lam),as.numeric(spar_res$lambdas))
+  expect_equal(unique(spar_res$val_sum$nu),as.numeric(spar_res$nus))
 })
 
 test_that("Validated nummod values are same as the ones for initial SPAR fit", {
@@ -51,7 +51,8 @@ test_that("Columns with zero sd get ceofficient 0", {
 # Tests expecting errors
 
 test_that("Get errors for input x not data.frame or matrix", {
-  x <- list("1"=1:10,"2"=(-1)^(1:12),"3"=rnorm(12),"4"=rnorm(12),"5"=runif(12),"6"=runif(12))
+  x <- list("1"=1:10,"2"=(-1)^(1:12),"3"=rnorm(12),
+            "4"=rnorm(12),"5"=runif(12),"6"=runif(12))
   y <- rnorm(6)
   expect_error(spar.cv(x,y,nfolds=2))
 })
