@@ -38,6 +38,7 @@ constructor_randomprojection <- function(name, generate_fun,
     out <- list(name = name,
                 generate_rp_fun = generate_fun,
                 update_data_fun = update_data_fun,
+                update_rpm_w_data = update_rpm_w_data,
                 control = control)
     attr <- list2(...)
     attributes(out) <- c(attributes(out), attr)

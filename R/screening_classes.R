@@ -30,7 +30,6 @@ constructor_screencoef <- function(name, generate_fun) {
                 control = control)
     attr <- list2(...)
     attributes(out) <- c(attributes(out), attr)
-    if (is.null(attr(out, "split_data"))) attr(out, "split_data") <- FALSE
     if (is.null(attr(out, "type"))) {
       attr(out, "type") <- "prob"
     } else {
@@ -186,7 +185,9 @@ screen_glmnet <- constructor_screencoef(
 print.screencoef <- function(x, ...) {
   cat(paste0("Name: ", x$name), "\n")
   cat("Main attributes:", "\n")
-  cat("split_data:",  attr(x, "split_data"), "\n")
+  cat("Proportion of data used for screening:",
+      ifelse(is.null(attr(x, "split_data_prop")),
+             1, attr(x, "split_data_prop")), "\n")
   cat("type:",  attr(x, "type"), "\n")
   cat("number of screened variables:",  attr(x, "nscreen"), "\n")
   imp_vals <- attr(x, "importance")

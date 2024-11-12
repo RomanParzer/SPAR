@@ -44,7 +44,7 @@ test_that("Returned coef and preds are correct for fixed screening and projectio
 
   spar_res <- spar(x,y,
                    nummods=c(2),inds = list(1:(2*nrow(x)),
-                                                500+1:(2*nrow(x))),
+                                            500+1:(2*nrow(x))),
                    RPMs = list(RP1,RP2))
   sparcoef <- coef(spar_res)
   pred     <- predict(spar_res,xnew=xnew)
@@ -91,6 +91,25 @@ test_that("Columns with zero sd get ceofficient 0", {
   spar_res <- spar(x,y)
   sparcoef <- coef(spar_res)
   expect_equal(sparcoef$beta[c(1,11,111)],c(0,0,0))
+})
+
+test_that("Data splitting delivers different results", {
+  x <- example_data$x
+  y <- example_data$y
+  set.seed(123)
+  spar_res <- spar(x,y,
+                   screencoef = screen_corr(split_data_prop = 0.25))
+  set.seed(123)
+  spar_res3 <- spar(x,y,
+                    screencoef = screen_corr(split_data = TRUE))
+  set.seed(123)
+  spar_res2 <- spar(x,y,
+                    screencoef = screen_corr())
+  sparcoef <- coef(spar_res)
+  sparcoef2 <- coef(spar_res2)
+  sparcoef3 <- coef(spar_res3)
+  expect_true(any(sparcoef$beta[c(13,38,43)] != sparcoef2$beta[c(13,38,43)]))
+  expect_equal(sparcoef$beta[c(13,38,43)], sparcoef3$beta[c(13,38,43)])
 })
 
 # Tests expecting errors

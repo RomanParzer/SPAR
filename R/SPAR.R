@@ -206,8 +206,14 @@ spar <- function(x, y,
   if (is.null(attr(screencoef, "family"))) {
     attr(screencoef, "family") <- family
   }
-  if (attr(screencoef, "split_data")) {
-    scr_inds <- sample(n, n%/%4) # TODO need to parametrize this
+  if (!is.null(attr(screencoef, "split_data")) &
+      is.null(attr(screencoef, "split_data_prop"))) {
+    attr(screencoef, "split_data_prop") <- 0.25
+  }
+  if (!is.null(attr(screencoef, "split_data_prop"))) {
+    attr(screencoef, "split_data") <- TRUE
+    scr_inds <- sample(n,
+                       ceiling(n * attr(screencoef, "split_data_prop")))  # TODO need to parametrize this
     mar_inds <- seq_len(n)[-scr_inds]
   } else {
     mar_inds <- scr_inds <- seq_len(n)
