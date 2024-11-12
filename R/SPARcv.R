@@ -8,7 +8,7 @@
 #' @param family  a \code{\link[stats]{"family"}} object used for the marginal generalized linear model,
 #'        default \code{gaussian("identity")}.
 #' @param rp function creating a randomprojection object.
-#' @param scrcoef unction creating a screeningcoef object
+#' @param screencoef unction creating a screeningcoef object
 #' @param nfolds number of folds to use for cross-validation; should be greater than 2, defaults to 10.
 #' @param nnu number of different threshold values \eqn{\nu} to consider for thresholding;
 #'        ignored when nus are given; defaults to 20.
@@ -63,7 +63,7 @@
 spar.cv <- function(x, y,
                     family = gaussian("identity"),
                     rp = NULL,
-                    scrcoef = NULL,
+                    screencoef = NULL,
                     nfolds = 10,
                     nnu = 20,
                     nus = NULL,
@@ -81,7 +81,7 @@ spar.cv <- function(x, y,
   n <- nrow(x)
 
   SPARres <- spar(x, y, family = family,
-                  rp = rp, scrcoef = scrcoef,
+                  rp = rp, screencoef = screencoef,
                   nnu = nnu,
                   nummods = nummods,
                   measure = measure, ...)
@@ -94,7 +94,7 @@ spar.cv <- function(x, y,
                         family = family,
                         xval = x[fold_ind,SPARres$xscale>0],
                         yval = y[fold_ind],
-                        rp = rp, scrcoef = scrcoef,
+                        rp = rp, screencoef = screencoef,
                         nus = SPARres$nus,
                         inds = SPARres$inds, RPMs = SPARres$RPMs,
                         nummods = nummods,
@@ -117,7 +117,7 @@ spar.cv <- function(x, y,
               nummods=nummods,
               family = family,
               measure = measure,
-              rp = rp, scrcoef = scrcoef,
+              rp = rp, screencoef = screencoef,
               ycenter = SPARres$ycenter, yscale = SPARres$yscale,
               xcenter = SPARres$xcenter, xscale = SPARres$xscale)
 

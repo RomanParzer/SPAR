@@ -4,6 +4,12 @@ format:
     jss-pdf:
         keep-tex: true
     # jss-html: default
+knitr:
+  opts_chunk: 
+    collapse: true
+    comment: "#>" 
+#    prompt: "R> "
+#    continue: "+  "
 author:
   - name: Roman Parzer
     affiliations:
@@ -14,7 +20,7 @@ author:
         country: Austria
         postal-code: 1040
     orcid: 
-    email: Roman.Parzers@tuwien.ac.at
+    email: Roman.Parzer@tuwien.ac.at
   - name: Peter Filzmoser
     affiliations:
       - TU Wien
@@ -32,6 +38,11 @@ keywords-formatted: [random projection, variable screening, ensemble learning, "
 
 bibliography: SPAR.bib   
 ---
+
+```{r setup, echo=FALSE}
+options(prompt = "R> ", continue = "+  ", width = 70,
+  useFancyQuotes = FALSE)
+```
 
 ## Introduction {#sec-intro}
 
@@ -85,7 +96,7 @@ scenarios where an important variable is marginally uncorrelated to the response
 is performed based on the log-likelihood of the GLM containing only $X_j$  as a predictor: $\hat\alpha_j=: \text{min}_{{\beta_j}\in\mathbb{R}}\sum_{i=1}^n -\ell(\beta;y_i,x_{ij})$.
 
 
-A rich stream of literature focuses on developing semi- or non-parametric alternatives to SIS which should be more robust to model misspecification. For linear regression, approaches include using the ranked correlation [@zhu2011model], (conditional) distance correlation [@li2012feature,@wang2015conditional]. or quantile correlation [@ma2016robust].
+A rich stream of literature focuses on developing semi- or non-parametric alternatives to SIS which should be more robust to model misspecification. For linear regression, approaches include using the ranked correlation [@zhu2011model], (conditional) distance correlation [@li2012feature;@wang2015conditional]. or quantile correlation [@ma2016robust].
 For GLMs, @fan2011nonparametric extend @Fan2010sisglms by fitting a generalized additive model with B-splines. Further extensions for discrete (or categorical) outcomes include the fused Kolmogorov filter [@mai2013kolmogorov], using the mean conditional variance, i.e., the expectation in $X_j$ of the variance in the response of the conditional cumulative
 distribution function $\Prob(X\leq x|Y)$ [@cui2015model].
 @ke2023sufficient propose a model free method where the contribution of each individual predictor is quantified marginally and conditionally in the presence of the control variables as well as the other candidates by reproducing-kernel-based $R^2$ and partial 
@@ -150,7 +161,7 @@ a linear regression setting.
 
 
 
-### Algorithm
+### Algorithm {#sec-algo}
 
 -   choose family with corresponding log-likelihood $\ell(.)$ and link
 
@@ -183,78 +194,115 @@ a linear regression setting.
 
 ## Software {#sec-software}
 
-The package can be loaded by:
+The package be installed from [GitHub]{.proglang} 
+```{r eval=FALSE}
+devtools::install_github("RomanParzer/SPAR")
+```
+and loaded by:
 ```{r}
 library("SPAR")
 ```
-
-The two main functions in the package are:
-
-```{r eval=FALSE}
-spar(x, y, family = gaussian(), ...)
+In this section we rely for illustration purposes on an example data set from the package:
+```{r}
+data("example_data", package = "SPAR")
+str(example_data)
 ```
 
+### Main functions and their arguments
+
+The two main functions for fitting the SPAR algorithm are:
+```{r eval=FALSE}
+spar(x, y, family = gaussian("identity"), rp = NULL, screencoef = NULL,
+  xval = NULL, yval = NULL, nnu = 20, nus = NULL, nummods = c(20),
+  measure = c("deviance", "mse", "mae", "class", "1-auc"),
+  inds = NULL, RPMs = NULL, ...)
+```
+which implements the algorithm in @sec-algo without cross-validation and returns an object of class "`spar`", 
 and
-
 ```{r eval=FALSE}
-spar.cv(x, y, family = gaussian(), nfolds = 10L, ...)
+spar.cv(x, y, family = gaussian("identity"), rp = NULL, screencoef = NULL,
+  nfolds = 10, nnu = 20, nus = NULL, nummods = c(20),
+  measure = c("deviance", "mse", "mae", "class", "1-auc"), ...)
 ```
+which implements the cross-validated procedure and returns an object of class "`spar.cv`".
 
-Most important arguments:
+The common arguments of these functions are:
 
--   `x` $n \times p$ numeric matrix of predictor variables.
+-   `x` is an $n \times p$ numeric matrix of predictor variables.
 
 -   `y` numeric response vector of length $n$.
 
 -   `family` object from [stats::family]{.fct}.
 
--   `type.rpm` type of random projection matrix to be employed; one of `"cwdatadriven"`, `"cw"` @Clarkson2013LowRankApproxShort, `"gaussian"`, `"sparse"`.
+-   `rp` an object of type [randomprojection]{.class}
 
--   `nscreen` max number of variables kept after screening in each marginal model; defaults to $2n$.
+-   `screencoef` an object of type [screencoef]{.class}
 
--   `type.screening` measure by which the coefficients are screened; `"ridge"` performs screening based on ridge regression, `"marglik"` marginal likelihood of fitting a GLM for each predictor, `"corr"` correlation of the response with each predictor.
+-    `nnu` is the number of threshold values $\nu$ which should be considered for thresholding; defaults to 20
 
--   `type.measure` loss to use for choosing $\lambda$ and $M$; defaults to `"deviance"` (available for all families). Other options are `"mse"` or `"mae"` (for all families), `"class"` and `"1-auc"` for `"binomial"`.
+-   `nus` is an optional vector of $\nu$ values to be considered for thresholding. If it is not provided, is defaults to a grid of `nnu` values. This grid is generated by including zero and `nnu`$-1$  equally spaced quantiles of the absolute values of the estimated coefficients from the marginal models.
 
--   `nlambda` number of $\lambda$ values to be considered for thresholding and optionally `lambdas`, a vector of values.
 
--   `nummods` vector containing the size of the different ensembles $M$ to consider for the prediction.
+-   `nummods` is the number of models to be considered in the ensemble;
+    defaults to 20. If a vector is provided, all combinations of `nus` and 
+     `nummods` are considered when choosing the optimal $\nu_\text{best}$ and $M_\text{best}$.
 
-Methods `print`, `plot`, `coef`, `predict` are available.
+-   `measure` gives the measure based on which the thresholding value $\nu_\text{opt}$ and the number of models `M` should be chosen on the validation set (for `spar()`) or in each of the folds (in `spar.cv()`). Defaults to `"deviance"`, which is available for all families. Other options are `"mse"` or `"mae"` (between responses and predicted means, for all families), 
+`"class"` (misclassification error) and `"1-auc"` (one minus area under the ROC curve) both just for binomial family.
 
-| Name           | Random projection method |
-|---------|---------|
-| `gaussian`            | Standard Gaussian      |  
-| `sparse`              | Rademacher      |  
-| `cw`                  | sparse embedding matrix      |  
-| `cwdatadriven`        | data driven sparse embedding matrix |
-: Overview of implemented random projection matrices. {#tbl-overviewrp}
+Furthermore, `spar()` has the specific arguments:
+
+-  `xval` and  `yval` which are used as validation sets for choosing $\nu_\text{best}$ and $M_\text{best}$. If not provided, `x` and  `y` will be employed.
+
+- `inds` is an optional list of length `max(nummods)` containing column index-vectors corresponding to variables that should be kept after screening for each marginal model; dimensions need to fit those of the dimensions of the provided matrices in `RPM`.
+
+-   `RPMs` is an optional list of length `max(nummods)` which contains  projection matrices to be used in each marginal model. 
+
+Function `spar.cv()` has the specific argument `nfolds` which is the number of folds to be used for cross-validation. It relies on `spar()`
+as a workhorse, which is called for each fold. The random projections
+for each model are held fixed throughout the cross-validation
+to reduce the computational burden. This is possible by calling `spar()`
+in each fold with a predefined `inds` and `RPMs` argument. 
+
 
 ### Screening coefficients
 
-The objects for creating screening coefficients are implemented as \proglang{S}3
-classes "`screeningcoef`". 
-
-They are created by functions which take `...` and a list of controls `control`
+The objects for creating screening coefficients are implemented as \proglang{S}3 classes "`screencoef`". These objects are created by
+several  `screen_*` functions, which take `...` and a list of controls `control`
 as arguments. 
-These functions return an object of class "`screeningcoef`"
+These functions return an object of class "`screencoef`"
 which in turn is a list with three elements: 
   
   * `name`, 
   
-  * `generate_scrcoef` function for generating the screening coefficient. This
-  function should have with arguments `scrcoef`, which is a 
-  "`screeningcoef`" object,  `data`, 
-  which is a list of `x` (matrix of predictors used as input in `spar()` and 
-  `spar.cv()`) and `y` (vector of responses used in  `spar()`). It returns a
+  * `generate_fun` -- an [R]{.proglang} function for generating the screening coefficient. This
+  function should have the following arguments:
+    * a "`screencoef`" object which has as attributes all 
+    the information passed through `...` ,  
+    * `data`, which should be a list of `x` -- the matrix of standardized predictors --  and `y` -- the vector of (standardized in the Gaussian case) responses. It returns a
   vector of screening coefficients of length $p$.
   
   * `control`, which is the control list in `screen_*`. These controls are 
-  arguments which are needed in `generate_scrcoef` in order to generate the desired 
+  arguments which are needed in `generate_fun` in order to generate the desired 
   screening coefficients.
-  
-Further arguments related to screening can be passed through `...`, which will
-then be saved as attributes of the "`screeningcoef`" object.
+
+The following screening coefficients are implemented in [SPAR]{.pkg}:
+
+* `screen_marglik()` - computes the screening coefficients by the coefficient of $x_j$ in a univariate GLM using the `stats::glm()` function.  It allows to pass a list of controls through the `control` argument to `stats::glm` such as weights, family, offsets.
+
+* `screen_corr()` -- computes the screening coefficients by the correlation between $y$ and $x_j$ using the function `stats::cor()`. It allows to pass a list of controls through the `control` argument to `stats::cor`.
+
+* `screen_glmnet()` -- computes by default the ridge coefficient 
+where the penalty $\lambda$ is very small [see @parzer2024glms for motivation]. The function 
+relies on `glmnet::glmnet()` and, while it assumes by 
+default $\alpha = 0$ and a small penalty, it allows to pass a list of 
+controls through the `control` argument to `glmnet::glmnet()` such 
+as `alpha = 1`. Used as default if `screencoef = NULL` in function call of
+`spar()` or `spar.cv()`.
+
+
+Further arguments related to screening can be passed through 
+`...`, which will be saved as attributes of the "`screencoef`" object.
 More specifically, the following are employed in function `spar()`:
 
   * `nscreen` integer giving the number of variables to be retained after screening; defaults to $2n$
@@ -266,33 +314,22 @@ More specifically, the following are employed in function `spar()`:
   variables should be employed across the ensemble; defaults to `type = "prob"`.
 
 For illustration purposes, consider the implemented function
-`screen_marglik`, which is used to define a screening procedure 
+`screen_marglik()`, which is used to define a screening procedure 
 based on the coefficients of univariate marginal GLMs between each predictor 
 and the response. 
 ```{r}
 unclass(screen_marglik())
 ```
-Function `generate_scrcoef_marglik` defines the generation of the screening coefficient. It considers the controls in `scrcoef$control` when calling
+Function `generate_scrcoef_marglik` defines the generation of the screening coefficient. It considers the controls in `object$control` when calling
 the `stats::glm()` function. Given that the proposed framework 
 estimates GLMs for the marginal models, the `spar()` function
-assigns its `family` argument as an attribute for the `screeningcoef`
-object. In `generate_scrcoef_marglik`, we employ the marginal model
-`family` if the control list argument does not contain any particular family.
+assigns by default its `family` argument as an attribute for the `screencoef`
+object. 
+In `generate_scrcoef_marglik`, we employ `family` attribute of the "`screencoef`" object if the control list argument does not contain any particular family.
 
-For convenience, a constructor function `constructor_screeningcoef()`
-is provided, which can be used to create the `screen_*` functions.  
+For convenience, a constructor function `constructor_screencoef()`
+is provided, which can be used to create new `screen_*` functions.  
 
-The following functions are implemented in [SPAR]{.pkg} 
-
-* `screen_marglik()` - computes the screening coefficients by the coefficient of $x_j$ in a univariate GLM using the `stats::glm()` function.  It allows to pass a list of controls through the `control` argument to `stats::glm` such as weights, family, offsets.
-
-* `screen_corr()` - computes the screening coefficients by the correlation between 
-$y$ and $x_j$ using the function `stats::cor()`. It allows to pass a list of controls through the `control` argument to `stats::cor` such as the method.
-
-* `screen_ridge()` - computes by default the screening coefficients by the ridge coefficient 
-where the penalty $\lambda$ is very small [see @parzer2024glms]. The function 
-relies on `glmnet::glmnet()` and, while it assumes by default $\alpha = 0$ and 
-a small penalty, it allows to pass a list of controls through the `control` argument to `glmnet::glmnet()` such as `alpha = 1`.
 
 ### Random projections
 
@@ -357,6 +394,32 @@ rp_gaussian()
 ```
 
 
+| Name           | Random projection method |
+|---------|---------|
+| `gaussian`            | Standard Gaussian      |  
+| `sparse`              | Rademacher      |  
+| `cw`                  | sparse embedding matrix      |  
+| `cwdatadriven`        | data driven sparse embedding matrix |
+: Overview of implemented random projection matrices. {#tbl-overviewrp}
+
+### Methods 
+
+```{r}
+data("example_data")
+spar_res <- spar(example_data$x, example_data$y,
+                 xval = example_data$xtest,
+                 yval = example_data$ytest,
+                 nummods=c(5,10,15,20,25,30))
+spar_res
+```
+
+
+Methods `print`, `plot`, `coef`, `predict` are available for both "`spar`"
+and "`spar.cv`" classes.
+
+
+The `print` method return information on 
+
 ## Extensibility
 
 
@@ -371,10 +434,10 @@ We exemplify how new screening coefficients implemented in package
 We start by defining the function for generating the screening coefficients
 using the `screenIID()` function in [VariableScreening]{.pkg}.
 ```{r}
-generate_scr_sirs <- function(scrcoef, data) {
+generate_scr_sirs <- function(object, data) {
   res_screen <- do.call(function(...) 
     VariableScreening::screenIID(data$x, data$y, ...), 
-    scrcoef$control)
+    object$control)
   coefs <- res_screen$measurement
   coefs
 }
@@ -383,11 +446,11 @@ Note that `screenIID()` also takes method as an argument.
 To allow for flexibility, we do not
 fix the method in `generate_scr_sirs` but rather allow the user to 
 pass a method through the `control` argument in the `screen_*` function.
-This function is created using `constructor_screeningcoef`:
+This function is created using `constructor_screencoef`:
 ```{r}
-screen_sirs <- constructor_screeningcoef(
+screen_sirs <- constructor_screencoef(
   "screen_sirs", 
-  generate_scrcoef = generate_scr_sirs)
+  generate_fun = generate_scr_sirs)
 ```
 
 We now call the `spar()` function with the newly created screening procedure.
@@ -396,7 +459,7 @@ screening but employ the top $2n$ variables in each marginal model.
 ```{r}
 set.seed(123)      
 spar_example <- spar(example_data$x, example_data$y,
-                     scrcoef = screen_sirs(type = "fixed",
+                     screencoef = screen_sirs(type = "fixed",
                                            control=list(method = "SIRS")),
                      measure = "mse")
 print(spar_example)
@@ -473,7 +536,7 @@ rp_cannings <- constructor_randomprojection(
 ```
 
 We can now estimate SPAR
-```{r}
+```{r eval=FALSE}
 set.seed(123)      
 ystar <- ( example_data$y > 0 ) + 0
 ystarval <- ( example_data$ytest > 0 ) + 0
@@ -482,13 +545,13 @@ spar_example_1 <- spar(
   xval = example_data$xtest, yval = ystarval,
   family = binomial(),
   nummods = 100, 
-  scrcoef = screen_marglik(type = "fixed"),
+  screencoef = screen_marglik(type = "fixed"),
   rp = rp_cannings(control = list(B2 = 50))
 )
 
 spar_example_2 <- spar(x = example_data$x, y = ystar,
   family = binomial(),
-  scrcoef = screen_marglik(type = "fixed"),
+  screencoef = screen_marglik(type = "fixed"),
   rp = rp_cw(data = TRUE),
   nummods = 100, 
   xval = example_data$xtest, yval = ystarval

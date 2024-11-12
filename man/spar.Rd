@@ -9,7 +9,7 @@ spar(
   y,
   family = gaussian("identity"),
   rp = NULL,
-  scrcoef = NULL,
+  screencoef = NULL,
   xval = NULL,
   yval = NULL,
   nnu = 20,
@@ -31,7 +31,7 @@ default \code{gaussian("identity")}.}
 
 \item{rp}{function creating a randomprojection object.}
 
-\item{scrcoef}{function creating a screeningcoef object}
+\item{screencoef}{function creating a screeningcoef object}
 
 \item{xval}{optional matrix of predictor variables observations used for
 validation of threshold nu and number of models; \code{x} is used

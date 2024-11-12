@@ -185,6 +185,7 @@ update_data_cw <- function(rp, data) {
   }
 
   control_glmnet <- rp$control[names(rp$control)  %in% names(formals(glmnet))]
+
   glmnet_res <- do.call(function(...)
     glmnet(x=z, y=yz, ...), control_glmnet)
 

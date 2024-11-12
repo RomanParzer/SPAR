@@ -17,7 +17,7 @@
 #' @param family  a \code{\link[stats]{"family"}} object used for the marginal generalized linear model,
 #'        default \code{gaussian("identity")}.
 #' @param rp function creating a randomprojection object.
-#' @param scrcoef function creating a screeningcoef object
+#' @param screencoef function creating a screeningcoef object
 #' @param xval optional matrix of predictor variables observations used for
 #'        validation of threshold nu and number of models; \code{x} is used
 #'        if not provided.
@@ -100,7 +100,7 @@
 spar <- function(x, y,
                  family = gaussian("identity"),
                  rp = NULL,
-                 scrcoef = NULL,
+                 screencoef = NULL,
                  xval = NULL, yval = NULL,
                  nnu = 20, nus = NULL,
                  nummods = c(20),
@@ -110,6 +110,16 @@ spar <- function(x, y,
 
   # Ensure back compatibility ----
   args <- list(...)
+
+  if (is.null(rp)) rp <- rp_cw(data = TRUE)
+  if (!is.null(args$mslow)) attr(rp, "mslow") <- args$mslow
+  if (!is.null(args$msup))  attr(rp, "msup") <- args$msup
+
+  if (is.null(screencoef)) screencoef <- screen_glmnet()
+  if (!is.null(args$nscreen)) attr(screencoef, "nscreen") <- args$nscreen
+  if (!is.null(args$split_data))  attr(screencoef, "split_data") <- args$split_data
+
+
   ##  Check if the old argument name 'old_arg' is used
   if (!is.null(args$type.measure)) {
     if (!is.null(measure)) {
@@ -126,25 +136,25 @@ spar <- function(x, y,
     } else {
       # Assign the value from 'old_arg' to 'new_arg' if 'new_arg' is not provided
       rp <- switch(args$type.rpm,
-                   "cw" = rp_cw(),
+                   "cw"           = rp_cw(data = FALSE),
                    "cwdatadriven" = rp_cw(data = TRUE),
-                   "gaussian" = rp_gaussian(),
-                   "sparse" = rp_sparse(psi = 0.1),
+                   "gaussian"     = rp_gaussian(),
+                   "sparse"       = rp_sparse(psi = 0.1),
                    stop("Provided 'type.rpm' not implemented."))
-      warning("'type.measure' is deprecated. Please use 'measure' instead.")
+      warning("'type.rpm' is deprecated. Please use 'rp' instead.")
     }
   }
   if (!is.null(args$type.screening)) {
-    if (!is.null(scrcoef)) {
-      warning("Both 'scrcoef' and deprecated 'type.screening' were provided. Using 'scrcoef'.")
+    if (!is.null(screencoef)) {
+      warning("Both 'screencoef' and deprecated 'type.screening' were provided. Using 'screencoef'.")
     } else {
       # Assign the value from 'old_arg' to 'new_arg' if 'new_arg' is not provided
-      scrcoef <- switch(args$type.screening,
-                        "ridge" = screen_ridge(),
-                        "marglik" = screen_marglik(),
-                        "corr" = screen_corr(),
-                        stop("Provided 'type.screening' not implemented."))
-      warning("'type.screening' is deprecated. Please use 'scrcoef' instead.")
+      screencoef <- switch(args$type.screening,
+                           "ridge" = screen_glmnet(),
+                           "marglik" = screen_marglik(),
+                           "corr" = screen_corr(),
+                           stop("Provided 'type.screening' not implemented."))
+      warning("'type.screening' is deprecated. Please use 'screencoef' instead.")
     }
   }
 
@@ -153,14 +163,6 @@ spar <- function(x, y,
   # Setup and Checks ----
   p <- ncol(x)
   n <- nrow(x)
-
-  if (is.null(rp)) rp <- rp_cw(data = TRUE)
-  if (!is.null(args$mslow)) attr(rp, "mslow") <- args$mslow
-  if (!is.null(args$msup))  attr(rp, "msup") <- args$msup
-
-  if (is.null(scrcoef)) scrcoef <- screen_ridge()
-  if (!is.null(args$nscreen)) attr(scrcoef, "nscreen") <- args$nscreen
-  if (!is.null(args$split_data))  attr(scrcoef, "split_data") <- args$split_data
 
 
   measure <- match.arg(measure)
@@ -201,20 +203,20 @@ spar <- function(x, y,
   yz <- scale(y,center = ycenter,scale = yscale)
 
   # Setup screening ----
-  if (is.null(attr(scrcoef, "family"))) {
-    attr(scrcoef, "family") <- family
+  if (is.null(attr(screencoef, "family"))) {
+    attr(screencoef, "family") <- family
   }
-  if (attr(scrcoef, "split_data")) {
+  if (attr(screencoef, "split_data")) {
     scr_inds <- sample(n, n%/%4) # TODO need to parametrize this
     mar_inds <- seq_len(n)[-scr_inds]
   } else {
     mar_inds <- scr_inds <- seq_len(n)
   }
 
-  if (is.null(attr(scrcoef, "nscreen"))) {
-    nscreen <- attr(scrcoef, "nscreen") <- 2 * n
+  if (is.null(attr(screencoef, "nscreen"))) {
+    nscreen <- attr(screencoef, "nscreen") <- 2 * n
   } else {
-    nscreen <- attr(scrcoef, "nscreen")
+    nscreen <- attr(screencoef, "nscreen")
   }
 
   ## Update RP with data only at the beginning, not in each RP! ----
@@ -236,66 +238,22 @@ spar <- function(x, y,
 
   # Perform screening ----
   if (nscreen < p) {
-    scr_coef <- get_scrcoef(scrcoef,
+    scr_coef <- get_screencoef(screencoef,
                             data = list(x = z[scr_inds,],
                                         y = yz[scr_inds, ]))
-    attr(scrcoef, "importance") <- scr_coef
+    attr(screencoef, "importance") <- scr_coef
 
     inc_probs <- abs(scr_coef)
     max_inc_probs <- max(inc_probs)
     inc_probs <- inc_probs/max_inc_probs
   } else {
+    scr_coef <- NULL
     message("nscreen >= p. No screening performed.")
   }
-
-  # if (is.null(scrcoef)) {
-  #   scr_coef <- switch(type.screening,
-  #                      "ridge" = screening_ridge_lambda0(z[scr_inds,], yz = yz[scr_inds, ],
-  #                                                        family = family),
-  #                      "marglik" = screening_marglik(z[scr_inds,], yz = yz[scr_inds, ],
-  #                                                    family = family),
-  #                      "corr" = screening_corr(z[scr_inds,], yz = yz[scr_inds, ],
-  #                                              family = family))
-  # }
-  # if (family$family=="gaussian" & family$link=="identity") {
-  #   fit_family <- "gaussian"  # why??
-  #   ycenter <- mean(y)
-  #   yscale <- sd(y)
-  #   yz <- scale(y,center = ycenter,scale = yscale)
-  #   if (actual_p < n/2) {
-  #     scr_coef <- tryCatch( solve(crossprod(z[scr_inds,]),crossprod(z[scr_inds,],yz[scr_inds])),
-  #                           error=function(error_message) {
-  #                             return(solve(crossprod(z[scr_inds,])+(sqrt(actual_p)+sqrt(n))*diag(actual_p),crossprod(z[scr_inds,],yz[scr_inds])))
-  #                           })
-  #   } else if (actual_p < 2*n) {
-  #     scr_coef <- crossprod(z[scr_inds,],solve(tcrossprod(z[scr_inds,])+(sqrt(actual_p)+sqrt(n))*diag(n),yz[scr_inds]))
-  #   } else {
-  #     solve_res <- tryCatch( solve(tcrossprod(z[scr_inds,]),yz[scr_inds]),
-  #                            error=function(error_message) {
-  #                              return(solve(tcrossprod(z[scr_inds,])+(sqrt(actual_p)+sqrt(n))*diag(n),yz[scr_inds]))
-  #                            })
-  #     scr_coef <- crossprod(z[scr_inds,],solve_res)
-  #   }
-  # } else {
-  #   if (family$family=="binomial" & family$link=="logit") {
-  #     fit_family <- "binomial"
-  #   } else if (family$family=="poisson" & family$link=="log") {
-  #     fit_family <- "poisson"
-  #   } else {
-  #     fit_family <- family
-  #   }
-  #
-  #   ycenter <- 0
-  #   yscale <- 1
-  #   glmnet_res <- glmnet::glmnet(x=z[scr_inds,],y=y[scr_inds],family = fit_family,alpha=0)
-  #   lam <- min(glmnet_res$lambda)
-  #   scr_coef <- coef(glmnet_res,s=lam)[-1]
-  # }
 
   max_num_mod <- max(nummods)
   intercepts <- numeric(max_num_mod)
   betas_std <- Matrix(data=c(0),actual_p,max_num_mod,sparse = TRUE)
-
 
   drawRPMs <- FALSE
   if (is.null(RPMs)) {
@@ -315,10 +273,10 @@ spar <- function(x, y,
   for (i in seq_len(max_num_mod)) {
     if (drawinds) {
       if (nscreen < p) {
-        if (attr(scrcoef, "type") == "fixed") {
+        if (attr(screencoef, "type") == "fixed") {
           ind_use <- order(inc_probs, decreasing = TRUE)[seq_len(nscreen)]
         }
-        if (attr(scrcoef, "type") == "prob") {
+        if (attr(screencoef, "type") == "prob") {
           ind_use <- sample(actual_p, nscreen, prob=inc_probs)
         }
       } else {
@@ -432,7 +390,8 @@ spar <- function(x, y,
       avg_coef <- rowMeans(tmp_coef)
       tmp_beta <- numeric(p)
       tmp_beta[xscale>0] <- yscale*avg_coef/(xscale[xscale>0])
-      tmp_intercept <- mean(intercepts[1:nummod]) + as.numeric(ycenter - sum(xcenter*tmp_beta) )
+      tmp_intercept <- mean(intercepts[1:nummod]) +
+        as.numeric(ycenter - sum(xcenter*tmp_beta) )
       eta_hat <- xval%*%tmp_beta + tmp_intercept
       c(l,
         thresh,
@@ -457,7 +416,7 @@ spar <- function(x, y,
               family = family,
               measure = measure,
               rp = rp,
-              scrcoef = scrcoef
+              screencoef = screencoef
   )
   attr(res,"class") <- "spar"
 

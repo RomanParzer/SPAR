@@ -42,7 +42,8 @@ test_that("Returned coef and preds are correct for fixed screening and projectio
   RP2@p <- 0:nsc
   RP2@x <- (-1)^(1:nsc)
 
-  spar_res <- spar(x,y,nummods=c(2),inds = list(1:(2*nrow(x)),
+  spar_res <- spar(x,y,
+                   nummods=c(2),inds = list(1:(2*nrow(x)),
                                                 500+1:(2*nrow(x))),
                    RPMs = list(RP1,RP2))
   sparcoef <- coef(spar_res)

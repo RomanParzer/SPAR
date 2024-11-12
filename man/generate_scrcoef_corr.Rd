@@ -4,7 +4,7 @@
 \alias{generate_scrcoef_corr}
 \title{Screening coefficient based on correlation}
 \usage{
-generate_scrcoef_corr(scrcoef, data)
+generate_scrcoef_corr(object, data)
 }
 \description{
 Screening coefficient based on correlation

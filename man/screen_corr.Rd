@@ -8,18 +8,18 @@ screen_corr(..., control = list())
 }
 \arguments{
 \item{...}{includes arguments which can be passed as attributes to the
-"\code{screeningcoef}" object}
+"\code{screencoef}" object}
 
 \item{control}{list of controls to be passed to the screening function}
 }
 \value{
-object of class "\code{screeningcoef}" which is a list with elements
-\code{name} (character), \code{generate_scrcoef} (function), and \code{control}
-(list of controls passes as an argument)
+object of class "\code{screencoef}" which is a list with elements
+\code{name} (character) \code{generate_fun} (function), and \code{control}
+(list of controls passed as an argument)
 }
 \description{
 No arguments need to be passed.
 }
 \details{
-Creates an object class "\code{screeningcoef}" using arguments passed by user.
+Creates an object class "\code{screencoef}" using arguments passed by user.
 }

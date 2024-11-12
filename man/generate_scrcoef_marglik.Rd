@@ -4,7 +4,7 @@
 \alias{generate_scrcoef_marglik}
 \title{Screening coefficient based on marginal GLMs}
 \usage{
-generate_scrcoef_marglik(scrcoef, data)
+generate_scrcoef_marglik(object, data)
 }
 \description{
 Screening coefficient based on marginal GLMs

@@ -9,7 +9,7 @@ spar.cv(
   y,
   family = gaussian("identity"),
   rp = NULL,
-  scrcoef = NULL,
+  screencoef = NULL,
   nfolds = 10,
   nnu = 20,
   nus = NULL,
@@ -28,7 +28,7 @@ default \code{gaussian("identity")}.}
 
 \item{rp}{function creating a randomprojection object.}
 
-\item{scrcoef}{unction creating a screeningcoef object}
+\item{screencoef}{unction creating a screeningcoef object}
 
 \item{nfolds}{number of folds to use for cross-validation; should be greater than 2, defaults to 10.}
 
