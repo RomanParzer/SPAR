@@ -144,7 +144,7 @@
 \makeatletter
 \makeatother
 \makeatletter
-\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[enhanced, sharp corners, frame hidden, interior hidden, borderline west={3pt}{0pt}{shadecolor}, breakable, boxrule=0pt]}{\end{tcolorbox}}\fi
+\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[boxrule=0pt, enhanced, borderline west={3pt}{0pt}{shadecolor}, breakable, interior hidden, frame hidden, sharp corners]}{\end{tcolorbox}}\fi
 \makeatother
 
 \ifLuaTeX
@@ -304,7 +304,7 @@ ensembles, but only for classification purposes, include package
 ensemble classification and classification problems, where random
 subspaces are generated and the optimal one is chosen to train a weak
 learner on the basis of some criterion, and package \pkg{RPEnsemble}
-\citep{pkg:RPEnsembleR}, which implements the procedure in
+\citep{RPEnsembleR}, which implements the procedure in
 \citet{cannings2017random}. \pkg{RaSEn} provides various choices of base
 classifiers but do not perform random projections while \pkg{RPEnsemble}
 implements only the random projection approach in the package and
@@ -591,6 +591,14 @@ from the package:
 \begin{verbatim}
 R> data("example_data", package = "SPAR")
 R> str(example_data)
+#> List of 7
+#>  $ x     : num [1:200, 1:2000] 1.8302 -0.4251 -1.3893 -0.0947 0.4304 ...
+#>  $ y     : num [1:200] -5.64 -23.63 -17.09 13.18 20.91 ...
+#>  $ xtest : num [1:100, 1:2000] -0.166 -0.3729 0.0379 0.6774 0.2174 ...
+#>  $ ytest : num [1:100] 10.61 -34.1 29.3 35.53 8.67 ...
+#>  $ mu    : num 1
+#>  $ beta  : num [1:2000] 1 -2 3 2 1 -3 2 3 1 -2 ...
+#>  $ sigma2: num 83
 \end{verbatim}
 
 \subsection{Main functions and their
@@ -780,12 +788,42 @@ A user-friendly \texttt{print} of the \class{screencoef} is provided:
 
 \begin{verbatim}
 R> obj
+#> Name: screen_marglik 
+#> Main attributes: 
+#> * proportion of data used for screening: 1 
+#> * number of screened variables: not provided, will default to 2n 
+#> * type: probabilistic screening 
+#> * screening coefficients: not yet computed from the data.
 \end{verbatim}
 
 The structure of the object is the following:
 
 \begin{verbatim}
 R> unclass(obj)
+#> $name
+#> [1] "screen_marglik"
+#> 
+#> $generate_fun
+#> function(object, data) {
+#>   y <- data$y
+#>   x <- data$x
+#>   if (is.null(object$control$family)) {
+#>     object$control$family <- attr(object, "family")
+#>   }
+#>   coefs <- apply(x, 2, function(xj){
+#>     glm_res <- do.call(function(...) glm(y ~ xj,  ...),
+#>                        object$control)
+#>     glm_res$coefficients[2]
+#>   })
+#>   coefs
+#> }
+#> <environment: namespace:SPAR>
+#> 
+#> $control
+#> list()
+#> 
+#> attr(,"type")
+#> [1] "prob"
 \end{verbatim}
 
 Function \texttt{generate\_scrcoef\_marglik} defines the generation of
@@ -907,6 +945,36 @@ from the normal distribution.
 
 \begin{verbatim}
 R> rp_gaussian()
+#> $name
+#> [1] "rp_gaussian"
+#> 
+#> $generate_fun
+#> function(rp, m, included_vector) {
+#>   p <- length(included_vector)
+#>   control_rnorm <-
+#>     rp$control[names(rp$control)  %in% names(formals(rnorm))]
+#>   vals <- do.call(function(...)
+#>     rnorm(m * p, ...), control_rnorm)
+#>   vals <- rnorm(m * p)
+#>   RM <- matrix(vals, nrow = m, ncol = p)
+#>   RM <- Matrix(RM, sparse = TRUE)
+#>   return(RM)
+#> }
+#> <environment: namespace:SPAR>
+#> 
+#> $update_data_fun
+#> NULL
+#> 
+#> $update_rpm_w_data
+#> NULL
+#> 
+#> $control
+#> list()
+#> 
+#> attr(,"use_data")
+#> [1] FALSE
+#> attr(,"class")
+#> [1] "randomprojection"
 \end{verbatim}
 
 The \texttt{generate\_fun} returns a sparse matrix object of class
@@ -944,10 +1012,30 @@ R> spar_cv <- spar.cv(example_data$x, example_data$y,
 
 \begin{verbatim}
 R> spar_res
+#> SPAR object:
+#> Smallest Validation Measure reached for nummod=5,
+#>               nu=2.32e-02 leading to 329 / 2000 active predictors.
+#> Summary of those non-zero coefficients:
+#>     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
+#> -1.06207 -0.17028  0.15296  0.08591  0.28885  1.19042
 \end{verbatim}
 
 \begin{verbatim}
 R> spar_cv
+#> SPAR.cv object:
+#> Smallest CV-Meas 2119.7 reached for nummod=30,
+#>               nu=0.00e+00 leading to 1858 / 2000 active predictors.
+#> Summary of those non-zero coefficients:
+#>      Min.   1st Qu.    Median      Mean   3rd Qu.      Max. 
+#> -0.774941 -0.037497  0.003731  0.018246  0.070578  0.962296 
+#> 
+#> Sparsest coefficient within one standard error of best CV-Meas
+#>               reached for nummod=5, nu=1.07e-02 
+#> leading to 740 / 2000 active
+#>               predictors with CV-Meas 3077.4.
+#> Summary of those non-zero coefficients:
+#>     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
+#> -1.23449 -0.14023  0.07962  0.04250  0.20041  1.34205
 \end{verbatim}
 
 \subsubsection{coef}\label{coef}
@@ -968,6 +1056,11 @@ object, together with further arguments:
 
 \begin{verbatim}
 R> str(coef(spar_res))
+#> List of 4
+#>  $ intercept: num 2.56
+#>  $ beta     : num [1:2000] 0 0 0.449 0 0 ...
+#>  $ nummod   : num 5
+#>  $ nu       : num 0.0232
 \end{verbatim}
 
 It returns a list with the intercept, vector of \texttt{beta}
@@ -1143,6 +1236,12 @@ R> spar_example <- spar(example_data$x, example_data$y,
 +                                           control=list(method = "SIRS")),
 +                     measure = "mse")
 R> print(spar_example)
+#> SPAR object:
+#> Smallest Validation Measure reached for nummod=20,
+#>               nu=1.75e-03 leading to 396 / 2000 active predictors.
+#> Summary of those non-zero coefficients:
+#>       Min.    1st Qu.     Median       Mean    3rd Qu.       Max. 
+#> -0.6918230 -0.0928444  0.0009116  0.0943062  0.1777889  2.0089709
 \end{verbatim}
 
 \subsection{Random projections}\label{random-projections-1}
@@ -1291,6 +1390,13 @@ We can extract the measures on the validation set by:
 
 \begin{verbatim}
 R> head(spar_example_1$val_res)
+#>   nnu          nu nummod numAct Meas
+#> 1   1 0.000000000    100   2000 0.19
+#> 2   2 0.002504236    100   2000 0.18
+#> 3   3 0.005091038    100   2000 0.19
+#> 4   4 0.007674062    100   2000 0.19
+#> 5   5 0.010337517    100   2000 0.19
+#> 6   6 0.013009198    100   2000 0.19
 \end{verbatim}
 
 We can compare the two approaches by looking at the minimum
@@ -1303,7 +1409,11 @@ R> min_val_2 <- min(spar_example_2$val_res$Meas)
 R> id_best_2 <- max(which(spar_example_2$val_res$Meas == min_val_2))
 R> 
 R> spar_example_1$val_res[id_best_1, ]
+#>    nnu         nu nummod numAct Meas
+#> 11  11 0.02840239    100   2000 0.18
 R> spar_example_2$val_res[id_best_2, ]
+#>    nnu         nu nummod numAct Meas
+#> 10  10 0.01408872    100   1612 0.16
 \end{verbatim}
 
 \section{Illustrations}\label{sec-illustrations}
@@ -1349,6 +1459,17 @@ R> ggplot(data.frame(X = rep(1:64,each=64),Y = rep(64:1,64),
 +        plot.title = element_text(hjust = 0.5))
 \end{verbatim}
 
+\begin{figure}[H]
+
+{\centering \includegraphics{SPAR_files/figure-pdf/unnamed-chunk-29-1.pdf}
+
+}
+
+\caption{Image corresponding to the first observation in the
+\emph{Isomap faces} data set. \label{fig:facesplot_i1}}
+
+\end{figure}%
+
 We split the data into training vs test sample:
 
 \begin{verbatim}
@@ -1373,7 +1494,23 @@ R> spar_faces <- spar.cv(
 +  screencoef = screen_cor(method = "kendall"),
 +  nummods = c(5, 10, 20, 50),
 +  measure = "mse")
+#> Warning in cor(y, xj, ...): the standard deviation is zero
+#> Warning in cor(y, xj, ...): the standard deviation is zero
 R> spar_faces
+#> SPAR.cv object:
+#> Smallest CV-Meas 28.4 reached for nummod=50,
+#>               nu=1.71e-03 leading to 3738 / 4096 active predictors.
+#> Summary of those non-zero coefficients:
+#>      Min.   1st Qu.    Median      Mean   3rd Qu.      Max. 
+#> -753.4845   -0.2689    0.0082   -0.1040    0.2720  791.3590 
+#> 
+#> Sparsest coefficient within one standard error of best CV-Meas
+#>               reached for nummod=5, nu=1.08e-02 
+#> leading to 2228 / 4096 active
+#>               predictors with CV-Meas 38.2.
+#> Summary of those non-zero coefficients:
+#>     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
+#> -164.623   -1.199    0.021    1.729    1.273 3349.713
 \end{verbatim}
 
 The \texttt{plot} method for `\texttt{spar.cv}' objects displays by
@@ -1385,6 +1522,20 @@ value found to perform best in cross-validation exercise:
 R> plot(spar_faces)
 \end{verbatim}
 
+\begin{figure}[H]
+
+{\centering \includegraphics{SPAR_files/figure-pdf/unnamed-chunk-32-1.pdf}
+
+}
+
+\caption{Plot of mean squared error over a grid of threshold values
+\(\nu\) for fixed number of optimal models \(M=50\) for the
+\emph{Isomap faces} data set. Confidence bands represent one standard
+deviation in the measures across the number of folds.
+\label{fig:facesplot_valmeasure}}
+
+\end{figure}%
+
 The coefficients of the different variables (in this example pixels)
 obtained by averaging over the coefficients the marginal models (for
 optimal \(\lambda\) and number of models) are given by:
@@ -1392,6 +1543,11 @@ optimal \(\lambda\) and number of models) are given by:
 \begin{verbatim}
 R> face_coef <- coef(spar_faces, opt_par = "best")
 R> str(face_coef)
+#> List of 4
+#>  $ intercept: num -10.7
+#>  $ beta     : num [1:4096] 2.627 2.425 0.797 -0.918 -1.208 ...
+#>  $ nummod   : num 50
+#>  $ nu       : num 0.00171
 \end{verbatim}
 
 For a sparser solution we can compute the coefficients using
@@ -1401,6 +1557,11 @@ number of models.
 \begin{verbatim}
 R> face_coef_1se <- coef(spar_faces, opt_par = "1se")
 R> str(face_coef_1se)
+#> List of 4
+#>  $ intercept: num -9
+#>  $ beta     : num [1:4096] 0 0 -1.64 0 0 ...
+#>  $ nummod   : num 5
+#>  $ nu       : num 0.0108
 \end{verbatim}
 
 The standardized coefficients from each of \texttt{max(nummods)} models
@@ -1409,6 +1570,18 @@ The standardized coefficients from each of \texttt{max(nummods)} models
 \begin{verbatim}
 R> plot(spar_faces, "coefs")
 \end{verbatim}
+
+\begin{figure}[H]
+
+{\centering \includegraphics{SPAR_files/figure-pdf/unnamed-chunk-35-1.pdf}
+
+}
+
+\caption{Coefficient plot for all variables and all \(M=50\) models in
+the SPAR ensemble for the \emph{Isomap faces} data set. The coefficients
+are standardized, before thresholding. \label{fig:faces_coefs}}
+
+\end{figure}%
 
 The \texttt{predict()} function can be applied to the `\texttt{spar.cv}'
 object. We will employ the sparser solution chosen by the
@@ -1425,6 +1598,7 @@ of a model containing only an intercept:
 \begin{verbatim}
 R> rMSPEconst <- mean((ytest - mean(y))^2) 
 R> mean((ynew-ytest)^2)/rMSPEconst
+#> [1] 0.0237945
 \end{verbatim}
 
 Additionally, for this data set, one can visualize the effect of each
@@ -1444,6 +1618,19 @@ R> plot4 <- ggplot(data.frame(X = rep(1:64, each = 64),
 +  theme(plot.title = element_text(hjust = 0.5)) 
 R> plot4
 \end{verbatim}
+
+\begin{figure}[H]
+
+{\centering \includegraphics{SPAR_files/figure-pdf/unnamed-chunk-38-1.pdf}
+
+}
+
+\caption{The effect of each pixel \(\hat\beta_j x^\text{new}_{i,j}\) in
+predicting the face orientation in a given image (the 10th observation
+in the test set) of the \emph{Isomap faces} data set.
+\label{fig:faces_predictions}}
+
+\end{figure}%
 
 \subsection{Darwin data set}\label{darwin-data-set}
 
@@ -1476,6 +1663,9 @@ R> tmp <- cellWise::DDC(
 +  list(returnBigXimp = TRUE, 
 +       tolProb = 0.999,
 +       silent = TRUE))
+#>  
+#>  The final data set we will analyze has 174 rows and 446 columns.
+#> 
 R> darwin <- list(x = tmp$Ximp, y = darwin_orig$y)
 \end{verbatim}
 
@@ -1483,6 +1673,12 @@ The structure of the data is:
 
 \begin{verbatim}
 R> str(darwin)
+#> List of 2
+#>  $ x: num [1:174, 1:450] 5160 3721 2600 2130 2310 ...
+#>   ..- attr(*, "dimnames")=List of 2
+#>   .. ..$ : NULL
+#>   .. ..$ : chr [1:450] "air_time1" "disp_index1" "gmrt_in_air1" "gmrt_on_paper1" ...
+#>  $ y: num [1:174] 1 1 1 1 1 1 1 1 1 1 ...
 \end{verbatim}
 
 We estimate the SPAR algorithm with the screening and random projection
@@ -1505,6 +1701,20 @@ method for ``\texttt{spar.cv}'' (see Figure
 \begin{verbatim}
 R> plot(spar_darwin, plot_type = "Val_numAct")
 \end{verbatim}
+
+\begin{figure}[H]
+
+{\centering \includegraphics{SPAR_files/figure-pdf/unnamed-chunk-45-1.pdf}
+
+}
+
+\caption{Average number of active variables for the grid of thresholding
+values \(\nu\) and \(M=20\) models for the \emph{Darwin} data set. The
+red points correspond to the average number of active variables for the
+model with the lowest cross-validation measures and to the one chosen by
+the 1-standard-error rule. \label{fig:darwin_activevars}}
+
+\end{figure}%
 
 The predictors are ordered by task, where the first 18 covariates
 represent different features measured for the first task. Given that
@@ -1530,6 +1740,18 @@ R> plot(spar_darwin,"coefs",coef_order = reorder_ind) +
 +           y = 45,label=feat_names, angle = 90,
 +           size = 3)
 \end{verbatim}
+
+\begin{figure}[H]
+
+{\centering \includegraphics{SPAR_files/figure-pdf/unnamed-chunk-46-1.pdf}
+
+}
+
+\caption{Coefficient plot for all variables and all \(M=50\) models in
+the SPAR ensemble \emph{Darwin} data set. The coefficients are
+standardized, before thresholding. \label{fig:darwin_coefs}}
+
+\end{figure}%
 
 In general we observe that the different features measures across
 different tasks have the same impact on the probability of AD

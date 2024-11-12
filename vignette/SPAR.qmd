@@ -14,7 +14,7 @@ author:
   - name: Roman Parzer
     affiliations:
       - name: TU Wien
-        department: Computational Statistics (CSTAT) \ Institute of Statistics and Mathematical Methods in Economics
+        department: Computational Statistics (CSTAT), Institute of Statistics and Mathematical Methods in Economics
         address: Karlsplatz 4
         city: Vienna
         country: Austria
@@ -23,7 +23,12 @@ author:
     email: romanparzer1@gmail.com
   - name: Laura Vana Gür
     affiliations:
-      - TU Wien
+      - name: TU Wien
+        department: Computational Statistics (CSTAT), Institute of Statistics and Mathematical Methods in Economics
+        address: Karlsplatz 4
+        city: Vienna
+        country: Austria
+        postal-code: 1040
     orcid: 0000-0002-9613-7604
 abstract: |
   [SPAR]{.pkg} is a package for building ensembles of predictive generalized linear models (GLMs) with high-dimensional (HD) predictors in [R]{.proglang} by making use of probabilistic variable screening and random projection tools.
@@ -38,7 +43,7 @@ bibliography: SPAR.bib
 ---
 
 ```{r setup, echo=FALSE}
-knitr::opts_chunk$set(fig.pos = "t!", out.extra = "", eval=FALSE)
+knitr::opts_chunk$set(fig.pos = "t!", out.extra = "", eval=TRUE)
 ```
 
 ## Introduction {#sec-intro}
@@ -70,7 +75,7 @@ package [VariableScreening]{.pkg} [@pkg:VariableScreening] implements screening 
 A collection of model-free screening techniques such as SIRS, DC-SIS, MV-SIS, the fused Kolmogorov filter [@mai2015fusedkolmogorov], the projection correlation method using knock-off features [@liu2020knockoff], are provided in package [MFSIS]{.pkg} [@pkg:MFSIS]. Further packages are available which implement specific procedures: [@pkg:tilting;@pkg:cdcsis;@pkg:QCSIS;@pkg:LqG,@pkg:fusionclust]. 
 <!-- Package [SMLE]{.pkg} [@pkg:SMLE] implements joint feature screening via sparse MLE [@SMLE2014] in high-dimensional linear, logistic, and Poisson models. Package [TSGSIS]{.pkg} [@pkg:TSGSIS] provides a high-dimensional grouped variable selection approach for detecting interactions that may not have marginal effects in high dimensional linear and logistic regression [@10.1093/bioinformatics/btx409]. -->
 
-Packages which are similar in spirit to [SPAR]{.pkg}, which also build ensembles, but only for classification purposes, include package [RaSEn]{.pkg} [@pkg:RaSEn], which implements the RaSE algorithm for ensemble classification and classification problems, where random subspaces are generated and the optimal one is chosen to train a weak learner on the basis of some criterion, and package [RPEnsemble]{.pkg}  [@pkg:RPEnsembleR],
+Packages which are similar in spirit to [SPAR]{.pkg}, which also build ensembles, but only for classification purposes, include package [RaSEn]{.pkg} [@pkg:RaSEn], which implements the RaSE algorithm for ensemble classification and classification problems, where random subspaces are generated and the optimal one is chosen to train a weak learner on the basis of some criterion, and package [RPEnsemble]{.pkg}  [@RPEnsembleR],
 which implements the procedure in @cannings2017random. 
 [RaSEn]{.pkg} provides various choices of base classifiers
 but do not perform random projections while [RPEnsemble]{.pkg} implements only the random projection approach in the package and provides limited functionality for using different classifiers. Therefore, no other package in [R]{.proglang}
