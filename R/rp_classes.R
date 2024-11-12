@@ -141,7 +141,7 @@ rp_sparse <- constructor_randomprojection(
 #'
 generate_cw <- function(rp, m, included_vector) {
   p <- length(included_vector)
-  use_data <- attr(rp, "use_data")
+  use_data <- attr(rp, "data")
   if (!use_data) {
     diagvals <- sample(c(-1, 1), p, replace = TRUE)
   } else {

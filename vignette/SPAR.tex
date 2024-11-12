@@ -144,7 +144,7 @@
 \makeatletter
 \makeatother
 \makeatletter
-\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[boxrule=0pt, enhanced, borderline west={3pt}{0pt}{shadecolor}, breakable, interior hidden, frame hidden, sharp corners]}{\end{tcolorbox}}\fi
+\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[sharp corners, borderline west={3pt}{0pt}{shadecolor}, frame hidden, boxrule=0pt, interior hidden, enhanced, breakable]}{\end{tcolorbox}}\fi
 \makeatother
 
 \ifLuaTeX
@@ -208,13 +208,17 @@ learning, R}
 %% in the following format:
 \Address{
 Roman Parzer\\
-Computational Statistics (CSTAT) ~Institute of Statistics and
+Computational Statistics (CSTAT), Institute of Statistics and
 Mathematical Methods in Economics\\
 Karlsplatz 4\\
 Vienna Austria\\
 E-mail: \email{romanparzer1@gmail.com}\\
 \\~
 Laura Vana Gür\\
+Computational Statistics (CSTAT), Institute of Statistics and
+Mathematical Methods in Economics\\
+Karlsplatz 4\\
+Vienna Austria\\
 \\~
 
 }
@@ -910,8 +914,8 @@ algorithm:
   \texttt{msup}: integer giving the maximum dimension to which the
   predictors should be projected; defaults to \(n/2\)
 \item
-  \texttt{use\_data}: boolean indicating whether the random projection
-  is data driven.
+  \texttt{data}: boolean indicating whether the random projection is
+  data driven.
 \end{itemize}
 
 Note that for random projection matrices which satisfy the JL lemma,
@@ -1013,29 +1017,29 @@ R> spar_cv <- spar.cv(example_data$x, example_data$y,
 \begin{verbatim}
 R> spar_res
 #> SPAR object:
-#> Smallest Validation Measure reached for nummod=5,
-#>               nu=2.32e-02 leading to 329 / 2000 active predictors.
+#> Smallest Validation Measure reached for nummod=25,
+#>               nu=1.37e-02 leading to 1062 / 2000 active predictors.
 #> Summary of those non-zero coefficients:
 #>     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
-#> -1.06207 -0.17028  0.15296  0.08591  0.28885  1.19042
+#> -0.90455 -0.06833  0.02290  0.02888  0.12747  0.99103
 \end{verbatim}
 
 \begin{verbatim}
 R> spar_cv
 #> SPAR.cv object:
-#> Smallest CV-Meas 2119.7 reached for nummod=30,
-#>               nu=0.00e+00 leading to 1858 / 2000 active predictors.
+#> Smallest CV-Meas 2103.5 reached for nummod=30,
+#>               nu=0.00e+00 leading to 1826 / 2000 active predictors.
 #> Summary of those non-zero coefficients:
 #>      Min.   1st Qu.    Median      Mean   3rd Qu.      Max. 
-#> -0.774941 -0.037497  0.003731  0.018246  0.070578  0.962296 
+#> -1.084023 -0.043191  0.004472  0.018491  0.077643  1.086230 
 #> 
 #> Sparsest coefficient within one standard error of best CV-Meas
-#>               reached for nummod=5, nu=1.07e-02 
-#> leading to 740 / 2000 active
-#>               predictors with CV-Meas 3077.4.
+#>               reached for nummod=5, nu=6.81e-03 
+#> leading to 910 / 2000 active
+#>               predictors with CV-Meas 2468.6.
 #> Summary of those non-zero coefficients:
 #>     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
-#> -1.23449 -0.14023  0.07962  0.04250  0.20041  1.34205
+#> -0.88534 -0.12709  0.05940  0.03596  0.18166  1.39080
 \end{verbatim}
 
 \subsubsection{coef}\label{coef}
@@ -1057,10 +1061,10 @@ object, together with further arguments:
 \begin{verbatim}
 R> str(coef(spar_res))
 #> List of 4
-#>  $ intercept: num 2.56
-#>  $ beta     : num [1:2000] 0 0 0.449 0 0 ...
-#>  $ nummod   : num 5
-#>  $ nu       : num 0.0232
+#>  $ intercept: num 2.93
+#>  $ beta     : num [1:2000] 0 -0.016 0.695 0 0 ...
+#>  $ nummod   : num 25
+#>  $ nu       : num 0.0137
 \end{verbatim}
 
 It returns a list with the intercept, vector of \texttt{beta}
@@ -1473,7 +1477,7 @@ R> ggplot(data.frame(X = rep(1:64,each=64),Y = rep(64:1,64),
 We split the data into training vs test sample:
 
 \begin{verbatim}
-R> set.seed(1234)
+R> set.seed(123)
 R> ntot <- length(y); ntest <- ntot * 0.25
 R> testind <- sample(ntot, ntest, replace=FALSE)
 R> xtrain <- as.matrix(x[-testind, ]); ytrain <- y[-testind]
@@ -1481,36 +1485,32 @@ R> xtest <- as.matrix(x[testind, ]); ytest <- y[testind]
 \end{verbatim}
 
 and estimate on the training data the SPAR algorithm with
-cross-validation. We employ a Gaussian random projection where entries
-are generated from a normal distribution with mean zero and standard
-deviation \(1/p\) and with screening based on the ridge coefficients:
+cross-validation. We employ the data driven random projection with
+screening based on the ridge coefficients: TODO: warnings of
+non.convergence in glmnet fit!
 
 \begin{verbatim}
 R> library(SPAR)
 R> p <- ncol(xtrain)
-R> spar_faces <- spar.cv(
+R> spar_faces <- suppressWarnings(spar.cv(
 +  xtrain, ytrain,
-+  rp = rp_gaussian(control = list(c(mean = 0, sd = 1/p))),
-+  screencoef = screen_cor(method = "kendall"),
 +  nummods = c(5, 10, 20, 50),
-+  measure = "mse")
-#> Warning in cor(y, xj, ...): the standard deviation is zero
-#> Warning in cor(y, xj, ...): the standard deviation is zero
++  measure = "mse"))
 R> spar_faces
 #> SPAR.cv object:
-#> Smallest CV-Meas 28.4 reached for nummod=50,
-#>               nu=1.71e-03 leading to 3738 / 4096 active predictors.
-#> Summary of those non-zero coefficients:
-#>      Min.   1st Qu.    Median      Mean   3rd Qu.      Max. 
-#> -753.4845   -0.2689    0.0082   -0.1040    0.2720  791.3590 
-#> 
-#> Sparsest coefficient within one standard error of best CV-Meas
-#>               reached for nummod=5, nu=1.08e-02 
-#> leading to 2228 / 4096 active
-#>               predictors with CV-Meas 38.2.
+#> Smallest CV-Meas 9.2 reached for nummod=50,
+#>               nu=0.00e+00 leading to 3736 / 4096 active predictors.
 #> Summary of those non-zero coefficients:
 #>     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
-#> -164.623   -1.199    0.021    1.729    1.273 3349.713
+#> -644.287   -0.141    0.000    2.203    0.159 5099.865 
+#> 
+#> Sparsest coefficient within one standard error of best CV-Meas
+#>               reached for nummod=10, nu=2.90e-03 
+#> leading to 2371 / 4096 active
+#>               predictors with CV-Meas 12.6.
+#> Summary of those non-zero coefficients:
+#>     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
+#> -610.423   -0.277    0.035    2.683    0.345 6001.384
 \end{verbatim}
 
 The \texttt{plot} method for `\texttt{spar.cv}' objects displays by
@@ -1544,24 +1544,24 @@ optimal \(\lambda\) and number of models) are given by:
 R> face_coef <- coef(spar_faces, opt_par = "best")
 R> str(face_coef)
 #> List of 4
-#>  $ intercept: num -10.7
-#>  $ beta     : num [1:4096] 2.627 2.425 0.797 -0.918 -1.208 ...
+#>  $ intercept: num -35.4
+#>  $ beta     : num [1:4096] 0.3238 -0.0629 0.7151 2.1684 -1.3427 ...
 #>  $ nummod   : num 50
-#>  $ nu       : num 0.00171
+#>  $ nu       : num 0
 \end{verbatim}
 
 For a sparser solution we can compute the coefficients using
-\texttt{opt\_par\ =\ "1se"} which leads to more sparsity and a lowe
+\texttt{opt\_par\ =\ "1se"} which leads to more sparsity and a lower
 number of models.
 
 \begin{verbatim}
 R> face_coef_1se <- coef(spar_faces, opt_par = "1se")
 R> str(face_coef_1se)
 #> List of 4
-#>  $ intercept: num -9
-#>  $ beta     : num [1:4096] 0 0 -1.64 0 0 ...
-#>  $ nummod   : num 5
-#>  $ nu       : num 0.0108
+#>  $ intercept: num -27.2
+#>  $ beta     : num [1:4096] 0 0 0.712 2.756 -0.555 ...
+#>  $ nummod   : num 10
+#>  $ nu       : num 0.0029
 \end{verbatim}
 
 The standardized coefficients from each of \texttt{max(nummods)} models
@@ -1598,7 +1598,7 @@ of a model containing only an intercept:
 \begin{verbatim}
 R> rMSPEconst <- mean((ytest - mean(y))^2) 
 R> mean((ynew-ytest)^2)/rMSPEconst
-#> [1] 0.0237945
+#> [1] 0.01785043
 \end{verbatim}
 
 Additionally, for this data set, one can visualize the effect of each

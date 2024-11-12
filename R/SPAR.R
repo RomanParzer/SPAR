@@ -225,11 +225,11 @@ spar <- function(x, y,
     nscreen <- attr(screencoef, "nscreen")
   }
 
-  ## Update RP with data only at the beginning, not in each RP! ----
+  ## Update RP with data only at the beginning if possible, not in each RP! ----
   if (is.null(attr(rp, "family"))) {
     attr(rp, "family") <- family
   }
-  if (attr(rp, "use_data")) {
+  if (attr(rp, "data")) {
     rp <- rp$update_data_fun(rp,
                              data = list(x = z[scr_inds,],
                                          y = yz[scr_inds, ]))

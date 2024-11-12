@@ -295,14 +295,14 @@ spar(x, y, family = gaussian("identity"), rp = NULL, screencoef = NULL,
   measure = c("deviance", "mse", "mae", "class", "1-auc"),
   inds = NULL, RPMs = NULL, ...)
 ```
-which implements the algorithm in @sec-algo without cross-validation and returns an object of class "`spar`", 
+which implements the algorithm in @sec-algo without cross-validation and returns an object of class [spar]{.class}, 
 and
 ```{r eval=FALSE}
 spar.cv(x, y, family = gaussian("identity"), rp = NULL, screencoef = NULL,
   nfolds = 10, nnu = 20, nus = NULL, nummods = c(20),
   measure = c("deviance", "mse", "mae", "class", "1-auc"), ...)
 ```
-which implements the cross-validated procedure and returns an object of class "`spar.cv`".
+which implements the cross-validated procedure and returns an object of class [spar.cv]{.class}.
 
 The common arguments of these functions are:
 
@@ -475,7 +475,7 @@ the SPAR algorithm:
   * `msup`: integer giving the maximum dimension to which the predictors should
   be projected; defaults to $n/2$
   
-  * `use_data`: boolean indicating whether the random projection is data driven.
+  * `data`: boolean indicating whether the random projection is data driven.
   
 Note that for random projection matrices which satisfy the JL lemma, `mslow`
 can be determined by employing the result of the JL lemma, which gives a lower bound on the  goal dimension in order to preserve the distances between 
@@ -510,13 +510,11 @@ of the object are `NULL`, as this conventional
 random projection is data agnostic.
 
 
-
-
 ### Methods 
 
 
-Methods `print`, `plot`, `coef`, `predict` are available for both "`spar`"
-and "`spar.cv`" classes.
+Methods `print`, `plot`, `coef`, `predict` are available for both [spar]{.class}
+and [spar.cv]{.class} classes.
 
 #### print
 The `print` method returns information on $\nu_\text{best}$
@@ -556,7 +554,7 @@ str(coef(spar_res))
 
 It returns a list with the intercept, vector of `beta` coefficients and the `nummod` and `nu` employed in the calculation.
 
-Additionally for "`spar.cv`", the `coef` method 
+Additionally for [spar.cv]{.class}, the `coef` method 
 also has argument `opt_par` which is one of 
 `c("1se","best")` and chooses whether to select the best pair of `nus` and `nummods` according to cross-validation 
 `measure`, or the solution within one standard deviation
@@ -580,7 +578,7 @@ together with
 
 * `coef`	optional vector of coefficients to be used directly in the prediction.
 
-Additionally, for class "`spar.cv`", argument `opt_par` is available and used in the computation of the 
+Additionally, for class [spar.cv]{.class}, argument `opt_par` is available and used in the computation of the 
 coefficients to be used for prediction (see above description of  method `coef`). 
 
 
@@ -589,7 +587,7 @@ coefficients to be used for prediction (see above description of  method `coef`)
 Plotting functionality is provided through method 
 `plot` which allows for the following arguments:
 
-* `x` an object of class "`spar`" or "`spar.cv`"
+* `x` an object of class [spar]{.class} or [spar.cv]{.class}
 
 * `plot_type` one of:
 
@@ -621,7 +619,7 @@ responses used in computing the residuals. Must provided for this plot, as the `
 *  `coef_order`  optional index vector of length $p$ in case
 `plot_type = "coefs"` to give the order of the predictors; defaults to `1 : p`.
 
-For class "`spar.cv`" there is the extra argument
+For class [spar.cv]{.class} there is the extra argument
 `opt_par = c("best", "1-se")` which, for `plot_type = "res-vs-fitted"` indicates whether the predictions 
 should be based on coefficients using the best $(\nu, M)$ combination or on the one which delivers the largest error within 1-standard-deviation from the minimum.
 
@@ -900,26 +898,25 @@ ggplot(data.frame(X = rep(1:64,each=64),Y = rep(64:1,64),
 
 We split the data into training vs test sample:
 ```{r }
-set.seed(1234)
+set.seed(123)
 ntot <- length(y); ntest <- ntot * 0.25
 testind <- sample(ntot, ntest, replace=FALSE)
 xtrain <- as.matrix(x[-testind, ]); ytrain <- y[-testind]
 xtest <- as.matrix(x[testind, ]); ytest <- y[testind]
 ```
-and estimate on the training data the SPAR algorithm with cross-validation. We employ a Gaussian random projection where entries are generated from a normal distribution with mean zero and standard deviation $1/p$ and with screening based on the ridge coefficients:
-```{r }
+and estimate on the training data the SPAR algorithm with cross-validation. We employ the data driven random projection with screening based on the ridge coefficients:
+```{r}
 library(SPAR)
 p <- ncol(xtrain)
-spar_faces <- spar.cv(
+### TODO: warnings of non convergence in glmnet fit!
+spar_faces <- suppressWarnings(spar.cv(
   xtrain, ytrain,
-  rp = rp_gaussian(control = list(c(mean = 0, sd = 1/p))),
-  screencoef = screen_cor(method = "kendall"),
   nummods = c(5, 10, 20, 50),
-  measure = "mse")
+  measure = "mse"))
 spar_faces
 ```
 
-The `plot` method for '`spar.cv`' objects displays by default the 
+The `plot` method for [spar.cv]{.class} objects displays by default the 
 measure employed in the cross-validation (in this case MSE) 
 for a grid of $\nu$
 values, where the number of models is fixed to the value found to perform 
@@ -933,7 +930,7 @@ face_coef <- coef(spar_faces, opt_par = "best")
 str(face_coef)
 ```
 For a sparser solution we can compute the coefficients using 
-`opt_par = "1se"` which leads to more sparsity and a lowe number of models.
+`opt_par = "1se"` which leads to more sparsity and a lower number of models.
 ```{r}
 face_coef_1se <- coef(spar_faces, opt_par = "1se")
 str(face_coef_1se)
@@ -943,7 +940,7 @@ The standardized coefficients from each of `max(nummods)` models  (before averag
 plot(spar_faces, "coefs")
 ```
 
-The `predict()` function can be applied to the '`spar.cv`' object. We will employ the sparser solution chosen by the `opt_par = "1se"` rule:
+The `predict()` function can be applied to the [spar.cv]{.class} object. We will employ the sparser solution chosen by the `opt_par = "1se"` rule:
 ```{r }
 ynew <- predict(spar_faces, xnew = xtest, coef = face_coef_1se)
 ```
@@ -1016,7 +1013,7 @@ spar_darwin <- spar.cv(darwin$x, darwin$y,
 
 We can look at the average number of active variables for
 a grid of $\nu$  where the number of models is fixed to the value found to perform  best in cross-validation exercise by using the 
-`plot` method for "`spar.cv`" (see Figure \ref{fig:darwin_activevars}).
+`plot` method for [spar.cv]{.class} (see Figure \ref{fig:darwin_activevars}).
 ```{r , fig.width=10, fig.height=6, fig.pos="center", fig.cap="Average number of active variables for the grid of thresholding values $\\nu$ and $M=20$ models for the \\emph{Darwin} data set. The red points correspond to the average number of active variables for the model with the lowest cross-validation measures and to the one chosen by the 1-standard-error rule. \\label{fig:darwin_activevars}"}
 plot(spar_darwin, plot_type = "Val_numAct")
 ```
