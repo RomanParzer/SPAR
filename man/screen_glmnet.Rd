@@ -14,11 +14,15 @@ screen_glmnet(..., control = list())
 }
 \value{
 object of class "\code{screencoef}" which is a list with elements
-\code{name} (character), \code{generate_fun} (function), and \code{control}
-(list of controls passed as an argument)
+
+\itemize{
+\item \code{name} (character)
+\item \code{control} (list of controls passed as an argument)
+\item \code{generate_fun}  for generating the screening coefficient. This function should have arguments \code{object}, which is a "\code{screencoef}" object, and \code{data}, which is a list of two elements \code{x} and \code{y} containing the matrix of standardized predictors and the vector of (standardized for Gaussian) responses.
+}
 }
 \description{
-No arguments need to be passed.
+Relies on \link[glmnet]{glmnet}.
 }
 \details{
 Creates an object class "\code{screencoef}" using arguments passed by user.

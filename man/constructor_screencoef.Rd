@@ -10,7 +10,7 @@ constructor_screencoef(name, generate_fun)
 \item{name}{character}
 
 \item{generate_fun}{function for generating the screening coefficient. This
-function should have with arguments \code{object}, which is a "\code{screencoef}"
+function should  with arguments \code{object}, which is a "\code{screencoef}"
 object, and \code{data}, which is a list of x (matrix of predictors used as input in
 \link{\code{spar}}) and y (vector of responses used in  \link{\code{spar}}).}
 }

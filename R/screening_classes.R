@@ -3,7 +3,7 @@
 #' Creates an object class screencoef using arguments passed by user.
 #' @param name character
 #' @param generate_fun function for generating the screening coefficient. This
-#' function should have with arguments \code{object}, which is a "\code{screencoef}"
+#' function should  with arguments \code{object}, which is a "\code{screencoef}"
 #' object, and \code{data}, which is a list of x (matrix of predictors used as input in
 #' \link{\code{spar}}) and y (vector of responses used in  \link{\code{spar}}).
 #' @return a function which in turn creates a function which in turn creates an
@@ -20,7 +20,7 @@ constructor_screencoef <- function(name, generate_fun) {
   args_generate_fun <- formals(generate_fun)
   stopifnot("Function generate_fun should contain two arguments: an object
             of class \"screencoef\" and 'data'." =
-            length(args_generate_fun) == 2)
+              length(args_generate_fun) == 2)
   stopifnot("Function generate_fun should contain argument 'data'." =
               "data" %in% names(args_generate_fun))
   ## Function to return
@@ -72,11 +72,16 @@ generate_scrcoef_marglik <- function(object, data) {
 #' @param ... includes arguments which can be passed as attributes to the
 #' "\code{screencoef}" object
 #' @param control list of controls to be passed to the screening function
-#' @return object of class "\code{screencoef}" which is a list with elements
-#' \code{name} (character), \code{generate_fun} (function), and \code{control}
-#' (list of controls passed as an argument)
+#' @return object of class "\code{screencoef}" which is a list with elements:
+#'
+#' \itemize{
+#'  \item \code{name} (character)
+#'  \item \code{control} (list of controls passed as an argument)
+#'  \item \code{generate_fun}  for generating the screening coefficient. This function should have arguments \code{object}, which is a "\code{screencoef}" object, and \code{data}, which is a list of two elements \code{x} and \code{y} containing the matrix of standardized predictors and the vector of (standardized for Gaussian) responses.
+#' }
+#'
 #' @description
-#' No arguments need to be passed.
+#' Relies on \link[stats]{glm}.
 #'
 #' @export
 #'
@@ -88,7 +93,7 @@ screen_marglik <- constructor_screencoef(
 #'
 #' Screening coefficient based on correlation
 #'
-generate_scrcoef_corr <- function(object, data) {
+generate_scrcoef_cor <- function(object, data) {
   y <- data$y
   x <- data$x
   coefs <- apply(x, 2, function(xj) {
@@ -104,16 +109,22 @@ generate_scrcoef_corr <- function(object, data) {
 #' "\code{screencoef}" object
 #' @param control list of controls to be passed to the screening function
 #' @return object of class "\code{screencoef}" which is a list with elements
-#' \code{name} (character) \code{generate_fun} (function), and \code{control}
-#' (list of controls passed as an argument)
+#'
+#' \itemize{
+#'  \item \code{name} (character)
+#'  \item \code{control} (list of controls passed as an argument)
+#'  \item \code{generate_fun}  for generating the screening coefficient. This function should have arguments \code{object}, which is a "\code{screencoef}" object, and \code{data}, which is a list of two elements \code{x} and \code{y} containing the matrix of standardized predictors and the vector of (standardized for Gaussian) responses.
+#' }
+#'
 #' @description
-#' No arguments need to be passed.
+#' Relies on \link[stats]{cor}.
 #'
 #' @export
 #'
-screen_corr <- constructor_screencoef(
-  "screen_corr",
-  generate_fun = generate_scrcoef_corr)
+screen_cor <- constructor_screencoef(
+  "screen_cor",
+  generate_fun = generate_scrcoef_cor)
+
 #'
 #' Screening coefficient based  on glmnet coefficients
 #'
@@ -162,10 +173,15 @@ generate_scrcoef_glmnet <- function(object, data) {
 #' "\code{screencoef}" object
 #' @param control list of controls to be passed to the screening function
 #' @return object of class "\code{screencoef}" which is a list with elements
-#' \code{name} (character), \code{generate_fun} (function), and \code{control}
-#' (list of controls passed as an argument)
+#'
+#' \itemize{
+#'  \item \code{name} (character)
+#'  \item \code{control} (list of controls passed as an argument)
+#'  \item \code{generate_fun}  for generating the screening coefficient. This function should have arguments \code{object}, which is a "\code{screencoef}" object, and \code{data}, which is a list of two elements \code{x} and \code{y} containing the matrix of standardized predictors and the vector of (standardized for Gaussian) responses.
+#' }
+#'
 #' @description
-#' No arguments need to be passed.
+#' Relies on \link[glmnet]{glmnet}.
 #'
 #' @export
 #'
@@ -185,15 +201,21 @@ screen_glmnet <- constructor_screencoef(
 print.screencoef <- function(x, ...) {
   cat(paste0("Name: ", x$name), "\n")
   cat("Main attributes:", "\n")
-  cat("Proportion of data used for screening:",
+  cat("* proportion of data used for screening:",
       ifelse(is.null(attr(x, "split_data_prop")),
              1, attr(x, "split_data_prop")), "\n")
-  cat("type:",  attr(x, "type"), "\n")
-  cat("number of screened variables:",  attr(x, "nscreen"), "\n")
+  cat("* number of screened variables:",
+      ifelse(is.null(attr(x, "nscreen")),
+             "not provided, will default to 2n",
+             attr(x, "nscreen")), "\n")
+  cat("* type:",  ifelse(attr(x, "type") == "prob",
+                         "probabilistic screening",
+                         "screening top nscreen variables"), "\n")
   imp_vals <- attr(x, "importance")
-  if (!is.null(imp_vals)) {
-    cat("importance:",
-        sprintf("num [1:%d] %s ...", length(imp_vals),
-                paste(round(imp_vals[1:5], 3), collapse = " ")), "\n")
-  }
+  out_imp <-  ifelse(!is.null(imp_vals),
+                     sprintf("num [1:%d] %s ...", length(imp_vals),
+                             paste(round(imp_vals[1:5], 3),
+                                   collapse = " ")),
+                     "not yet computed from the data.")
+  cat("* screening coefficients:", out_imp,  "\n")
 }

@@ -581,7 +581,7 @@ plot.spar <- function(x,
     if (is.null(xfit) | is.null(yfit)) {
       stop("xfit and yfit need to be provided for res-vs-fitted plot!")
     }
-    pred <- predict(spar_res, xfit, nummod, nu)
+    pred <- predict(spar_res, xfit, nummod, nu, type = "response")
     res <- ggplot2::ggplot(data = data.frame(fitted=pred,residuals=yfit-pred),
                            ggplot2::aes(x=fitted,y=residuals)) +
       ggplot2::geom_point() +
@@ -598,13 +598,15 @@ plot.spar <- function(x,
       tmp_df <- subset(spar_res$val_res,nummod==mynummod)
       ind_min <- which.min(tmp_df$Meas)
 
-      res <- ggplot2::ggplot(data = tmp_df, ggplot2::aes(x=tmp_df$nnu,y=tmp_df$Meas)) +
+      res <- ggplot2::ggplot(data = tmp_df, ggplot2::aes(x=nnu,y=Meas)) +
         ggplot2::geom_point() +
         ggplot2::geom_line() +
         # ggplot2::scale_x_continuous(breaks=seq(1,nrow(spar_res$val_res),1),labels=round(spar_res$val_res$nu,3)) +
         ggplot2::scale_x_continuous(breaks=seq(1,nrow(spar_res$val_res),2),labels=formatC(spar_res$val_res$nu[seq(1,nrow(spar_res$val_res),2)], format = "e", digits = 1)) +
         ggplot2::labs(x=expression(nu),y=spar_res$measure) +
-        ggplot2::geom_point(data=data.frame(x=tmp_df$nnu[ind_min],y=tmp_df$Meas[ind_min]),ggplot2::aes(x=x,y=y),col="red") +
+        ggplot2::geom_point(data=data.frame(x=tmp_df$nnu[ind_min],
+                                            y=tmp_df$Meas[ind_min]),
+                            ggplot2::aes(x=x,y=y),col="red") +
         ggplot2::ggtitle(paste0(tmp_title,mynummod))
     } else {
       if (is.null(nu)) {
@@ -616,7 +618,7 @@ plot.spar <- function(x,
       tmp_df <- subset(spar_res$val_res,nu==nu)
       ind_min <- which.min(tmp_df$Meas)
 
-      res <- ggplot2::ggplot(data = tmp_df,ggplot2::aes(x=tmp_df$nummod,y=tmp_df$Meas)) +
+      res <- ggplot2::ggplot(data = tmp_df,ggplot2::aes(x=nummod,y=Meas)) +
         ggplot2::geom_point() +
         ggplot2::geom_line() +
         ggplot2::labs(y=spar_res$measure) +
@@ -639,7 +641,8 @@ plot.spar <- function(x,
         ggplot2::geom_point() +
         ggplot2::geom_line() +
         # ggplot2::scale_x_continuous(breaks=seq(1,nrow(spar_res$val_res),1),labels=round(spar_res$val_res$nu,3)) +
-        ggplot2::scale_x_continuous(breaks=seq(1,nrow(spar_res$val_res),2),labels=formatC(spar_res$val_res$nu[seq(1,nrow(spar_res$val_res),2)], format = "e", digits = 1)) +
+        ggplot2::scale_x_continuous(breaks=seq(1,nrow(spar_res$val_res),2),
+                                    labels=formatC(spar_res$val_res$nu[seq(1,nrow(spar_res$val_res),2)], format = "e", digits = 1)) +
         ggplot2::labs(x=expression(nu)) +
         ggplot2::geom_point(data=data.frame(x=tmp_df$nnu[ind_min],y=tmp_df$numAct[ind_min]),ggplot2::aes(x=x,y=y),col="red")+
         ggplot2::ggtitle(paste0(tmp_title,mynummod))
