@@ -98,13 +98,13 @@ test_that("Data splitting delivers different results", {
   y <- example_data$y
   set.seed(123)
   spar_res <- spar(x,y,
-                   screencoef = screen_corr(split_data_prop = 0.25))
+                   screencoef = screen_cor(split_data_prop = 0.25))
   set.seed(123)
   spar_res3 <- spar(x,y,
-                    screencoef = screen_corr(split_data = TRUE))
+                    screencoef = screen_cor(split_data = TRUE))
   set.seed(123)
   spar_res2 <- spar(x,y,
-                    screencoef = screen_corr())
+                    screencoef = screen_cor())
   sparcoef <- coef(spar_res)
   sparcoef2 <- coef(spar_res2)
   sparcoef3 <- coef(spar_res3)

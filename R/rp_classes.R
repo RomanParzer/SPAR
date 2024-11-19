@@ -42,8 +42,8 @@ constructor_randomprojection <- function(name, generate_fun,
                 control = control)
     attr <- list2(...)
     attributes(out) <- c(attributes(out), attr)
-    if (is.null(attr(out, "use_data"))) {
-      attr(out, "use_data") <- ifelse(is.null(out$update_data_fun),
+    if (is.null(attr(out, "data"))) {
+      attr(out, "data") <- ifelse(is.null(out$update_data_fun),
                                       FALSE, TRUE)
     }
     class(out) <- c("randomprojection")
@@ -72,9 +72,7 @@ generate_gaussian <- function(rp, m, included_vector) {
     rp$control[names(rp$control)  %in% names(formals(rnorm))]
   vals <- do.call(function(...)
     rnorm(m * p, ...), control_rnorm)
-  vals <- rnorm(m * p)
   RM <- matrix(vals, nrow = m, ncol = p)
-  RM <- Matrix(RM, sparse = TRUE)
   return(RM)
 }
 #'
@@ -196,7 +194,6 @@ update_data_cw <- function(rp, data) {
   }
 
   control_glmnet <- rp$control[names(rp$control)  %in% names(formals(glmnet))]
-
   glmnet_res <- do.call(function(...)
     glmnet(x=z, y=yz, ...), control_glmnet)
 
@@ -234,3 +231,24 @@ rp_cw <- constructor_randomprojection(
   update_rpm_w_data = update_rpm_w_data_cw
 )
 
+#' print.randomprojection
+#'
+#' Print method for a "\code{randomprojection}" object
+#' @param x object of class randomprojection
+#' @param ... further arguments passed to or from other methods
+#' @return text summary
+#'
+#' @export
+print.randomprojection <- function(x, ...) {
+  cat(paste0("Name: ", x$name), "\n")
+  cat("Main attributes:", "\n")
+  cat("* Data-dependent:", attr(x,"data"), "\n")
+  cat("* Lower bound on goal dimension m:",
+      ifelse(is.null(attr(x, "mslow")),
+             "not provided, will default to log(p).",
+             attr(x, "mslow")), "\n")
+  cat("* Upper bound on goal dimension m:",
+      ifelse(is.null(attr(x, "msup")),
+             "not provided, will default to n/2.",
+             attr(x, "mslow")), "\n")
+}

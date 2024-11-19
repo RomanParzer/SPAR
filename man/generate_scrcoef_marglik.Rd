@@ -2,10 +2,19 @@
 % Please edit documentation in R/screening_classes.R
 \name{generate_scrcoef_marglik}
 \alias{generate_scrcoef_marglik}
-\title{Screening coefficient based on marginal GLMs}
+\title{Generate screening coefficient based  on marginal likelihood in univariate GLMs}
 \usage{
 generate_scrcoef_marglik(object, data)
 }
-\description{
-Screening coefficient based on marginal GLMs
+\arguments{
+\item{object}{"\code{screencoef}" object}
+
+\item{data}{list of x and y}
 }
+\value{
+vector of screening coefficients of length p
+}
+\description{
+Generate screening coefficient based  on marginal likelihood in univariate GLMs
+}
+\keyword{internal}

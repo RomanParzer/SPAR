@@ -14,7 +14,7 @@
 #'
 #' @param x n x p numeric matrix of predictor variables.
 #' @param y quantitative response vector of length n.
-#' @param family  a \code{\link[stats]{"family"}} object used for the marginal generalized linear model,
+#' @param family  a \link[stats]{family}  object used for the marginal generalized linear model,
 #'        default \code{gaussian("identity")}.
 #' @param rp function creating a randomprojection object.
 #' @param screencoef function creating a screeningcoef object
@@ -111,9 +111,6 @@ spar <- function(x, y,
   # Ensure back compatibility ----
   args <- list(...)
 
-  if (is.null(rp)) rp <- rp_cw(data = TRUE)
-  if (!is.null(args$mslow)) attr(rp, "mslow") <- args$mslow
-  if (!is.null(args$msup))  attr(rp, "msup") <- args$msup
 
   if (is.null(screencoef)) screencoef <- screen_glmnet()
   if (!is.null(args$nscreen)) attr(screencoef, "nscreen") <- args$nscreen
@@ -157,6 +154,10 @@ spar <- function(x, y,
       warning("'type.screening' is deprecated. Please use 'screencoef' instead.")
     }
   }
+  ## TODO
+  if (is.null(rp)) rp <- rp_cw(data = TRUE)
+  if (!is.null(args$mslow)) attr(rp, "mslow") <- args$mslow
+  if (!is.null(args$msup))  attr(rp, "msup") <- args$msup
 
 
 
@@ -245,8 +246,8 @@ spar <- function(x, y,
   # Perform screening ----
   if (nscreen < p) {
     scr_coef <- get_screencoef(screencoef,
-                            data = list(x = z[scr_inds,],
-                                        y = yz[scr_inds, ]))
+                               data = list(x = z[scr_inds,],
+                                           y = yz[scr_inds, ]))
     attr(screencoef, "importance") <- scr_coef
 
     inc_probs <- abs(scr_coef)

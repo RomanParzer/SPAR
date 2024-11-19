@@ -10,9 +10,12 @@ rp_sparse(..., control = list())
 \item{...}{includes arguments which can be passed as attributes to the random
 projection matrix. The possible argument is \code{psi} in (0,1] which determines
 the level of sparsity in the matrix.}
+
+\item{control}{list of arguments to be used in functions
+\code{generate_fun}, \code{update_data_fun}, \code{update_rpm_w_data}}
 }
 \value{
-object of class randomprojection
+object of class "\code{randomprojection}"
 }
 \description{
 The sparse matrix used in \insertCite{ACHLIOPTAS2003JL}{SPAR} with entries equal to
@@ -20,7 +23,7 @@ The sparse matrix used in \insertCite{ACHLIOPTAS2003JL}{SPAR} with entries equal
 for \eqn{\psi\in (0,1]}. Default is \code{psi = 1}.
 }
 \details{
-Creates an object class randomprojection using arguments passed by user.
+Creates an object class "\code{randomprojection}" using arguments passed by user.
 }
 \references{
 {

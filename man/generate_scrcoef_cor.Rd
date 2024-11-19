@@ -2,10 +2,19 @@
 % Please edit documentation in R/screening_classes.R
 \name{generate_scrcoef_cor}
 \alias{generate_scrcoef_cor}
-\title{Screening coefficient based on correlation}
+\title{Generate screening coefficient based  on correlation}
 \usage{
 generate_scrcoef_cor(object, data)
 }
-\description{
-Screening coefficient based on correlation
+\arguments{
+\item{object}{"\code{screencoef}" object}
+
+\item{data}{list of x and y}
 }
+\value{
+vector of screening coefficients of length p
+}
+\description{
+Generate screening coefficient based  on correlation
+}
+\keyword{internal}

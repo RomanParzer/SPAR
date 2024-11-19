@@ -6,6 +6,15 @@
 \usage{
 generate_scrcoef_glmnet(object, data)
 }
+\arguments{
+\item{object}{"\code{screencoef}" object}
+
+\item{data}{list of x and y}
+}
+\value{
+vector of screening coefficients of length p
+}
 \description{
 Screening coefficient based  on glmnet coefficients
 }
+\keyword{internal}

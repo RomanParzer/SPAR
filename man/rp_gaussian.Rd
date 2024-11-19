@@ -2,19 +2,22 @@
 % Please edit documentation in R/rp_classes.R
 \name{rp_gaussian}
 \alias{rp_gaussian}
-\title{Creates an object class randomprojection using arguments passed by user.}
+\title{Creates an object class "\code{randomprojection}" using arguments passed by user.}
 \usage{
 rp_gaussian(..., control = list())
 }
 \arguments{
 \item{...}{includes arguments which can be passed as attributes to the random
 projection matrix}
+
+\item{control}{list of arguments to be used in functions
+\code{generate_fun}, \code{update_data_fun}, \code{update_rpm_w_data}}
 }
 \value{
-object of class randomprojection with is a list with elements name,
-generate_rp_fun, update_data_fun, control
+object of class "\code{randomprojection}" with is a list with elements name,
+generate_fun, update_data_fun, control
 }
 \description{
-No arguments need to be passed. The entries of the matrix are generated from
-a standard normal distribution.
+The entries of the matrix will be generated from
+a normal distribution (mean 0 and standard deviation 1 by default).
 }

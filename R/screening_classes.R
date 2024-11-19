@@ -33,8 +33,10 @@ constructor_screencoef <- function(name, generate_fun) {
     if (is.null(attr(out, "type"))) {
       attr(out, "type") <- "prob"
     } else {
-      stopifnot("'type' must be either 'prob' or 'fixed'." =
-                  attr(out, "type") == "prob" | attr(out, "type") == "fixed")
+      stopifnot(
+        "'type' must be either 'prob' or 'fixed'." =
+          (attr(out, "type") == "prob" | attr(out, "type") == "fixed")
+      )
     }
     class(out) <- c("screencoef")
     return(out)
@@ -51,8 +53,11 @@ get_screencoef <- function(object, data) {
 }
 
 #'
-#' Screening coefficient based on marginal GLMs
-#'
+#' Generate screening coefficient based  on marginal likelihood in univariate GLMs
+#' @param object  "\code{screencoef}" object
+#' @param data list of x and y
+#' @return vector of screening coefficients of length p
+#' @keywords internal
 generate_scrcoef_marglik <- function(object, data) {
   y <- data$y
   x <- data$x
@@ -91,8 +96,11 @@ screen_marglik <- constructor_screencoef(
 
 
 #'
-#' Screening coefficient based on correlation
-#'
+#' Generate screening coefficient based  on correlation
+#' @param object  "\code{screencoef}" object
+#' @param data list of x and y
+#' @return vector of screening coefficients of length p
+#' @keywords internal
 generate_scrcoef_cor <- function(object, data) {
   y <- data$y
   x <- data$x
@@ -127,7 +135,10 @@ screen_cor <- constructor_screencoef(
 
 #'
 #' Screening coefficient based  on glmnet coefficients
-#'
+#' @param object  "\code{screencoef}" object
+#' @param data list of x and y
+#' @return vector of screening coefficients of length p
+#' @keywords internal
 generate_scrcoef_glmnet <- function(object, data) {
   z <- data$x
   yz <- data$y

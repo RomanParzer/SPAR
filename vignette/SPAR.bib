@@ -1144,6 +1144,7 @@ year = {2021}
   author={Cho, Haeran and Fryzlewicz, Piotr},
   journal={Journal of the Royal Statistical Society Series B: Statistical Methodology},
   volume={74},
+  doi={10.1111/j.1467-9868.2011.01023.x},
   number={3},
   pages={593--622},
   year={2012},
@@ -1721,7 +1722,6 @@ year = {2003},
 note = {Special Issue on PODS 2001},
 issn = {0022-0000},
 doi = {10.1016/S0022-0000(03)00025-4},
-url = {https://www.sciencedirect.com/science/article/pii/S0022000003000254},
 author = {Dimitris Achlioptas},
 abstract = {A classic result of Johnson and Lindenstrauss asserts that any set of n points in d-dimensional Euclidean space can be embedded into k-dimensional Euclidean space—where k is logarithmic in n and independent of d—so that all pairwise distances are maintained within an arbitrarily small factor. All known constructions of such embeddings involve projecting the n points onto a spherically random k-dimensional hyperplane through the origin. We give two constructions of such embeddings with the property that all elements of the projection matrix belong in {−1,0,+1}. Such constructions are particularly well suited for database environments, as the computation of the embedding reduces to evaluating a single aggregate over k random partitions of the attributes.}
 }
@@ -4548,7 +4548,7 @@ url={https://jmlr.csail.mit.edu/papers/v10/fan09a.html},
     author = {Timothy I. Cannings and Richard J. Samworth},
     year = {2021},
     note = {\proglang{R}~package version 0.5},
-    url = {https://CRAN.R-project.org/package=RPEnsemble},
+    url = {10.32614/CRAN.package.RPEnsemble},
 }
 
   @Manual{SPCAvRPR,
@@ -4557,14 +4557,14 @@ url={https://jmlr.csail.mit.edu/papers/v10/fan09a.html},
     author = {Milana Gataric and Tengyao Wang and Richard J. Samworth},
     year = {2019},
     note = {\proglang{R}~package version 0.4},
-    url = {https://CRAN.R-project.org/package=SPCAvRP},
+    url = {10.32614/CRAN.package.SPCAvRP},
   }
 @Manual{RandProR,
     title = {\pkg{RandPro}: Random Projection with Classification},
     author = {Aghila, G and Siddharth, R},
     year = {2020},
     note = {\proglang{R}~package version 0.2.2},
-    url = {https://CRAN.R-project.org/package=RandPro},
+    doi = {10.32614/CRAN.package.RandPro},
   }
 
 @article{ailon2009fast,
@@ -4586,12 +4586,11 @@ url={https://jmlr.csail.mit.edu/papers/v10/fan09a.html},
 	journal = {SoftwareX},
 	keywords = {Dimension reduction, Johnson--Lindenstrauss lemma, RandPro, R Programming, Software description},
 	pages = {100629},
-	title = {RandPro- A practical implementation of random projection-based feature extraction for high dimensional multivariate data analysis in R},
+	title = {RandPro -- A practical implementation of random projection-based feature extraction for high dimensional multivariate data analysis in R},
 	url = {https://www.sciencedirect.com/science/article/pii/S2352711020303423},
 	volume = {12},
 	year = {2020},
-	bdsk-url-1 = {https://www.sciencedirect.com/science/article/pii/S2352711020303423},
-	bdsk-url-2 = {https://doi.org/10.1016/j.softx.2020.100629}}
+}
 
 @Article{pkg:ball,
     title = {\pkg{Ball}: An \proglang{R} Package for Detecting Distribution
@@ -4628,7 +4627,7 @@ Search with Screening (S5)},
     author = {Dongjin Li and Debarshi Chakraborty and Somak Dutta and Vivekananda Roy},
     year = {2024},
     note = {\proglang{R}~package version 3.2.1},
-    url = {https://CRAN.R-project.org/package=bravo},
+    url = {10.32614/CRAN.package.bravo},
   }
 @misc{wang2021bayesianiterativescreeningultrahigh,
       title={Bayesian iterative screening in ultra-high dimensional settings},
@@ -4777,4 +4776,14 @@ Estimation},
     note = {R package version 2.5.3},
     url = {https://CRAN.R-project.org/package=cellWise},
   }
-R>
+
+@article{pedregosa2011scikit,
+  title={\pkg{scikit-learn}: Machine learning in \proglang{Python}},
+  author={Pedregosa, Fabian and Varoquaux, Ga{\"e}l and Gramfort, Alexandre and Michel, Vincent and Thirion, Bertrand and Grisel, Olivier and Blondel, Mathieu and Prettenhofer, Peter and Weiss, Ron and Dubourg, Vincent and others},
+  journal={Journal of Machine Learning Research},
+  volume={12},
+  number={Oct},
+  pages={2825--2830},
+  year={2011},
+  url={https://www.jmlr.org/papers/v12/pedregosa11a.html}
+}

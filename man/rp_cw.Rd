@@ -9,6 +9,9 @@ rp_cw(..., control = list())
 \arguments{
 \item{...}{includes arguments which can be passed as attributes to the random
 projection matrix}
+
+\item{control}{list of arguments to be used in functions
+\code{generate_fun}, \code{update_data_fun}, \code{update_rpm_w_data}}
 }
 \value{
 object of class randomprojection

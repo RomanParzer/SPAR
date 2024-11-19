@@ -26,7 +26,7 @@ spar(
 
 \item{y}{quantitative response vector of length n.}
 
-\item{family}{a \code{\link[stats]{"family"}} object used for the marginal generalized linear model,
+\item{family}{a \link[stats]{family}  object used for the marginal generalized linear model,
 default \code{gaussian("identity")}.}
 
 \item{rp}{function creating a randomprojection object.}
