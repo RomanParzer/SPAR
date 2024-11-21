@@ -23,17 +23,17 @@ spar.cv(
 
 \item{y}{quantitative response vector of length n.}
 
-\item{family}{a \code{\link[stats]{"family"}} object used for the marginal generalized linear model,
+\item{family}{a "\code{\link[stats]{family}}" object used for the marginal generalized linear model,
 default \code{gaussian("identity")}.}
 
-\item{rp}{function creating a randomprojection object.}
+\item{rp}{function creating a "\code{randomprojection}" object.}
 
-\item{screencoef}{unction creating a screeningcoef object}
+\item{screencoef}{function creating a "\code{screeningcoef}" object}
 
 \item{nfolds}{number of folds to use for cross-validation; should be greater than 2, defaults to 10.}
 
 \item{nnu}{number of different threshold values \eqn{\nu} to consider for thresholding;
-ignored when nus are given; defaults to 20.}
+ignored when \code{nus} is provided; defaults to 20.}
 
 \item{nus}{optional vector of \eqn{\nu}'s to consider for thresholding;
 if not provided, \code{nnu} values ranging from 0 to the maximum absolute

@@ -18,7 +18,7 @@ the level of sparsity in the matrix.}
 object of class "\code{randomprojection}"
 }
 \description{
-The sparse matrix used in \insertCite{ACHLIOPTAS2003JL}{SPAR} with entries equal to
+The sparse matrix used in \insertCite{ACHLIOPTAS2003JL}{spar} with entries equal to
 \eqn{\Psi_{ij} = \pm 1/\sqrt{\psi}} with probability \eqn{\psi/2} and zero otherwise
 for \eqn{\psi\in (0,1]}. Default is \code{psi = 1}.
 }
@@ -27,6 +27,6 @@ Creates an object class "\code{randomprojection}" using arguments passed by user
 }
 \references{
 {
-\insertRef{ACHLIOPTAS2003JL}{SPAR}
+\insertRef{ACHLIOPTAS2003JL}{spar}
 }
 }

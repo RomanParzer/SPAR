@@ -17,13 +17,13 @@ projection matrix}
 object of class randomprojection
 }
 \description{
-The entries of the matrix are generated based on \insertCite{Clarkson2013LowRankApprox}{SPAR}.
+The entries of the matrix are generated based on \insertCite{Clarkson2013LowRankApprox}{spar}.
 }
 \details{
 Creates an object class randomprojection using arguments passed by user.
 }
 \references{
 {
-\insertRef{Clarkson2013LowRankApprox}{SPAR}
+\insertRef{Clarkson2013LowRankApprox}{spar}
 }
 }

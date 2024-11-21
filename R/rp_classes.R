@@ -66,6 +66,14 @@ get_rp <- function(rp, m, included_vector) {
 #'
 #' Gaussian random projection matrix
 #'
+#' @param rp object of class  "\code{randomprojection}"
+#' @param m goal dimension, which will be randomly sampled in the SPAR algorithm
+#' @param included_vector integer vector of column indices for the variables to be
+#' included in the random projection. These indices are produced in the
+#' screening step of the SPAR algorithm.
+#' @return matrix with m rows and
+#'  \code{length(included_vector)} columns sampled from the normal distribution.
+#' @keywords internal
 generate_gaussian <- function(rp, m, included_vector) {
   p <- length(included_vector)
   control_rnorm <-
@@ -97,6 +105,14 @@ rp_gaussian <- constructor_randomprojection(
 #'
 #' Sparse random projection matrix
 #'
+#' @param rp object of class  "\code{randomprojection}"
+#' @param m goal dimension, which will be randomly sampled in the SPAR algorithm
+#' @param included_vector integer vector of column indices for the variables to be
+#' included in the random projection. These indices are produced in the
+#' screening step of the SPAR algorithm.
+#' @return (possibly sparse) matrix with m rows and
+#'  \code{length(included_vector)} columns.
+#' @keywords internal
 generate_sparse <- function(rp, m, included_vector) {
   p <- length(included_vector)
   psi <- attr(rp, "psi")
@@ -121,11 +137,11 @@ generate_sparse <- function(rp, m, included_vector) {
 #' \code{generate_fun}, \code{update_data_fun}, \code{update_rpm_w_data}
 #' @return object of class "\code{randomprojection}"
 #' @description
-#' The sparse matrix used in \insertCite{ACHLIOPTAS2003JL}{SPAR} with entries equal to
+#' The sparse matrix used in \insertCite{ACHLIOPTAS2003JL}{spar} with entries equal to
 #' \eqn{\Psi_{ij} = \pm 1/\sqrt{\psi}} with probability \eqn{\psi/2} and zero otherwise
 #' for \eqn{\psi\in (0,1]}. Default is \code{psi = 1}.
 #' @references{
-#'   \insertRef{ACHLIOPTAS2003JL}{SPAR}
+#'   \insertRef{ACHLIOPTAS2003JL}{spar}
 #' }
 #' @export
 rp_sparse <- constructor_randomprojection(
@@ -137,6 +153,13 @@ rp_sparse <- constructor_randomprojection(
 #'
 #' Sparse embedding matrix
 #'
+#' @param m goal dimension, which will be randomly sampled in the SPAR algorithm
+#' @param included_vector integer vector of column indices for the variables to be
+#' included in the random projection. These indices are produced in the
+#' screening step of the SPAR algorithm.
+#' @return (possibly sparse) matrix with m rows and
+#'  \code{length(included_vector)} columns.
+#' @keywords internal
 generate_cw <- function(rp, m, included_vector) {
   p <- length(included_vector)
   use_data <- attr(rp, "data")
@@ -219,9 +242,9 @@ update_rpm_w_data_cw <- function(rpm, rp, included_vector) {
 #' \code{generate_fun}, \code{update_data_fun}, \code{update_rpm_w_data}
 #' @return object of class randomprojection
 #' @description
-#' The entries of the matrix are generated based on \insertCite{Clarkson2013LowRankApprox}{SPAR}.
+#' The entries of the matrix are generated based on \insertCite{Clarkson2013LowRankApprox}{spar}.
 #' @references{
-#'   \insertRef{Clarkson2013LowRankApprox}{SPAR}
+#'   \insertRef{Clarkson2013LowRankApprox}{spar}
 #' }
 #' @export
 rp_cw <- constructor_randomprojection(

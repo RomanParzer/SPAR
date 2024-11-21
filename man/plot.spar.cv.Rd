@@ -12,7 +12,7 @@
   nu = NULL,
   xfit = NULL,
   yfit = NULL,
-  opt_par = c("best", "1-se"),
+  opt_par = c("best", "1se"),
   prange = NULL,
   coef_order = NULL,
   ...

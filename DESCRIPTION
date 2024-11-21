@@ -1,5 +1,5 @@
 Type: Package
-Package: SPAR
+Package: spar
 Title: Sparse Projected Averaged Regression in R
 Version: 3.2.0
 Authors@R:
@@ -13,7 +13,7 @@ Authors@R:
              role = "ctb",
              comment = c(ORCID = "0000-0002-9613-7604")))
 Description: Apply Sparse Projected Averaged Regression to
-    High-dimensional Data (see Parzer, Filzmoser, and Vana-Guer 2024).
+    High-dimensional Data.
 License: GPL-3 + file LICENSE
 Imports: 
     dplyr,
@@ -22,7 +22,6 @@ Imports:
     Rdpack,
     ggplot2,
     tidyr,
-    tidyselect,
     rlang,
     glmnet
 RdMacros: Rdpack

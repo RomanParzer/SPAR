@@ -5,13 +5,13 @@
 #'
 #' @param x n x p numeric matrix of predictor variables.
 #' @param y quantitative response vector of length n.
-#' @param family  a \code{\link[stats]{"family"}} object used for the marginal generalized linear model,
+#' @param family  a "\code{\link[stats]{family}}" object used for the marginal generalized linear model,
 #'        default \code{gaussian("identity")}.
-#' @param rp function creating a randomprojection object.
-#' @param screencoef unction creating a screeningcoef object
+#' @param rp function creating a "\code{randomprojection}" object.
+#' @param screencoef function creating a "\code{screeningcoef}" object
 #' @param nfolds number of folds to use for cross-validation; should be greater than 2, defaults to 10.
 #' @param nnu number of different threshold values \eqn{\nu} to consider for thresholding;
-#'        ignored when nus are given; defaults to 20.
+#'        ignored when \code{nus} is provided; defaults to 20.
 #' @param nus optional vector of \eqn{\nu}'s to consider for thresholding;
 #'         if not provided, \code{nnu} values ranging from 0 to the maximum absolute
 #'         marginal coefficient are used.
@@ -25,8 +25,8 @@
 #'         binomial family.
 # #' @param type.rpm  type of random projection matrix to be employed;
 # #'        one of \code{"cwdatadriven"},
-# #'        \code{"cw"} \insertCite{Clarkson2013LowRankApprox}{SPAR},
-# #'        \code{"gaussian"}, \code{"sparse"} \insertCite{ACHLIOPTAS2003JL}{SPAR};
+# #'        \code{"cw"} \insertCite{Clarkson2013LowRankApprox}{spar},
+# #'        \code{"gaussian"}, \code{"sparse"} \insertCite{ACHLIOPTAS2003JL}{spar};
 # #'        defaults to \code{"cwdatadriven"}.
 # #' @param type.screening  type of screening coefficients; one of \code{"ridge"},
 # #'        \code{"marglik"}, \code{"corr"}; defaults to \code{"ridge"} which is
@@ -34,18 +34,23 @@
 #' @param ... further arguments mainly to ensure back-compatibility
 #' @returns object of class \code{"spar.cv"} with elements
 #' \itemize{
-#'  \item betas p x  \code{max(nummods)} matrix of standardized coefficients from each marginal model
-#'  \item scr_coef p-vector of coefficients used for screening for standardized predictors
-#'  \item inds list of index-vectors corresponding to variables kept after
+#'  \item \code{betas} p x  \code{max(nummods)} sparse matrix of class
+#'  \code{"\link[=dgCMatrix-class]{dgCMatrix}"} containing the
+#'   standardized coefficients from each marginal model
+#'  \item \code{intercepts} used in each marginal model, vector of length \code{max(nummods)}
+#'  \item \code{scr_coef} p-vector of coefficients used for screening for standardized predictors
+#'  \item \code{inds} list of index-vectors corresponding to variables kept after
 #'  screening in each marginal model of length  \code{max(nummods)}
-#'  \item RPMs list of projection matrices used in each marginal model of length \code{max(nummods)}
-#'  \item val_sum \code{data.frame} with CV results (mean and sd validation measure and mean number of active variables) for each element of nus and nummods
-#'  \item nus vector of \eqn{\nu}'s considered for thresholding
-#'  \item nummods vector of numbers of marginal models considered for validation
-#'  \item ycenter empirical mean of initial response vector
-#'  \item yscale empirical standard deviation of initial response vector
-#'  \item xcenter p-vector of empirical means of initial predictor variables
-#'  \item xscale p-vector of empirical standard deviations of initial predictor variables
+#'  \item \code{RPMs} list of projection matrices used in each marginal model of length \code{max(nummods)}
+#'  \item \code{val_sum} \code{data.frame} with CV results (mean and sd validation measure and mean number of active variables) for each element of nus and nummods
+#'  \item \code{nus} vector of \eqn{\nu}'s considered for thresholding
+#'  \item \code{nummods} vector of numbers of marginal models considered for validation
+#'  \item \code{ycenter} empirical mean of initial response vector
+#'  \item \code{yscale} empirical standard deviation of initial response vector
+#'. \item \code{xcenter} p-vector of empirical means of initial predictor variables
+#'  \item \code{xscale} p-vector of empirical standard deviations of initial predictor variables
+#'  \item \code{rp} an object of class "\code{randomprojection}"
+#'  \item \code{screencoef} an object of class "\code{screeningcoef}"
 #' }
 #' @examples
 #' \dontrun{
@@ -102,12 +107,12 @@ spar.cv <- function(x, y,
     val_res <- rbind(val_res,foldSPARres$val_res)
   }
 
-  val_sum <- dplyr::group_by(val_res, nnu, nu, nummod)
+  val_sum <- dplyr::group_by(val_res, .data$nnu, .data$nu, .data$nummod)
   suppressMessages(
     val_sum <-  dplyr::summarise(val_sum,
-                         mMeas = mean(Meas,na.rm=TRUE),
-                         sdMeas = sd(Meas,na.rm=TRUE),
-                         mNumAct = mean(numAct,na.rm=TRUE))
+                         mMeas = mean(.data$Meas,na.rm=TRUE),
+                         sdMeas = sd(.data$Meas,na.rm=TRUE),
+                         mNumAct = mean(.data$numAct,na.rm=TRUE))
   )
 
   res <- list(betas = SPARres$betas, intercepts = SPARres$intercepts,
@@ -151,7 +156,8 @@ coef.spar.cv <- function(object,
   if (is.null(nummod) & is.null(nu)) {
     best_ind <- which.min(object$val_sum$mMeas)
     if (opt_nunum=="1se") {
-      allowed_ind <- object$val_sum$mMeas<object$val_sum$mMeas[best_ind]+object$val_sum$sdMeas[best_ind]
+      allowed_ind <- object$val_sum$mMeas<object$val_sum$mMeas[best_ind]+
+        object$val_sum$sdMeas[best_ind]
       ind_1cv <- which.min(object$val_sum$mNumAct[allowed_ind])
       par <- object$val_sum[allowed_ind,][ind_1cv,]
     } else {
@@ -319,7 +325,7 @@ plot.spar.cv <- function(x,
     }
     pred <- predict(spar_res,xfit,opt_par=opt_par,nummod=nummod,nu=nu)
     res <- ggplot2::ggplot(data = data.frame(fitted=pred,residuals=yfit-pred),
-                           ggplot2::aes(x=fitted,y=residuals)) +
+                           ggplot2::aes(x=.data$fitted,y=.data$residuals)) +
       ggplot2::geom_point() +
       ggplot2::geom_hline(yintercept = 0,linetype=2,linewidth=0.5)
   } else if (plot_type=="Val_Measure") {
@@ -336,21 +342,29 @@ plot.spar.cv <- function(x,
       allowed_ind <- tmp_df$Meas<tmp_df$Meas[ind_min]+tmp_df$sdMeas[ind_min]
       ind_1se <- which.min(tmp_df$numAct[allowed_ind])
 
-      res <- ggplot2::ggplot(data = tmp_df,ggplot2::aes(x=nnu,y=Meas)) +
+      res <- ggplot2::ggplot(data = tmp_df,
+                             ggplot2::aes(x = .data$nnu,y = .data$Meas)) +
         ggplot2::geom_point() +
         ggplot2::geom_line() +
         # ggplot2::scale_x_continuous(breaks=seq(1,nrow(my_val_sum),1),labels=round(my_val_sum$nu,3)) +
-        ggplot2::scale_x_continuous(breaks=seq(1,nrow(my_val_sum),2),labels=formatC(my_val_sum$nu[seq(1,nrow(my_val_sum),2)], format = "e", digits = 1)) +
+        ggplot2::scale_x_continuous(
+          breaks=seq(1,nrow(my_val_sum),2),
+          labels=formatC(my_val_sum$nu[seq(1,nrow(my_val_sum),2)], format = "e", digits = 1)) +
         ggplot2::labs(x=expression(nu),y=spar_res$measure) +
-        ggplot2::geom_point(data=data.frame(x=tmp_df$nnu[ind_min],y=tmp_df$Meas[ind_min]),ggplot2::aes(x=x,y=y),col="red") +
+        ggplot2::geom_point(data=data.frame(x=tmp_df$nnu[ind_min],y=tmp_df$Meas[ind_min]),
+                            ggplot2::aes(x=.data$x,y=.data$y),col="red") +
         ggplot2::ggtitle(paste0(tmp_title,mynummod)) +
-        ggplot2::geom_ribbon(ggplot2::aes(ymin=Meas-sdMeas,ymax=Meas+sdMeas),alpha=0.2,linetype=2,show.legend = FALSE) +
-        ggplot2::geom_point(ggplot2::aes(x = x, y = y),
+        ggplot2::geom_ribbon(ggplot2::aes(ymin=.data$Meas-.data$sdMeas,
+                                          ymax=.data$Meas+.data$sdMeas),
+                             alpha=0.2,linetype=2,show.legend = FALSE) +
+        ggplot2::geom_point(ggplot2::aes(x = .data$x, y = .data$y),
                    color=2,show.legend = FALSE,
                    data=data.frame(x = c(tmp_df$nnu[ind_min],tmp_df$nnu[allowed_ind][ind_1se]),
                                    y = c(tmp_df$Meas[ind_min],tmp_df$Meas[allowed_ind][ind_1se]))) +
-        ggplot2::annotate("segment",x = tmp_df$nnu[ind_min], y = tmp_df$Meas[ind_min] + tmp_df$sdMeas[ind_min],
-                          xend = tmp_df$nnu[allowed_ind][ind_1se]+1, yend = tmp_df$Meas[ind_min] + tmp_df$sdMeas[ind_min],
+        ggplot2::annotate("segment",x = tmp_df$nnu[ind_min],
+                          y = tmp_df$Meas[ind_min] + tmp_df$sdMeas[ind_min],
+                          xend = tmp_df$nnu[allowed_ind][ind_1se]+1,
+                          yend = tmp_df$Meas[ind_min] + tmp_df$sdMeas[ind_min],
                           color=2,linetype=2)
     } else {
       if (is.null(nu)) {
@@ -365,14 +379,17 @@ plot.spar.cv <- function(x,
       allowed_ind <- tmp_df$Meas<tmp_df$Meas[ind_min]+tmp_df$sdMeas[ind_min]
       ind_1se <- which.min(tmp_df$numAct[allowed_ind])
 
-      res <- ggplot2::ggplot(data = tmp_df,ggplot2::aes(x=nummod,y=Meas)) +
+      res <- ggplot2::ggplot(data = tmp_df,ggplot2::aes(x=.data$nummod,y=.data$Meas)) +
         ggplot2::geom_point() +
         ggplot2::geom_line() +
         ggplot2::labs(y=spar_res$measure) +
-        ggplot2::geom_point(data=data.frame(x=tmp_df$nummod[ind_min],y=tmp_df$Meas[ind_min]),ggplot2::aes(x=x,y=y),col="red")+
+        ggplot2::geom_point(data=data.frame(x=tmp_df$nummod[ind_min],y=tmp_df$Meas[ind_min]),
+                            ggplot2::aes(x=.data$x,y=.data$y),col="red")+
         ggplot2::ggtitle(substitute(paste(txt,nu,"=",v),list(txt=tmp_title,v=round(nu,3)))) +
-        ggplot2::geom_ribbon(ggplot2::aes(ymin=Meas-sdMeas,ymax=Meas+sdMeas),alpha=0.2,linetype=2,show.legend = FALSE)+
-        ggplot2::geom_point(ggplot2::aes(x = x, y = y),
+        ggplot2::geom_ribbon(ggplot2::aes(ymin=.data$Meas-.data$sdMeas,
+                                          ymax=.data$Meas+.data$sdMeas),
+                             alpha=0.2,linetype=2,show.legend = FALSE)+
+        ggplot2::geom_point(ggplot2::aes(x = .data$x, y = .data$y),
                             color=2,show.legend = FALSE,
                             data=data.frame(x = c(tmp_df$nummod[ind_min],tmp_df$nummod[allowed_ind][ind_1se]),
                                             y = c(tmp_df$Meas[ind_min],tmp_df$Meas[allowed_ind][ind_1se]))) +
@@ -394,13 +411,15 @@ plot.spar.cv <- function(x,
       allowed_ind <- tmp_df$Meas<tmp_df$Meas[ind_min]+tmp_df$sdMeas[ind_min]
       ind_1se <- which.min(tmp_df$numAct[allowed_ind])
 
-      res <- ggplot2::ggplot(data = tmp_df,ggplot2::aes(x=nnu,y=numAct)) +
+      res <- ggplot2::ggplot(data = tmp_df,ggplot2::aes(x=.data$nnu,y=.data$numAct)) +
         ggplot2::geom_point() +
         ggplot2::geom_line() +
         # ggplot2::scale_x_continuous(breaks=seq(1,nrow(my_val_sum),1),labels=round(my_val_sum$nu,3)) +
-        ggplot2::scale_x_continuous(breaks=seq(1,nrow(my_val_sum),2),labels=formatC(my_val_sum$nu[seq(1,nrow(my_val_sum),2)], format = "e", digits = 1)) +
+        ggplot2::scale_x_continuous(breaks=seq(1,nrow(my_val_sum),2),
+                                    labels=formatC(my_val_sum$nu[seq(1,nrow(my_val_sum),2)],
+                                                   format = "e", digits = 1)) +
         ggplot2::labs(x=expression(nu)) +
-        ggplot2::geom_point(ggplot2::aes(x = x, y = y),
+        ggplot2::geom_point(ggplot2::aes(x = .data$x, y = .data$y),
                             color=2,show.legend = FALSE,
                             data=data.frame(x = c(tmp_df$nnu[ind_min],tmp_df$nnu[allowed_ind][ind_1se]),
                                             y = c(tmp_df$numAct[ind_min],tmp_df$numAct[allowed_ind][ind_1se]))) +
@@ -418,10 +437,10 @@ plot.spar.cv <- function(x,
       allowed_ind <- tmp_df$Meas<tmp_df$Meas[ind_min]+tmp_df$sdMeas[ind_min]
       ind_1se <- which.min(tmp_df$numAct[allowed_ind])
 
-      res <- ggplot2::ggplot(data = tmp_df,ggplot2::aes(x=nummod,y=numAct)) +
+      res <- ggplot2::ggplot(data = tmp_df,ggplot2::aes(x=.data$nummod,y=.data$numAct)) +
         ggplot2::geom_point() +
         ggplot2::geom_line() +
-        ggplot2::geom_point(ggplot2::aes(x = x, y = y),
+        ggplot2::geom_point(ggplot2::aes(x = .data$x, y = .data$y),
                             color=2,show.legend = FALSE,
                             data=data.frame(x = c(tmp_df$nummod[ind_min],tmp_df$nummod[allowed_ind][ind_1se]),
                                             y = c(tmp_df$numAct[ind_min],tmp_df$numAct[allowed_ind][ind_1se]))) +
@@ -439,14 +458,20 @@ plot.spar.cv <- function(x,
     }
 
 
-    tmp_mat <- data.frame(t(apply(as.matrix(spar_res$betas)[coef_order,],1,function(row)row[order(abs(row),decreasing = TRUE)])),
+    tmp_mat <- data.frame(t(apply(as.matrix(spar_res$betas)[coef_order,],1,
+                                  function(row)row[order(abs(row),decreasing = TRUE)])),
                           predictor=1:p)
     colnames(tmp_mat) <- c(1:nummod,"predictor")
-    tmp_df <- tidyr::pivot_longer(tmp_mat,tidyselect::all_of(1:nummod),names_to = "marginal model",values_to = "value")
+    tmp_df <- tidyr::pivot_longer(tmp_mat, cols = (1:.data$nummod),
+                                  names_to = "marginal model",
+                                  values_to = "value")
     tmp_df$`marginal model` <- as.numeric(tmp_df$`marginal model`)
 
-    mrange <- max(apply(spar_res$betas,1,function(row)sum(row!=0)))
-    res <- ggplot2::ggplot(tmp_df,ggplot2::aes(x=predictor,y=`marginal model`,fill=value)) +
+    mrange <- max(Matrix::rowSums(spar_res$betas != 0))
+
+    res <- ggplot2::ggplot(tmp_df,ggplot2::aes(x=.data$predictor,
+                                               y=.data$`marginal model`,
+                                               fill=.data$value)) +
       ggplot2::geom_tile() +
       ggplot2::scale_fill_gradient2() +
       ggplot2::coord_cartesian(xlim=prange,ylim=c(1,mrange)) +
@@ -471,7 +496,7 @@ print.spar.cv <- function(x, ...) {
   spar_res <- x
   mycoef_best <- coef(spar_res,opt_par = "best")
   mycoef_1se <- coef(spar_res,opt_par = "1se")
-  cat(sprintf("SPAR.cv object:\nSmallest CV-Meas %.1f reached for nummod=%d,
+  cat(sprintf("spar.cv object:\nSmallest CV-Meas %.1f reached for nummod=%d,
               nu=%s leading to %d / %d active predictors.\n",
               min(spar_res$val_sum$mMeas),mycoef_best$nummod,
               formatC(mycoef_best$nu,digits = 2,format = "e"),

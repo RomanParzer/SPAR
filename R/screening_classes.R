@@ -4,8 +4,8 @@
 #' @param name character
 #' @param generate_fun function for generating the screening coefficient. This
 #' function should  with arguments \code{object}, which is a "\code{screencoef}"
-#' object, and \code{data}, which is a list of x (matrix of predictors used as input in
-#' \link{\code{spar}}) and y (vector of responses used in  \link{\code{spar}}).
+#' object, and \code{data}, which is a list of x (matrix of predictors used as
+#' input in \code{spar()}) and y (vector of responses used in  \code{spar()}).
 #' @return a function which in turn creates a function which in turn creates an
 # ' object of class \code{"screencoef"}
 #' @description
