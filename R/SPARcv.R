@@ -298,6 +298,7 @@ predict.spar.cv <- function(object,
 #'  \code{plot_type="res-vs-fitted"} to set type of predictions, see \code{\link{predict.spar.cv}}.
 #' @param prange optional vector of length 2 for  \code{"coefs"}-plot to give the limits of the predictors' plot range; defaults to  \code{c(1, p)}.
 #' @param coef_order optional index vector of length p for \code{"coefs"}-plot to give the order of the predictors; defaults to  \code{1 : p}.
+#' @param digits number of significant digits to be displayed in the axis; defaults to 2L.
 #' @param ... further arguments passed to or from other methods
 #' @return ggplot2 object
 #' @import ggplot2
@@ -311,7 +312,7 @@ plot.spar.cv <- function(x,
                          yfit = NULL,
                          opt_par = c("best","1se"),
                          prange = NULL,
-                         coef_order = NULL, ...) {
+                         coef_order = NULL, digits = 2, ...) {
   spar_res <- x
   plot_type <- match.arg(plot_type)
   plot_along <- match.arg(plot_along)
@@ -349,7 +350,7 @@ plot.spar.cv <- function(x,
         # ggplot2::scale_x_continuous(breaks=seq(1,nrow(my_val_sum),1),labels=round(my_val_sum$nu,3)) +
         ggplot2::scale_x_continuous(
           breaks=seq(1,nrow(my_val_sum),2),
-          labels=formatC(my_val_sum$nu[seq(1,nrow(my_val_sum),2)], format = "e", digits = 1)) +
+          labels=formatC(my_val_sum$nu[seq(1,nrow(my_val_sum),2)], format = "e", digits = digits)) +
         ggplot2::labs(x=expression(nu),y=spar_res$measure) +
         ggplot2::geom_point(data=data.frame(x=tmp_df$nnu[ind_min],y=tmp_df$Meas[ind_min]),
                             ggplot2::aes(x=.data$x,y=.data$y),col="red") +
@@ -417,7 +418,7 @@ plot.spar.cv <- function(x,
         # ggplot2::scale_x_continuous(breaks=seq(1,nrow(my_val_sum),1),labels=round(my_val_sum$nu,3)) +
         ggplot2::scale_x_continuous(breaks=seq(1,nrow(my_val_sum),2),
                                     labels=formatC(my_val_sum$nu[seq(1,nrow(my_val_sum),2)],
-                                                   format = "e", digits = 1)) +
+                                                   format = "e", digits = digits)) +
         ggplot2::labs(x=expression(nu)) +
         ggplot2::geom_point(ggplot2::aes(x = .data$x, y = .data$y),
                             color=2,show.legend = FALSE,
@@ -462,7 +463,7 @@ plot.spar.cv <- function(x,
                                   function(row)row[order(abs(row),decreasing = TRUE)])),
                           predictor=1:p)
     colnames(tmp_mat) <- c(1:nummod,"predictor")
-    tmp_df <- tidyr::pivot_longer(tmp_mat, cols = (1:.data$nummod),
+    tmp_df <- tidyr::pivot_longer(tmp_mat, cols = (1:nummod),
                                   names_to = "marginal model",
                                   values_to = "value")
     tmp_df$`marginal model` <- as.numeric(tmp_df$`marginal model`)

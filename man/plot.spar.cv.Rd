@@ -15,6 +15,7 @@
   opt_par = c("best", "1se"),
   prange = NULL,
   coef_order = NULL,
+  digits = 2,
   ...
 )
 }
@@ -42,6 +43,8 @@ for  \code{plot_type="Val_Measure"} or  \code{"Val_numAct"}; same as for \code{\
 \item{prange}{optional vector of length 2 for  \code{"coefs"}-plot to give the limits of the predictors' plot range; defaults to  \code{c(1, p)}.}
 
 \item{coef_order}{optional index vector of length p for \code{"coefs"}-plot to give the order of the predictors; defaults to  \code{1 : p}.}
+
+\item{digits}{number of significant digits to be displayed in the axis; defaults to 2L.}
 
 \item{...}{further arguments passed to or from other methods}
 }

@@ -55,18 +55,28 @@ bibliography: SPAR.bib
 
 ```{r setup, echo=FALSE}
 knitr::opts_chunk$set(fig.pos = "t!",
-                      out.extra = "", 
+                      out.extra = "", continue = "+ ",
                       eval=TRUE)
 ```
 
 ## Introduction {#sec-intro}
 
-The [spar]{.pkg} package for [R]{.proglang} [@RLanguage] offers functionality for estimating predictive generalized linear models (GLMs) for high-dimensional settings, where the number of predictors $p$ significantly exceeds the number of observations $n$ i.e., $p>n$ or even $p>>n$. The package leverages variable screening 
-methods with random projection techniques to effectively reduce 
-the dimensionality of the predictor space, which are repeatedly performed in order 
-to reduce the variability stemming in the inherent randomness of the procedure, which in turn enables the construction of an ensemble of predictive generalized linear models.
+The [spar]{.pkg} package for [R]{.proglang} [@RLanguage] offers functionality
+for performing sparse projected averaged regression (SPAR) in high-dimensional 
+settings, where the number of predictors $p$ significantly exceeds the number 
+of observations $n$ i.e., $p>n$ or even $p\gg n$. To address the challenges of
+high dimensionality, the package integrates variable screening methods with
+random projection techniques to effectively reduce the predictor space. These 
+techniques are applied repeatedly in order to build an ensemble of GLMs, 
+in order to mitigate the variability introduced by the inherent randomness of 
+the procedure. Additional sparsity in the coefficients can be introduced through 
+a thresholding parameter, which together with the number of models in the
+ensemble can be chosen using a validation set or via cross-validation.
+The final coefficients are then obtained by averaging over the marginal
+models in the ensemble.
 
-Random projection is a computationally-efficient method which linearly maps a set of points in high dimensions into a much lower-dimensional space. 
+Random projection is a computationally-efficient method which linearly maps a 
+set of points in high dimensions into a much lower-dimensional space. 
 Several packages in [R]{.proglang} provide functionality for random
 projections. For instance, package [RandPro]{.pkg}
 [@RandProR; @SIDDHARTH2020100629] allows a Gaussian random matrix, a sparse matrix introduced in @ACHLIOPTAS2003JL,@LiHastie2006VerySparseRP
@@ -95,8 +105,7 @@ the scope of the current paper.
 <!-- Further packages are available which implement specific procedures: @pkg:tilting, @pkg:cdcsis, @pkg:QCSIS, @pkg:LqGm @pkg:fusionclust.  -->
 <!-- Package [SMLE]{.pkg} [@pkg:SMLE] implements joint feature screening via sparse MLE [@SMLE2014] in high-dimensional linear, logistic, and Poisson models. Package [TSGSIS]{.pkg} [@pkg:TSGSIS] provides a high-dimensional grouped variable selection approach for detecting interactions that may not have marginal effects in high dimensional linear and logistic regression [@10.1093/bioinformatics/btx409]. -->
 
-Combining variable screening with random projection is effective in reducing the
-predictor set. Moreover, in practice, the information from multiple such screening and projections can be combined by averaging, in order to reduce the variance introduced by the random sampling (of both projections and screening indicators) [@Thanei2017RPforHDR].
+Although combining variable screening with random projection effectively reduces the predictor set and computational costs, the variability introduced by random sampling -- both in projections and screening indicators -- can be mitigated by averaging the results from multiple iterations.  [@Thanei2017RPforHDR].
 To address these points, [spar]{.pkg} builds an ensemble of GLMs in the spirit 
 of @Dunson2020TargRandProj and @parzer2024glms where, in each model of the ensemble, i) variables are first screened based on a screening coefficient, ii) the selected variables are then projected to a lower dimensional space, iii) a GLM is estimated using the projected predictors.
 
@@ -273,11 +282,11 @@ initial screening step followed
 by a projection step, 
 we assume that the reduced and projected set of 
 predictors $\boldsymbol{z}_i$ together with the response arises from a GLM with the response having conditional density from a (reproductive) exponential dispersion family of the form 
-\begin{align}\label{eqn:y_density}
+\begin{align*}\label{eqn:y_density}
   f(y_i|\theta_i,\phi) = \exp\Bigl\{\frac{y_i\theta_i- b(\theta_i)}{a(\phi)} + c(y_i,\phi)\Bigr\},
   \quad
     g(\E[y_i|\boldsymbol{z}_i]) = \gamma_0 + \boldsymbol{z}_i^\top\boldsymbol{\gamma}=:\eta_i,
-\end{align}
+\end{align*}
 where $\theta_i$ is the natural parameter,  $a(.)>0$ and $c(.)$ are specific real-valued functions determining different families, $\phi$ is a dispersion parameter, and 
 $b(.)$ is the log-partition function normalizing the density to integrate to one. If $\phi$ is known, we obtain densities in the natural exponential family for our responses. 
 The responses are related to the $m$-dimensional reduced and projected predictors through the conditional mean, i.e., 
@@ -296,10 +305,10 @@ We will employ for this purpose the
 function `glmnet()` of package [glmnet]{.pkg} 
 [@glmnet2023] in the estimation of the marginal models.
 
-### Algorithm {#sec-algo}
+### SPAR algorithm {#sec-algo}
 
-We present the general algorithm implemented in package 
-[spar]{.pkg}. 
+We present the general algorithm for sparse projected averaged regression (SPAR)
+implemented in package [spar]{.pkg}. 
 
 1.   Choose family with corresponding log-likelihood $\ell(.)$ and link.
 
@@ -308,22 +317,19 @@ We present the general algorithm implemented in package
 3.   Calculate screening coefficients $\hat\omega$.
 
 4.   For $k=1,\dots,M$ models:
-
-  4.1.  If $p>2n$, screen $2n$ predictors based on the screening coefficient $\hat\omega$, which yields for model $k$ the screening index set $I_k=\{j_1^k,\dots,j_{2n}^k\}\subset[p]$; if probabilistic screening should be employed draw the predictors sequentially without replacement using an initial vector of probabilities $p_j\propto |\hat\omega_j|$. Otherwise, select the $2n$ variables with the highest $|\hat\omega_j|$. If $p < 2n$, perform no screening and $I_k=\{1,\dots,p\}$.
-  
-  4.2.   project screened variables to a random dimension $m_k\sim \text{Unif}\{\log(p),\dots,n/2\}$ using \textbf{projection matrix} $\Phi_k$ to obtain $Z_k=X_{\cdot I_k}\Phi_k^\top \in \mathbb{R}^{n\times m_k}$, 
+    a.  If $p>2n$, screen $2n$ predictors based on the screening coefficient $\hat\omega$, which yields for model $k$ the screening index set $I_k=\{j_1^k,\dots,j_{2n}^k\}\subset[p]$; if probabilistic screening should be employed draw the predictors sequentially without replacement using an initial vector of probabilities $p_j\propto |\hat\omega_j|$. Otherwise, select the $2n$ variables with the highest $|\hat\omega_j|$. If $p < 2n$, perform no screening and $I_k=\{1,\dots,p\}$.
+    b.   project screened variables to a random dimension $m_k\sim \text{Unif}\{\log(p),\dots,n/2\}$ using \textbf{projection matrix} $\Phi_k$ to obtain $Z_k=X_{\cdot I_k}\Phi_k^\top \in \mathbb{R}^{n\times m_k}$, 
   where $X_{\cdot I_k}$ contains the columns in $X$ having a column index in 
   $I_k$.
-  
-  4.3.  fit a ($L_2$ penalized) \textbf{GLM} of $y$ on $Z_k$ to obtain estimated coefficients $\widehat\gamma^k\in\mathbb{R}^{m_k}$ and $\hat \beta_{I_k}^k=\Phi_k^\top\widehat\gamma^k$, $\hat \beta_{\bar I_k}^k=0$.
+    c.  fit a ($L_2$ penalized) \textbf{GLM} of $y$ on $Z_k$ to obtain estimated coefficients $\widehat\gamma^k\in\mathbb{R}^{m_k}$ and $\hat \beta_{I_k}^k=\Phi_k^\top\widehat\gamma^k$, $\hat \beta_{\bar I_k}^k=0$.
 
 5.   For a given threshold $\nu>0$, set all $\hat\beta_j^k$ with $|\hat\beta_j^k|<\nu$ to $0$ for all $j,k$.
 
 6.   Choose $M$ and $\nu$ via a validation set or cross-validation by repeating steps 1 to 4 and employing a
 loss function on the test set $K(M, \nu)$ 
-\begin{align}
+\begin{align*}
          (M_{\text{best}},\nu_{\text{best}}) = \text{argmin}_{M,\nu}K(M,\nu)
-       \end{align}
+       \end{align*}
 
 7.   Combine models of the ensembles via the coefficients using **simple average** 
 $\hat \beta = \sum_{k=1}^M\hat \beta^k / M$.
@@ -391,8 +397,12 @@ chosen to be equally spaced  on the probability scale .
     defaults to 20. If a vector is provided, all combinations of `nus` and 
      `nummods` are considered when choosing the optimal $\nu_\text{best}$ and $M_\text{best}$.
 
--   `measure` gives the measure based on which the thresholding value $\nu_\text{opt}$ and the number of models `M` should be chosen on the validation set (for `spar()`) or in each of the folds (in `spar.cv()`). Defaults to `"deviance"`, which is available for all families. Other options are `"mse"` or `"mae"` (between responses and predicted means, for all families), 
-`"class"` (misclassification error) and `"1-auc"` (one minus area under the ROC curve) both just for binomial family.
+-   `measure` gives the measure based on which the thresholding value $\nu_\text{opt}$ and the number of models `M` should be chosen on the validation set (for `spar()`) or in each of the folds (in `spar.cv()`). 
+Defaults to `"deviance"`, which is available for all families. 
+Other options are mean squared error `"mse"` or mean absolute error `"mae"`
+(between responses and predicted conditional means, for all families), 
+`"class"` (misclassification error) and `"1-auc"` 
+(one minus area under the ROC curve) both just for binomial family.
 
 Furthermore, `spar()` has the specific arguments:
 
@@ -731,8 +741,8 @@ Note that `screenIID()` also takes method as an argument.
 To allow for flexibility, we do not
 fix the method in `generate_scr_sirs` but rather allow the user to 
 pass a method through the `control` argument in the `screen_*` function.
-This function is created using `constructor_screencoef`:
-```{r}
+This function is created using the helper `constructor_screencoef`:
+```{r sirs_chunk}
 screen_sirs <- constructor_screencoef(
   "screen_sirs", 
   generate_fun = generate_scr_sirs)
@@ -791,7 +801,7 @@ This helper simulates $m\times p$ matrices from the Haar measure:
 simulate_haar <- function(m, p) {
     R0 <- matrix(1/sqrt(p) * rnorm(p * m), nrow = p, ncol = m)
     RM <- qr.Q(qr(R0))[, seq_len(m)]
-    RM <- Matrix(t(RM), sparse = TRUE)  
+    RM <- Matrix::Matrix(t(RM), sparse = TRUE)  
 }
 ```
 
@@ -823,8 +833,8 @@ generate_cannings <- function(rp, m, included_vector) {
       xrp <- tcrossprod(xtrain, RM)
       mod <- do.call(function(...) 
        glm.fit(x =  cbind(1, xrp), y = ytrain, ...), control_glm)
-      eta_test <- drop(cbind(1, tcrossprod(xtest, RM)) %*% mod$coefficients)
-      pred <- family$linkinv(eta_test)
+      eta_test <- (cbind(1, tcrossprod(xtest, RM)) %*% mod$coefficients)
+      pred <- family$linkinv(as.vector(eta_test))
       out <-  ifelse(family$family == "binomial",
                      mean(((pred > 0.5) + 0) != ytest), 
                      mean((pred - ytest)^2))
@@ -870,7 +880,7 @@ if (file.exists(file)) {
     rp = rp_cannings(control = list(B2 = 50)),
     measure = "class"
   )
-  
+  set.seed(123)   
   spar_example_2 <- spar(
     x = example_data$x, y = ystar,
     family = binomial(),
@@ -899,6 +909,7 @@ spar_example_1 <- spar(
 ```
 Using the data-driven `rp_cw()`:
 ```{r eval=FALSE}
+set.seed(123)   
 spar_example_2 <- spar(x = example_data$x, y = ystar,
   family = binomial(),
   screencoef = screen_marglik(nscreen = ncol(example_data$x)),
@@ -912,9 +923,7 @@ We can extract the measures on the validation set by:
 ```{r}
 head(spar_example_1$val_res)
 ```
-We can compare the two approaches by looking at the minimum `Meas` 
-achieved:
-
+We can compare the two approaches by looking at the minimum measure `Meas`  achieved on the validation set:
 ```{r}
 min_val_1 <- min(spar_example_1$val_res$Meas)
 id_best_1 <- max(which(spar_example_1$val_res$Meas == min_val_1))
@@ -961,12 +970,14 @@ facedata <- readMat(file.path("face_data.mat"))
 x <- t(facedata$images)
 y <- facedata$poses[1,]
 ```
-We can visualize e.g., the first observation in this data set in
-Figure \ref{fig:facesplot_i1}.
-```{r, echo=FALSE,fig.width=8, fig.height=8,out.width="50%", fig.pos="center",fig.fullwidth=FALSE, fig.cap="Image corresponding to the first observation in the \\emph{Isomap faces} data set. \\label{fig:facesplot_i1}"}
+We can visualize one observation in this data set in
+Figure \ref{fig:facesplot1} (code for reproducing the figure is provided 
+in the supplementary materials).
+```{r, include=FALSE, echo=FALSE,fig.width=8, fig.height=8,out.width="50%", fig.pos="t",fig.fullwidth=FALSE}
 library(ggplot2)
-i <- 415
-ggplot(data.frame(X = rep(1:64,each=64),Y = rep(64:1,64),
+i <- 179
+p <- ggplot(data.frame(X = rep(1:64,each=64),
+                  Y = rep(64:1,64),
                   Z = facedata$images[,i]),
        aes(X, Y, fill = Z)) +
   geom_tile() +
@@ -974,42 +985,95 @@ ggplot(data.frame(X = rep(1:64,each=64),Y = rep(64:1,64),
   ggtitle(paste0("y = ", round(facedata$poses[1, i],1))) +
   theme(legend.position = "none",
         plot.title = element_text(hjust = 0.5))
+ggsave(filename = "Figures/faces_obs_415.pdf", p)
 ```
+\begin{figure}[t!]
+\centering
+\includegraphics[width=0.5\textwidth]{Figures/faces_obs_415.pdf}
+\caption{Image corresponding to one observation in the \emph{Isomap faces} data set. \label{fig:facesplot1}}
+\end{figure}
+
 This data set has the issue of many columns being almost constant, which can make estimation unstable. Given that `spar()`
 and `spar.cv()` ignore constant columns, we can alleviate this issue by setting all columns which have a low standard deviation to zero.
 ```{r}
-x[, apply(x, 2, sd) < 1e-2] <- 0
+x[, apply(x, 2, sd) < 0.01] <- 0
 ```
 
 We split the data into training vs test sample
-```{r }
+```{r}
 set.seed(123)
 ntot <- length(y); ntest <- ntot * 0.25
 testind <- sample(ntot, ntest, replace = FALSE)
 xtrain <- as.matrix(x[-testind, ]); ytrain <- y[-testind]
 xtest <- as.matrix(x[testind, ]); ytest <- y[testind]
 ```
-and estimate on the training data the SPAR algorithm with cross-validation. We employ the data-driven random projection with screening based on the ridge coefficients:
-```{r}
+and estimate on the training data the SPAR algorithm with cross-validation. 
+We employ the data-driven random projection proposed in @parzer2024sparse
+with screening based on the ridge coefficients. To ensure convergence 
+of the [glmnet]{.pkg} algorithm, we set the `lambda.min.ratio` parameter to 
+$0.001$.
+```{r echo=FALSE}
+file <- "faces_spar_result.rda"
+if (!file.exists(file)) {
+  set.seed(123)
+  library("spar")
+  spar_faces <- spar.cv(
+    xtrain, ytrain,
+    screencoef = screen_glmnet(control = list(lambda.min.ratio = 0.001)),
+    rp = rp_cw(data = TRUE, 
+               control = list(lambda.min.ratio = 0.001)),
+    nummods = c(5, 10, 20, 50),
+     measure = "mse")
+  save(spar_faces, file = file)
+} else {
+  load(file)
+}
+
+```
+```{r eval=FALSE}
 library("spar")
-p <- ncol(xtrain)
-spar_faces <- suppressWarnings(spar.cv(
+set.seed(123)
+spar_faces <- spar.cv(
   xtrain, ytrain,
+  screencoef = screen_glmnet(control = list(lambda.min.ratio = 0.001)),
   rp = rp_cw(data = TRUE, 
-             control = list(lambda.min.ratio = 0.007)),
+             control = list(lambda.min.ratio = 0.001)),
   nummods = c(5, 10, 20, 50),
-  measure = "mse"))
+  measure = "mse")
+```
+```{r}
 spar_faces
 ```
 The `plot` method for [spar.cv]{.class} objects displays by default the 
 measure employed in the cross-validation (in this case MSE) 
 for a grid of $\nu$
 values, where the number of models is fixed to the value found to perform 
-best in cross-validation exercise (see Figure \ref{fig:facesplot_valmeasure}). We observe that no thresholding delivers the lowest MSE. 
-```{r , fig.width=10, fig.height=6,out.width="80%", fig.cap="Plot of mean squared error over a grid of threshold values $\\nu$ for fixed number of optimal models $M=50$ for the \\emph{Isomap faces} data set. Confidence bands represent one standard deviation in the measures across the number of folds. \\label{fig:facesplot_valmeasure}"}
+best in cross-validation exercise (see Figure \ref{fig:facesplot_valmeasure}). 
+```{r, eval=F}
 plot(spar_faces)
 ```
-The coefficients of the different variables (in this example pixels) obtained by averaging over the coefficients the marginal models (for optimal $\lambda$ and number of models) are given by:
+```{r echo=TRUE, include=FALSE}
+p <- plot(spar_faces, digits = 4L)
+ggsave(filename = "Figures/faces_plot_valmeasure.pdf", p,
+       width = 10, height = 7)
+```
+\begin{figure}[t!]
+\centering
+\includegraphics[width=0.8\textwidth]{Figures/faces_plot_valmeasure.pdf}
+\caption{Plot of mean squared error over a grid of threshold values $\nu$ for fixed number of optimal models $M=20$ for the \emph{Isomap faces} data set.
+The red points correspond to the threshold which achieves the lowest
+cross-validation measure and the one with the largest cross-validation 
+measure within one standard deviation away from minimum. Confidence bands represent one standard deviation in the measures across the number of folds. \label{fig:facesplot_valmeasure}}
+\end{figure}
+
+
+We observe that no thresholding delivers the lowest MSE but that using thresholds
+between $7e-4$ and $1.1e-3$ does not cause a large increase in MSE. The 
+1-standard-error rule would suggest picking $\nu=0.00508$.
+
+The coefficients of the different variables (in this example pixels) obtained by
+averaging over the coefficients the marginal models (for optimal $\lambda$ and 
+number of models) are given by:
 ```{r}
 face_coef <- coef(spar_faces, opt_par = "best")
 str(face_coef)
@@ -1020,23 +1084,41 @@ For a sparser solution we can compute the coefficients using
 face_coef_1se <- coef(spar_faces, opt_par = "1se")
 str(face_coef_1se)
 ```
-The standardized coefficients from each of `max(nummods)` models  (before averaging and before thresholding) can be plotted by setting `plot_type = "coefs"` (see Figure \ref{fig:faces_coefs}). We observe that pixels close to each other have more correlation than pixels further apart.
-```{r , fig.width=15, fig.height=8,out.width="80%", fig.pos="center", fig.cap="Coefficient plot for all variables and all $M=50$ models in the SPAR ensemble for the \\emph{Isomap faces} data set. The coefficients are standardized, before thresholding. \\label{fig:faces_coefs}"}
+The standardized coefficients from each of `max(nummods)` models 
+(before averaging and before thresholding) can be plotted by setting 
+`plot_type = "coefs"` (see resulting plot in Figure\~\ref{fig:faces_coefs}). 
+```{r , eval=FALSE, fig.width=15, fig.height=8,out.width="80%", fig.pos="center", fig.cap=""}
 plot(spar_faces, plot_type = "coefs")
 ```
-The `predict()` function can be applied to the [spar.cv]{.class} object. We will employ the sparser solution chosen by the `opt_par = "1se"` rule:
+```{r echo=TRUE, include=FALSE}
+p <- plot(spar_faces, plot_type = "coefs")
+ggsave(filename = "Figures/faces_plot_coefs.pdf", p,
+       width = 8, height = 5)
+```
+\begin{figure}[t!]
+\centering
+\includegraphics[width=0.8\textwidth]{Figures/faces_plot_coefs.pdf}
+\caption{Coefficient plot for all variables and all $M=50$ models in the SPAR ensemble for the \emph{Isomap faces} data set. The coefficients are standardized, before thresholding.
+\label{fig:faces_coefs}}
+\end{figure}
+
+We observe that pixels close to each other have more correlation than pixels further apart.
+
+The `predict()` function can be applied to the [spar.cv]{.class} object.
+We will employ the sparser solution chosen by the `opt_par = "1se"` rule:
 ```{r }
 ynew <- predict(spar_faces, xnew = xtest, coef = face_coef_1se)
 ```
-In the high-dimensional setting it is interesting to look at the relative mean square prediction error which compares the MSE to the MSE of a model containing only an intercept:
+In the high-dimensional setting it is interesting to look at the relative mean 
+square prediction error which compares the MSE to the MSE of a model containing only an intercept:
 ```{r }
 rMSPEconst <- mean((ytest - mean(y))^2) 
 mean((ynew-ytest)^2)/rMSPEconst
 ```
 Additionally, for this data set, one can visualize the effect of each pixel 
-$\hat\beta_j x^\text{new}_{i,j}$ in predicting the face orientation in a given image e.g., the 11th one in the test set. The contribution of each pixel can be visualized in Figure \ref{fig:faces_predictions}.
-```{r echo=FALSE, fig.width=8, fig.height=8,out.width="50%", fig.pos="center", fig.cap="The effect of each pixel $\\hat\\beta_j x^\\text{new}_{i,j}$ in predicting the face orientation in Figure \ref{fig:facesplot_i1}. \\label{fig:faces_predictions}"}
-i <- 1
+$\hat\beta^\text{1se}_j x^\text{new}_{i,j}$ in predicting the face orientation in a given image e.g., the 11th one in the test set. The contribution of each pixel can be visualized in Figure \ref{fig:faces_predictions}.
+```{r echo=FALSE, fig.width=8, fig.height=8,out.width="50%", fig.pos="center", fig.cap=""}
+i <- 3
 plot4 <- ggplot(data.frame(X = rep(1:64, each = 64),
                            Y = rep(64:1, 64),
                            effect = xtest[i,] * face_coef_1se$beta), 
@@ -1046,8 +1128,14 @@ plot4 <- ggplot(data.frame(X = rep(1:64, each = 64),
   scale_fill_gradient2() +
   ggtitle(bquote(hat(y) == .(round(ynew[i])))) +
   theme(plot.title = element_text(hjust = 0.5)) 
-plot4
+ggsave(filename = "Figures/faces_plot_predictions.pdf", plot4, 
+       width = 10, height = 7)
 ```
+\begin{figure}[t!]
+\centering
+\includegraphics[width=0.5\textwidth]{Figures/faces_plot_predictions.pdf}
+\caption{The effect of each pixel $\hat\beta^\text{1se}_j x^\text{new}_{i,j}$ in predicting the face orientation in Figure \ref{fig:facesplot1}. \label{fig:faces_predictions}}
+\end{figure}
 
 ### Darwin data set
 
@@ -1096,17 +1184,36 @@ spar_darwin <- spar.cv(darwin$x, darwin$y,
 ```
 
 We can look at the average number of active variables for
-a grid of $\nu$  where the number of models is fixed to the value found to perform  best in cross-validation exercise by using the 
-`plot` method for [spar.cv]{.class} (see Figure \ref{fig:darwin_activevars}). We observe again that no thresholding achieves the best measure and translates 
+a grid of $\nu$  where the number of models is fixed to the value found to perform
+best in cross-validation exercise by using the 
+`plot` method for [spar.cv]{.class} (see Figure \ref{fig:darwin_activevars}). 
+We observe again that no thresholding achieves the best measure and translates 
 to almost all variables being active (some variables can be inactive at $\nu=0$ as they may never be screened).
 The 1-standard-error rule would however indicate that more sparsity can be introduced without too much increase in the cross-validation measure.
-```{r , fig.width=10, fig.height=6, fig.pos="center", out.width="80%", fig.cap="Average number of active variables for the grid of thresholding values $\\nu$ and $M=20$ models for the \\emph{Darwin} data set. The red points correspond to the average number of active variables for the model with the lowest cross-validation measures and to the one chosen by the 1-standard-error rule. \\label{fig:darwin_activevars}"}
+```{r eval=FALSE, fig.width=10, fig.height=6, fig.pos="center", out.width="80%", fig.cap=""}
 plot(spar_darwin, plot_type = "Val_numAct")
 ```
-The predictors are ordered by task, where the first 18 covariates represent different features measured for the first task. 
+```{r echo=TRUE, include=FALSE}
+p <- plot(spar_darwin, plot_type = "Val_numAct", digits=3L)
+ggsave(filename = "Figures/darwin_plot_valnumAct.pdf", p,
+       width = 8, height = 5)
+```
+\begin{figure}[t!]
+\centering
+\includegraphics[width=0.8\textwidth]{Figures/darwin_plot_valnumAct.pdf}
+\caption{Average number of active variables for the grid of thresholding values 
+$\nu$ and $M=10$ models for the \emph{Darwin} data set. The red points correspond to the average number of active variables for the model with the lowest cross-validation measures and to the one chosen by the 1-standard-error rule. \label{fig:darwin_activevars}}
+\end{figure}
+The coefficients of the predictors across the maximum number of 
+considered marginal models (in this case $M=50$) can be visualized with `plot`.
+In the dataset, the predictors are ordered by task, where the first 18 covariates represent different features measured for the first task. 
 Given that there is clear grouping in the variables in this example, we can reorder the coefficients for plotting by grouping them by feature, rather than task.
-We can achieve this by using reordering argument `coef_order` in method `plot` with `plot_type = "coefs"` (see Figure \ref{fig:darwin_coefs}).
-```{r echo=FALSE, fig.width=10, fig.height=6, fig.pos="center",out.width="50%", fig.cap="Coefficient plot for all variables and all $M=50$ models in the SPAR ensemble \\emph{Darwin} data set. The coefficients are standardized, before thresholding. \\label{fig:darwin_coefs}"}
+This allows to assess how the different features (e.g., time it takes to 
+complete a certain task) relate to the likelihood of having AD and how stable the
+sign and magnitude of the coefficient is across the models in the ensemble.
+We can achieve this by using reordering argument `coef_order` in method `plot` with `plot_type = "coefs"` (see Figure \ref{fig:darwin_coefs} which can be reproduced with code in the
+supplementary materials).
+```{r echo=FALSE, fig.width=10, fig.height=6, fig.pos="center",out.width="50%", fig.cap=""}
 ntasks <- 25
 nfeat <- 18
 reorder_ind <- c(outer(
@@ -1115,23 +1222,53 @@ reorder_ind <- c(outer(
 feat_names <- sapply(colnames(darwin$x)[seq_len(nfeat)],
                      function(name) substr(name, 1, nchar(name) - 1))
 
-plot(spar_darwin,"coefs",coef_order = reorder_ind) + 
+p <- plot(spar_darwin,"coefs",coef_order = reorder_ind) + 
   geom_vline(xintercept = 0.5 + seq_len(ntasks - 1) * ntasks, 
              alpha = 0.2, linetype = 2) +
   annotate("text",x = (seq_len(nfeat) - 1) * ntasks + 12,
            y = 45,label=feat_names, angle = 90,
            size = 3)
+ggsave(filename = "Figures/darwin_plot_coefs.pdf", p,
+       width = 8, height = 5)
 ```
+\begin{figure}[t!]
+\centering
+\includegraphics[width=0.8\textwidth]{Figures/darwin_plot_coefs.pdf}
+\caption{Coefficient plot for all variables and all considered $M=50$ models in the SPAR ensemble
+\emph{Darwin} data set. The coefficients are standardized, before thresholding. \label{fig:darwin_coefs}}
+\end{figure}
 In general we observe that the different features measures across different tasks have the same impact on the probability of AD (observable by the blocks of blue or red lines).
 
 ## Conclusion {#sec-conclusion}
 
 Package [spar]{.pkg} can be employed for modeling data in a high-dimensional setting, where the number of predictors is much higher than the number of 
-observations. The package provides an implementation of the SPAR algorithm,
+observations. The package provides an implementation an algorithm for  sparse projected and
+average regression (SPAR) proposed in @parzer2024glms
 which combines variable screening and random projection in an ensemble of
-GLMs. The package provides flexible classes for i) specifying the 
-screening coefficient based on which screening should be performed (both in a classical or probabilistic fashion), ii) generating the random projection 
-to be employed in each marginal model.
+GLMs. 
+The package provides flexible classes for i) specifying the 
+coefficient based on which screening should be performed (both in a classical fashion, where the predictors with the highest screening coefficient 
+are selected for subsequent or in a probabilistic fashion, where variables are
+sampled for inclusion with probabilities proportional to their 
+screening coefficient), ii) generating the random projection 
+to be employed in each marginal model. Screening coefficients based on 
+marginal correlation between the predictors and the response, marginal coefficients from a GLM or ridge coefficients are provided in the package.
+Moreover, several random projections are implemented:
+the Gaussian and sparse matrices which are data-agnostic and satisfy the JL 
+lemma and the data-driven projection proposed in @parzer2024sparse for linear regression and extended to GLMs in @parzer2024glms. This data-driven random 
+projection has the advantage of allowing the regression coefficients to be
+recovered after the projection, which is in general not possible with 
+conventional random projections [@Thanei2017RPforHDR].
+Methodologically, the SPAR algorithm with the data-driven random projection in 
+@parzer2024glms has been shown to perform well on a  
+variety of data settings where the sparsity of the coefficient vector is unknown,
+offering competitive predictions and variable ranking in both sparse and dense settings.
+The added flexibility and adaptability of the  [spar]{.pkg} package 
+should encourage practitioners and researchers alike to explore new procedures
+for screening and random projections or combine existing approaches to fit the 
+best fitting one to their data needs.
+
+
 
 ## Computational details {.unnumbered .unlisted}
 

@@ -54,18 +54,23 @@ binomial family.}
 \value{
 object of class \code{"spar.cv"} with elements
 \itemize{
-\item betas p x  \code{max(nummods)} matrix of standardized coefficients from each marginal model
-\item scr_coef p-vector of coefficients used for screening for standardized predictors
-\item inds list of index-vectors corresponding to variables kept after
+\item \code{betas} p x  \code{max(nummods)} sparse matrix of class
+\code{"\link[=dgCMatrix-class]{dgCMatrix}"} containing the
+standardized coefficients from each marginal model
+\item \code{intercepts} used in each marginal model, vector of length \code{max(nummods)}
+\item \code{scr_coef} p-vector of coefficients used for screening for standardized predictors
+\item \code{inds} list of index-vectors corresponding to variables kept after
 screening in each marginal model of length  \code{max(nummods)}
-\item RPMs list of projection matrices used in each marginal model of length \code{max(nummods)}
-\item val_sum \code{data.frame} with CV results (mean and sd validation measure and mean number of active variables) for each element of nus and nummods
-\item nus vector of \eqn{\nu}'s considered for thresholding
-\item nummods vector of numbers of marginal models considered for validation
-\item ycenter empirical mean of initial response vector
-\item yscale empirical standard deviation of initial response vector
-\item xcenter p-vector of empirical means of initial predictor variables
-\item xscale p-vector of empirical standard deviations of initial predictor variables
+\item \code{RPMs} list of projection matrices used in each marginal model of length \code{max(nummods)}
+\item \code{val_sum} \code{data.frame} with CV results (mean and sd validation measure and mean number of active variables) for each element of nus and nummods
+\item \code{nus} vector of \eqn{\nu}'s considered for thresholding
+\item \code{nummods} vector of numbers of marginal models considered for validation
+\item \code{ycenter} empirical mean of initial response vector
+\item \code{yscale} empirical standard deviation of initial response vector
+. \item \code{xcenter} p-vector of empirical means of initial predictor variables
+\item \code{xscale} p-vector of empirical standard deviations of initial predictor variables
+\item \code{rp} an object of class "\code{randomprojection}"
+\item \code{screencoef} an object of class "\code{screeningcoef}"
 }
 }
 \description{

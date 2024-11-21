@@ -284,6 +284,7 @@ spar <- function(x, y,
 
   # SPAR algorithm  ----
   for (i in seq_len(max_num_mod)) {
+    ## Screening step  ----
     if (drawinds) {
       if (nscreen < p) {
         if (attr(screencoef, "type") == "fixed") {
@@ -300,7 +301,7 @@ spar <- function(x, y,
       ind_use <- inds[[i]]
     }
     p_use <- length(ind_use)
-
+    ## RP step  ----
     if (drawRPMs) {
       m <- ms[i]
       if (p_use < m) {
@@ -567,6 +568,7 @@ predict.spar <- function(object,
 #'  the limits of the predictors' plot range; defaults to  \code{c(1, p)}.
 #' @param coef_order optional index vector of length p for "coefs"-plot to give
 #'  the order of the predictors; defaults to  \code{1 : p}.
+#' @param digits number of significant digits to be displayed in the axis; defaults to 2L.
 #' @param ... further arguments passed to or from other methods
 #' @return ggplot2 object
 #' @import ggplot2
@@ -579,7 +581,8 @@ plot.spar <- function(x,
                       xfit = NULL,
                       yfit = NULL,
                       prange = NULL,
-                      coef_order = NULL, ...) {
+                      coef_order = NULL,
+                      digits = 2L, ...) {
   spar_res <- x
   plot_type <- match.arg(plot_type)
   plot_along <- match.arg(plot_along)
@@ -612,7 +615,8 @@ plot.spar <- function(x,
         ggplot2::geom_line() +
         # ggplot2::scale_x_continuous(breaks=seq(1,nrow(spar_res$val_res),1),labels=round(spar_res$val_res$nu,3)) +
         ggplot2::scale_x_continuous(breaks=seq(1,nrow(spar_res$val_res),2),
-                                    labels=formatC(spar_res$val_res$nu[seq(1,nrow(spar_res$val_res),2)], format = "e", digits = 1)) +
+                                    labels=formatC(spar_res$val_res$nu[seq(1,nrow(spar_res$val_res),2)],
+                                                   format = "e", digits = digits)) +
         ggplot2::labs(x=expression(nu),y=spar_res$measure) +
         ggplot2::geom_point(data=data.frame(x=tmp_df$nnu[ind_min],
                                             y=tmp_df$Meas[ind_min]),
@@ -653,7 +657,8 @@ plot.spar <- function(x,
         ggplot2::geom_line() +
         # ggplot2::scale_x_continuous(breaks=seq(1,nrow(spar_res$val_res),1),labels=round(spar_res$val_res$nu,3)) +
         ggplot2::scale_x_continuous(breaks=seq(1,nrow(spar_res$val_res),2),
-                                    labels=formatC(spar_res$val_res$nu[seq(1,nrow(spar_res$val_res),2)], format = "e", digits = 1)) +
+                                    labels=formatC(spar_res$val_res$nu[seq(1,nrow(spar_res$val_res),2)],
+                                                   format = "e", digits = digits)) +
         ggplot2::labs(x=expression(nu)) +
         ggplot2::geom_point(data=data.frame(x=tmp_df$nnu[ind_min],y=tmp_df$numAct[ind_min]),
                             ggplot2::aes(x=.data$x,y=.data$y),col="red")+

@@ -73,6 +73,7 @@ object of class \code{"spar"} with elements
 \item \code{betas} p x \code{max(nummods)} sparse matrix of class
 \code{"\link[=dgCMatrix-class]{dgCMatrix}"} containing the
 standardized coefficients from each marginal model
+\item \code{intercepts} used in each marginal model
 \item \code{scr_coef} p-vector of coefficients used for screening for standardized predictors
 \item \code{inds} list of index-vectors corresponding to variables kept after screening in each marginal model of length max(nummods)
 \item \code{RPMs} list of projection matrices used in each marginal model of length \code{max(nummods)}
@@ -82,6 +83,8 @@ and number of active variables) for each element of \code{nus} and \code{nummods
 if \code{FALSE}, training data were used for validation
 \item \code{nus} vector of \eqn{\nu}'s considered for thresholding
 \item \code{nummods} vector of numbers of marginal models considered for validation
+\item \code{ycenter} empirical mean of initial response vector
+\item \code{yscale} empirical standard deviation of initial response vector
 \item \code{xcenter} p-vector of empirical means of initial predictor variables
 \item \code{xscale} p-vector of empirical standard deviations of initial predictor variables
 \item \code{rp} an object of class "\code{randomprojection}"

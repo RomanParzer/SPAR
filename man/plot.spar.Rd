@@ -14,6 +14,7 @@
   yfit = NULL,
   prange = NULL,
   coef_order = NULL,
+  digits = 2L,
   ...
 )
 }
@@ -39,6 +40,8 @@ the limits of the predictors' plot range; defaults to  \code{c(1, p)}.}
 
 \item{coef_order}{optional index vector of length p for "coefs"-plot to give
 the order of the predictors; defaults to  \code{1 : p}.}
+
+\item{digits}{number of significant digits to be displayed in the axis; defaults to 2L.}
 
 \item{...}{further arguments passed to or from other methods}
 }
