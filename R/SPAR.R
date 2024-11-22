@@ -16,6 +16,7 @@
 #' @param y quantitative response vector of length n.
 #' @param family  a \link[stats]{family}  object used for the marginal generalized linear model,
 #'        default \code{gaussian("identity")}.
+#' @param model function creating a "\code{sparmodel}" object; defaults to \code{spar_glmnet()}.
 #' @param rp function creating a "\code{randomprojection}" object.
 #' @param screencoef function creating a "\code{screeningcoef}" object
 #' @param xval optional matrix of predictor variables observations used for
@@ -105,6 +106,7 @@
 #'
 spar <- function(x, y,
                  family = gaussian("identity"),
+                 model = spar_glmnet(),
                  rp = NULL,
                  screencoef = NULL,
                  xval = NULL, yval = NULL,
@@ -193,22 +195,20 @@ spar <- function(x, y,
 
   # Scaling the y vector ----
   if (family$family=="gaussian" & family$link=="identity") {
-    fit_family <- "gaussian"
     ycenter <- mean(y)
     yscale <- sd(y)
   } else {
-    if (family$family=="binomial" & family$link=="logit") {
-      fit_family <- "binomial"
-    } else if (family$family=="poisson" & family$link=="log") {
-      fit_family <- "poisson"
-    } else {
-      fit_family <- family
-    }
     ycenter <- 0
     yscale  <- 1
   }
   yz <- scale(y,center = ycenter,scale = yscale)
-
+  # Setup model ----
+  if (is.null(attr(model, "family"))) {
+    attr(model, "family") <- family
+  }
+  if (!is.null(model$update_sparmodel)) {
+    model <- model$update_sparmodel(model)
+  }
   # Setup screening ----
   if (is.null(attr(screencoef, "family"))) {
     attr(screencoef, "family") <- family
@@ -301,6 +301,7 @@ spar <- function(x, y,
       ind_use <- inds[[i]]
     }
     p_use <- length(ind_use)
+
     ## RP step  ----
     if (drawRPMs) {
       m <- ms[i]
@@ -319,25 +320,28 @@ spar <- function(x, y,
       }
     }
 
+    ## Marginal model ----
     znew <- Matrix::tcrossprod(z[mar_inds, ind_use], RPM)
 
-    if (family$family=="gaussian" & family$link=="identity") {
-      mar_coef <- tryCatch(solve(crossprod(znew),
-                                 crossprod(znew,yz[mar_inds])),
-                           error=function(error_message) {
-                             return(solve(crossprod(znew)+0.01*diag(ncol(znew)),
-                                          crossprod(znew,yz[mar_inds])))
-                           })
-      intercepts[i] <- 0
-      betas_std[ind_use,i] <- Matrix::crossprod(RPM,mar_coef)
-    } else {
-      glmnet_res <- glmnet(znew,y[mar_inds],
-                           family = fit_family, alpha=0)
-      mar_coef <- coef(glmnet_res, s = min(glmnet_res$lambda))
-      intercepts[i] <- mar_coef[1]
-      betas_std[ind_use,i] <- crossprod(RPM,mar_coef[-1])
-    }
-
+    # if (family$family=="gaussian" & family$link=="identity") {
+    #   mar_coef <- tryCatch(solve(crossprod(znew),
+    #                              crossprod(znew,yz[mar_inds])),
+    #                        error=function(error_message) {
+    #                          return(solve(crossprod(znew)+0.01*diag(ncol(znew)),
+    #                                       crossprod(znew,yz[mar_inds])))
+    #                        })
+    #   intercepts[i] <- 0
+    #   betas_std[ind_use,i] <- Matrix::crossprod(RPM,mar_coef)
+    # } else {
+    #   glmnet_res <- glmnet(znew,y[mar_inds],
+    #                        family = fit_family, alpha=0)
+    #   mar_coef <- coef(glmnet_res, s = min(glmnet_res$lambda))
+    #   intercepts[i] <- mar_coef[1]
+    #   betas_std[ind_use,i] <- crossprod(RPM,mar_coef[-1])
+    # }
+    res <- model$model_fun(yz[mar_inds], znew, object = model)
+    intercepts[i] <- res$intercept
+    betas_std[ind_use,i] <- crossprod(RPM, res$gammas)
 
   }
 

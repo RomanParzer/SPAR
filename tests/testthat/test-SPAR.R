@@ -73,14 +73,16 @@ test_that("Returned coef and preds are correct for fixed screening and projectio
   RP2@p <- 0:nsc
   RP2@x <- (-1)^(1:nsc)
 
-  spar_res <- spar(x,y,nummods=c(2),inds = list(1:(2*nrow(x)),500+1:(2*nrow(x))),RPMs = list(RP1,RP2),family = binomial(logit))
+  spar_res <- spar(x,y,nummods=c(2),
+                   inds = list(1:(2*nrow(x)),500+1:(2*nrow(x))),
+                   RPMs = list(RP1,RP2),family = binomial(logit))
   sparcoef <- coef(spar_res)
   pred <- predict(spar_res,xnew=xnew)
 
-  expect_equal(sparcoef$nu,0.009446247,tolerance = 1e-6)
+  expect_equal(sparcoef$nu,0.009443021 ,tolerance = 1e-6)
   expect_equal(sparcoef$beta[11],0)
-  expect_equal(sparcoef$beta[1],0.05079038,tolerance = 1e-6)
-  expect_equal(pred[1],0.9738668,tolerance = 1e-5)
+  expect_equal(sparcoef$beta[1],0.05076765,tolerance = 1e-6)
+  expect_equal(pred[1],0.9738588,tolerance = 1e-5)
 })
 
 test_that("Columns with zero sd get ceofficient 0", {

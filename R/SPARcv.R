@@ -7,6 +7,7 @@
 #' @param y quantitative response vector of length n.
 #' @param family  a "\code{\link[stats]{family}}" object used for the marginal generalized linear model,
 #'        default \code{gaussian("identity")}.
+#' @param model function creating a "\code{sparmodel}" object; defaults to \code{spar_glmnet()}.
 #' @param rp function creating a "\code{randomprojection}" object.
 #' @param screencoef function creating a "\code{screeningcoef}" object
 #' @param nfolds number of folds to use for cross-validation; should be greater than 2, defaults to 10.
@@ -67,6 +68,7 @@
 #' @export
 spar.cv <- function(x, y,
                     family = gaussian("identity"),
+                    model = spar_glmnet(),
                     rp = NULL,
                     screencoef = NULL,
                     nfolds = 10,
@@ -85,7 +87,7 @@ spar.cv <- function(x, y,
   p <- ncol(x)
   n <- nrow(x)
 
-  SPARres <- spar(x, y, family = family,
+  SPARres <- spar(x, y, family = family, model = model,
                   rp = rp, screencoef = screencoef,
                   nnu = nnu,
                   nummods = nummods,
@@ -96,7 +98,7 @@ spar.cv <- function(x, y,
   for (k in seq_len(nfolds)) {
     fold_ind <- which(folds == k)
     foldSPARres <- spar(x[-fold_ind,SPARres$xscale>0],y[-fold_ind],
-                        family = family,
+                        family = family, model = model,
                         xval = x[fold_ind,SPARres$xscale>0],
                         yval = y[fold_ind],
                         rp = rp, screencoef = screencoef,
