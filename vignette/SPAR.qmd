@@ -312,7 +312,7 @@ implemented in package [spar]{.pkg}.
 
 1.   Choose family with corresponding log-likelihood $\ell(.)$ and link.
 
-2.   Standardize the $(n\times p)$ matrix of predictors $X$ by subtracting the sample column mean and dividing by the sample standard deviation. Additionally, for Gaussian response standardize $y$ to by subtracting the sample mean and dividing by the sample standard deviation.
+2.   Standardize the $(n\times p)$ matrix of predictors $X$ by subtracting the sample column mean and dividing by the sample standard deviation. Additionally, for Gaussian response standardize $y$ by subtracting the sample mean and dividing by the sample standard deviation.
 
 3.   Calculate screening coefficients $\hat\omega$.
 
@@ -1259,14 +1259,17 @@ lemma and the data-driven projection proposed in @parzer2024sparse for linear re
 projection has the advantage of allowing the regression coefficients to be
 recovered after the projection, which is in general not possible with 
 conventional random projections [@Thanei2017RPforHDR].
-Methodologically, the SPAR algorithm with the data-driven random projection in 
-@parzer2024glms has been shown to perform well on a  
-variety of data settings where the sparsity of the coefficient vector is unknown,
-offering competitive predictions and variable ranking in both sparse and dense settings.
-The added flexibility and adaptability of the  [spar]{.pkg} package 
-should encourage practitioners and researchers alike to explore new procedures
-for screening and random projections or combine existing approaches to fit the 
-best fitting one to their data needs.
+Methodologically, the SPAR algorithm particularly when paired with the
+data-driven random projection in @parzer2024glms has been demonstrated
+to perform effectively across different degrees of sparsity of the coefficient
+vector and to offer
+competitive predictions and variable ranking in both sparse and dense settings.
+
+The flexibility and adaptability of the [spar]{.pkg} package make it an 
+attractive choice for practitioners and researchers. It encourages exploration 
+of new methods for variable screening and random projections or the 
+combination of existing approaches to tailor solutions to specific data 
+requirements.
 
 
 
