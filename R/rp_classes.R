@@ -10,9 +10,9 @@
 #' due to the fact that screening can be employed pre-projection.
 #' @param update_data_fun function for updating the randomprojection object with
 #' information from the data. This
-#' function should have with arguments \code{rp}, which is a randomprojection
-#' object and \code{data}, which is a list containing `x` (the matrix of predictors)
-#' and `y` the vector of responses.
+#' function should have arguments \code{rp}, which is a randomprojection
+#' object and `x` (the matrix of predictors)
+#' and `y` (the vector of responses).
 #' @param update_rpm_w_data function for updating the random projection matrix with data.
 #' This can be used for the case where a list of random projection matrices is
 #' provided by argument \code{RPMs}. In this case, the random structure is kept
@@ -31,7 +31,11 @@ constructor_randomprojection <- function(name, generate_fun,
   ## Checks
   stopifnot(names(formals(generate_fun)) %in% c("rp", "m", "included_vector"))
   if (!is.null(update_data_fun)) {
-    stopifnot(names(formals(update_data_fun)) %in% c("rp", "data"))
+    stopifnot("Function update_data_fun should have arguments rp, x, y."=names(formals(update_data_fun)) %in% c("rp", "x", "y"))
+  }
+  if (!is.null(update_rpm_w_data)) {
+    stopifnot(
+      "Function update_rpm_w_data should have arguments rpm,  rp, included_vector."=names(formals(update_rpm_w_data)) %in% c("rpm", "rp", "included_vector"))
   }
   ## Function to return
   function(..., control = list()) {
@@ -187,13 +191,9 @@ generate_cw <- function(rp, m, included_vector) {
   return(RM)
 }
 
-update_data_cw <- function(rp, data) {
-  ## data should be list(x = x, y = y)
-  if (is.null(data$x) || is.null(data$y)) stop("data must be a list of x, y.")
-  z <- data$x
-  yz <- data$y
-  n <- NROW(z)
-  p <- NCOL(z)
+update_data_cw <- function(rp, x, y) {
+  n <- NROW(x)
+  p <- NCOL(x)
   if (is.null(rp$control$family)) {
     rp$control$family <- attr(rp, "family")
   }
@@ -207,18 +207,18 @@ update_data_cw <- function(rp, data) {
 
   if (is.null(rp$control$alpha)) rp$control$alpha <-  0
   if (is.null(rp$control$lambda.min.ratio)) {
-    tmp_sc <- apply(z, 2, function(col) sqrt(var(col)*(n-1)/n))
-    z2 <- scale(z, center = colMeans(z), scale = tmp_sc)
-    ytZ <- crossprod(yz, z2[,tmp_sc > 0])
-    lam_max <- 1000 * max(abs(ytZ))/n *
-      family$mu.eta(family$linkfun(mean(yz)))/
-      family$variance(mean(yz))
+    tmp_sc <- apply(x, 2, function(col) sqrt(var(col)*(n-1)/n))
+    x2 <- scale(x, center = colMeans(x), scale = tmp_sc)
+    ytX <- crossprod(y, x2[,tmp_sc > 0])
+    lam_max <- 1000 * max(abs(ytX))/n *
+      family$mu.eta(family$linkfun(mean(y)))/
+      family$variance(mean(y))
     rp$control$lambda.min.ratio <- min(0.01, 1e-4 / lam_max)
   }
 
   control_glmnet <- rp$control[names(rp$control)  %in% names(formals(glmnet))]
   glmnet_res <- do.call(function(...)
-    glmnet(x=z, y=yz, ...), control_glmnet)
+    glmnet(x=x, y=y, ...), control_glmnet)
 
   lam <- min(glmnet_res$lambda[glmnet_res$dev.ratio <= dev.ratio_cutoff])
   scr_coef <- coef(glmnet_res,s=lam)[-1]

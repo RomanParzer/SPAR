@@ -4,12 +4,14 @@
 \alias{generate_scrcoef_marglik}
 \title{Generate screening coefficient based  on marginal likelihood in univariate GLMs}
 \usage{
-generate_scrcoef_marglik(object, data)
+generate_scrcoef_marglik(y, x, object)
 }
 \arguments{
-\item{object}{"\code{screencoef}" object}
+\item{y}{vector of responses}
 
-\item{data}{list of x and y}
+\item{x}{matrix of predictors}
+
+\item{object}{"\code{screencoef}" object}
 }
 \value{
 vector of screening coefficients of length p

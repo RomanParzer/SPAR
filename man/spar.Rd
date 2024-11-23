@@ -8,6 +8,7 @@ spar(
   x,
   y,
   family = gaussian("identity"),
+  model = NULL,
   rp = NULL,
   screencoef = NULL,
   xval = NULL,
@@ -28,6 +29,8 @@ spar(
 
 \item{family}{a \link[stats]{family}  object used for the marginal generalized linear model,
 default \code{gaussian("identity")}.}
+
+\item{model}{function creating a "\code{sparmodel}" object; defaults to \code{spar_glmnet()}.}
 
 \item{rp}{function creating a "\code{randomprojection}" object.}
 

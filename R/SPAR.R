@@ -97,7 +97,7 @@
 #' plot(spar_res,"coefs",prange=c(1,400))}
 #' @seealso [spar.cv],[coef.spar],[predict.spar],[plot.spar],[print.spar]
 #' @export
-#' @importFrom stats coef fitted gaussian predict rnorm quantile residuals sd var cor glm
+#' @importFrom stats glm.fit coef fitted gaussian predict rnorm quantile residuals sd var cor glm
 #' @importFrom Matrix Matrix solve crossprod tcrossprod rowMeans
 #' @importFrom Rdpack reprompt
 #' @importFrom rlang list2
@@ -106,7 +106,7 @@
 #'
 spar <- function(x, y,
                  family = gaussian("identity"),
-                 model = spar_glmnet(),
+                 model = NULL,
                  rp = NULL,
                  screencoef = NULL,
                  xval = NULL, yval = NULL,
@@ -167,7 +167,13 @@ spar <- function(x, y,
   if (!is.null(args$mslow)) attr(rp, "mslow") <- args$mslow
   if (!is.null(args$msup))  attr(rp, "msup") <- args$msup
 
-
+  if (is.null(model)) {
+    if (family$family == "gaussian" && family$link == "identity") {
+      model <- spar_glm()
+    } else {
+      model <- spar_glmnet()
+    }
+  }
 
   # Setup and Checks ----
   p <- ncol(x)
@@ -203,8 +209,12 @@ spar <- function(x, y,
   }
   yz <- scale(y,center = ycenter,scale = yscale)
   # Setup model ----
-  if (is.null(attr(model, "family"))) {
-    attr(model, "family") <- family
+  if (is.null(model$control$family))  {
+    if (is.null(attr(model, "family"))) {
+      model$control$family <- family
+    } else {
+      model$control$family <- attr(model, "family")
+    }
   }
   if (!is.null(model$update_sparmodel)) {
     model <- model$update_sparmodel(model)
@@ -237,9 +247,9 @@ spar <- function(x, y,
     attr(rp, "family") <- family
   }
   if (attr(rp, "data")) {
-    rp <- rp$update_data_fun(rp,
-                             data = list(x = z[scr_inds,],
-                                         y = yz[scr_inds, ]))
+    rp <- rp$update_data_fun(rp = rp,
+                             x = z[scr_inds,],
+                             y = yz[scr_inds, ])
   }
 
   mslow <- attr(rp, "mslow")
@@ -251,9 +261,9 @@ spar <- function(x, y,
 
   # Perform screening ----
   if (nscreen < p) {
-    scr_coef <- get_screencoef(screencoef,
-                               data = list(x = z[scr_inds,],
-                                           y = yz[scr_inds, ]))
+    scr_coef <- get_screencoef(object = screencoef,
+                               x = z[scr_inds,],
+                               y = yz[scr_inds, ])
     attr(screencoef, "importance") <- scr_coef
 
     inc_probs <- abs(scr_coef)
@@ -316,7 +326,8 @@ spar <- function(x, y,
     } else {
       RPM <- RPMs[[i]]
       if (!is.null(rp$update_rpm_w_data)) {
-        RPM <- rp$update_rpm_w_data(RPM, rp, included_vector = ind_use)
+        RPM <- rp$update_rpm_w_data(rpm = RPM, rp = rp,
+                                    included_vector = ind_use)
       }
     }
 

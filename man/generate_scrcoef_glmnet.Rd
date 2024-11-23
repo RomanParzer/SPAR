@@ -4,12 +4,14 @@
 \alias{generate_scrcoef_glmnet}
 \title{Screening coefficient based  on glmnet coefficients}
 \usage{
-generate_scrcoef_glmnet(object, data)
+generate_scrcoef_glmnet(y, x, object)
 }
 \arguments{
-\item{object}{"\code{screencoef}" object}
+\item{y}{vector of responses}
 
-\item{data}{list of x and y}
+\item{x}{matrix of predictors}
+
+\item{object}{"\code{screencoef}" object}
 }
 \value{
 vector of screening coefficients of length p

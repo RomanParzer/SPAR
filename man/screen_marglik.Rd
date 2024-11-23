@@ -18,7 +18,10 @@ object of class "\code{screencoef}" which is a list with elements:
 \itemize{
 \item \code{name} (character)
 \item \code{control} (list of controls passed as an argument)
-\item \code{generate_fun}  for generating the screening coefficient. This function should have arguments \code{object}, which is a "\code{screencoef}" object, and \code{data}, which is a list of two elements \code{x} and \code{y} containing the matrix of standardized predictors and the vector of (standardized for Gaussian) responses.
+\item \code{generate_fun}  for generating the screening coefficient.
+This function should have arguments  and   \code{y} (vector of (standardized for Gaussian) responses),
+\code{x} (the matrix of standardized predictors) and a "\code{screencoef}" \code{object}.
+
 }
 }
 \description{

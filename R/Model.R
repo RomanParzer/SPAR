@@ -21,6 +21,10 @@
 #' @export
 #'
 spar_glmnet <- function(..., control = list()) {
+  ## Set defaults
+  if (is.null(control$alpha)) {
+    control$alpha <- 0
+  }
   out <-  list(name = "glmnet",
                model_fun = model_glmnet,
                update_sparmodel = update_sparmodel_glmnet,
@@ -39,7 +43,7 @@ ols_fun_corrected <- function(y, z) {
 }
 
 update_sparmodel_glmnet <- function(object) {
-  family <- attr(object, "family")
+  family <- object$control$family
   if (family$family=="gaussian" & family$link=="identity") {
     fit_family <- "gaussian"
   } else {
@@ -58,27 +62,11 @@ update_sparmodel_glmnet <- function(object) {
 model_glmnet <- function(y, z, object) {
   ## y - vector of n responses
   ## z - matrix with n rows
-  if (is.null(object$control$family)) {
-    object$control$family <- attr(object, "family")
-  }
-  if (is.null(object$control$alpha)) {
-    object$control$alpha <- 0
-  }
-  family <- object$control$family
-
-  if (family$family=="gaussian" & family$link=="identity") {
-    gammas <- tryCatch(ols_fun(y, z),
-                         error=function(error_message) {
-                           return(ols_fun_corrected(y, z))
-                         })
-    intercept <- 0
-  } else {
-    glmnet_res <- do.call(function(...) glmnet(x = z, y = y, ...),
-                          object$control)
-    mar_coef <- coef(glmnet_res, s = min(glmnet_res$lambda))
-    intercept <- mar_coef[1]
-    gammas <- mar_coef[-1]
-  }
+  glmnet_res <- do.call(function(...) glmnet(x = z, y = y, ...),
+                        object$control)
+  mar_coef <- coef(glmnet_res, s = min(glmnet_res$lambda))
+  intercept <- mar_coef[1]
+  gammas <- mar_coef[-1]
   list(gammas = gammas, intercept = intercept)
 }
 
@@ -115,13 +103,19 @@ spar_glm <- function(..., control = list()) {
 model_glm <- function(y, z, object) {
   ## y - vector of n responses
   ## z - matrix with n rows
-  if (is.null(object$control$family)) {
-    object$control$family <- attr(object, "family")
+  family <- object$control$family
+  if (family$family=="gaussian" & family$link=="identity") {
+    gammas <- tryCatch(ols_fun(y, z),
+                       error=function(error_message) {
+                         return(ols_fun_corrected(y, z))
+                       })
+    intercept <- 0
+  } else {
+    glm_res <- do.call(function(...) glm.fit(x = z, y = y, ...),
+                       object$control)
+    intercept <- coef(glm_res)[1]
+    gammas <- coef(glm_res)[-1]
   }
-  glm_res <- do.call(function(...) glm.fit(x = z, y = y, ...),
-                          object$control)
-  intercept <- coef(res)[1]
-  gammas <- coef(res)[-1]
   list(gammas = gammas, intercept = intercept)
 }
 

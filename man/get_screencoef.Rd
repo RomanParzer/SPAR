@@ -4,13 +4,14 @@
 \alias{get_screencoef}
 \title{Function which generates the screening coefficients}
 \usage{
-get_screencoef(object, data)
+get_screencoef(y, x, object)
 }
 \arguments{
-\item{object}{an object of class screencoef}
+\item{y}{vector of responses}
 
-\item{data}{list of  \code{x} which is a matrix of covariates and
-\code{y} which is the response vector}
+\item{x}{matrix of predictors}
+
+\item{object}{an object of class screencoef}
 }
 \description{
 Function which generates the screening coefficients

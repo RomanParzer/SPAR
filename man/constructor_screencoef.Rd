@@ -10,9 +10,9 @@ constructor_screencoef(name, generate_fun)
 \item{name}{character}
 
 \item{generate_fun}{function for generating the screening coefficient. This
-function should  with arguments \code{object}, which is a "\code{screencoef}"
-object, and \code{data}, which is a list of x (matrix of predictors used as
-input in \code{spar()}) and y (vector of responses used in  \code{spar()}).}
+function should have arguments  and   \code{y} (vector of responses -- standardized
+for Gaussian family), \code{x} (the matrix of standardized predictors) and a
+"\code{screencoef}" \code{object}.}
 }
 \value{
 a function which in turn creates a function which in turn creates an

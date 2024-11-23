@@ -146,7 +146,7 @@
 \makeatletter
 \makeatother
 \makeatletter
-\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[boxrule=0pt, enhanced, borderline west={3pt}{0pt}{shadecolor}, sharp corners, breakable, interior hidden, frame hidden]}{\end{tcolorbox}}\fi
+\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[interior hidden, boxrule=0pt, enhanced, borderline west={3pt}{0pt}{shadecolor}, sharp corners, frame hidden, breakable]}{\end{tcolorbox}}\fi
 \makeatother
 
 \ifLuaTeX
@@ -183,17 +183,17 @@ Filzmoser} %% comma-separated
 in} %% without formatting
 
 %% an abstract and keywords
-\Abstract{\pkg{spar} is a newly developed package for \proglang{R} that
-builds ensembles of predictive generalized linear models (GLMs) with
-high-dimensional (HD) predictors. It employs an algorithm utilizing
-variable screening and random projection tools to efficiently handle the
-computational challenges associated with large sets of predictors. The
-package is designed with a strong focus on extensibility. Screening and
-random projection techniques are implemented as \proglang{S}3 classes
-with user-friendly constructor functions, enabling users to easily
-integrate and develop new procedures. This design enhances the package's
-adaptability and makes it a powerful tool for a variety of
-high-dimensional applications.}
+\Abstract{Package \pkg{spar} for \proglang{R} builds ensembles of
+predictive generalized linear models with high-dimensional predictors.
+It employs an algorithm utilizing variable screening and random
+projection tools to efficiently handle the computational challenges
+associated with large sets of predictors. The package is designed with a
+strong focus on extensibility. Screening and random projection
+techniques are implemented as \proglang{S}3 classes with user-friendly
+constructor functions, enabling users to easily integrate and develop
+new procedures. This design enhances the package's adaptability and
+makes it a powerful tool for a variety of high-dimensional
+applications.}
 
 %% at least one keyword must be supplied
 \Keywords{random projection, variable screening, ensemble
@@ -244,8 +244,8 @@ Vienna Austria\\
 \section{Introduction}\label{sec-intro}
 
 The \pkg{spar} package for \proglang{R} \citep{RLanguage} offers
-functionality for performing sparse projected averaged regression (SPAR)
-in high-dimensional settings, where the number of predictors \(p\)
+functionality for estimating generalized linear models (GLMs) in
+high-dimensional settings, where the number of predictors \(p\)
 significantly exceeds the number of observations \(n\) i.e., \(p>n\) or
 even \(p\gg n\). To address the challenges of high dimensionality, the
 package integrates variable screening methods with random projection
@@ -256,7 +256,9 @@ procedure. Additional sparsity in the coefficients can be introduced
 through a thresholding parameter, which together with the number of
 models in the ensemble can be chosen using a validation set or via
 cross-validation. The final coefficients are then obtained by averaging
-over the marginal models in the ensemble.
+over the marginal models in the ensemble. This approach gives rise to a
+method which performs sparse projected averaged regression (SPAR) for
+both discrete and continuous data in the GLM framework.
 
 Random projection is a computationally-efficient method which linearly
 maps a set of points in high dimensions into a much lower-dimensional
@@ -316,7 +318,7 @@ Although combining variable screening with random projection effectively
 reduces the predictor set and computational costs, the variability
 introduced by random sampling -- both in projections and screening
 indicators -- can be mitigated by averaging the results from multiple
-iterations. \citep{Thanei2017RPforHDR}. To address these points,
+iterations \citep{Thanei2017RPforHDR}. To address these points,
 \pkg{spar} builds an ensemble of GLMs in the spirit of
 \citet{Dunson2020TargRandProj} and \citet{parzer2024glms} where, in each
 model of the ensemble, i) variables are first screened based on a
@@ -584,7 +586,7 @@ regression (SPAR) implemented in package \pkg{spar}.
 \item
   Standardize the \((n\times p)\) matrix of predictors \(X\) by
   subtracting the sample column mean and dividing by the sample standard
-  deviation. Additionally, for Gaussian response standardize \(y\) to by
+  deviation. Additionally, for Gaussian response standardize \(y\) by
   subtracting the sample mean and dividing by the sample standard
   deviation.
 \item
@@ -669,7 +671,7 @@ arguments}\label{main-functions-and-their-arguments}
 The two main functions for fitting the SPAR algorithm are:
 
 \begin{verbatim}
-spar(x, y, family = gaussian("identity"), rp = NULL, screencoef = NULL,
+spar(x, y, family = gaussian("identity"), model = spar_glmnet(), rp = NULL, screencoef = NULL,
   xval = NULL, yval = NULL, nnu = 20, nus = NULL, nummods = c(20),
   measure = c("deviance", "mse", "mae", "class", "1-auc"),
   inds = NULL, RPMs = NULL, ...)
@@ -679,7 +681,7 @@ which implements the algorithm in Section~\ref{sec-algo} without
 cross-validation and returns an object of class \class{spar}, and
 
 \begin{verbatim}
-spar.cv(x, y, family = gaussian("identity"), rp = NULL, screencoef = NULL,
+spar.cv(x, y, family = gaussian("identity"), model = spar_glmnet(), rp = NULL, screencoef = NULL,
   nfolds = 10, nnu = 20, nus = NULL, nummods = c(20),
   measure = c("deviance", "mse", "mae", "class", "1-auc"), ...)
 \end{verbatim}
@@ -697,6 +699,10 @@ The common arguments of these functions are:
 \item
   \texttt{family} object from \fct{stats::family}; defaults to
   \texttt{gaussian()};
+\item
+  \texttt{model} an object of class \class{sparmodel} which specifies
+  the model employed for each element of the ensemble, defaults to a
+  penalized GLM using \texttt{spar\_glmnet()};
 \item
   \texttt{rp} an object of class \class{randomprojection}, defaults to
   \texttt{rp\_cw(data=TRUE)};
@@ -792,8 +798,8 @@ R> screen_marglik
 #>     class(out) <- c("screencoef")
 #>     return(out)
 #>   }
-#> <bytecode: 0x124de7b28>
-#> <environment: 0x124bfc6c0>
+#> <bytecode: 0x11a0c38e8>
+#> <environment: 0x11a0ba608>
 \end{verbatim}
 
 Arguments related to the screening procedure can be passed through
@@ -1096,6 +1102,44 @@ The element \texttt{update\_data\_fun} and \texttt{update\_rpm\_w\_data}
 are \texttt{NULL} as this conventional random projection is
 data-agnostic.
 
+\subsection{Marginal models}\label{marginal-models}
+
+The package provides a class \class{sparmodel} for the marginal model to
+be fitted for each element of the ensemble. The framework currently
+assumes that the linear predictor is a linear combination of the
+projected variables.
+
+Similar to the objects for random projection and screening coefficients,
+the functions which create these objects have \texttt{...} (to be saved
+as attributes) and \texttt{control} (to be used in the main function for
+building the model).
+
+The two functions implemented are \texttt{spar\_glmnet}, which allows
+regularized GLMs as marginal models (by default using a ridge penalty
+with the minimal penalty provided by function
+\texttt{glmnet::glmnet()}), and \texttt{spar\_glm()} which estimates
+unregularized GLMs using \texttt{stats::glm.fit()}.
+
+An object of class \class{sparmodel} is a list with elements:
+
+\begin{itemize}
+\tightlist
+\item
+  \texttt{name},
+\item
+  \texttt{model\_fun} -- a function which takes \texttt{y} (the vector
+  of standardized responses), \texttt{z} (the matrix of reduced
+  predictors) and a further argument which is the object of class
+  \class{sparmodel} itself.
+\item
+  \texttt{update\_model} -- an optional function which can add further
+  attributes to the \class{sparmodel} object which is called at the
+  beginning of the SPAR algorithm. In the case of
+  \texttt{spar\_glmnet()} this function manipulates the \class{family}
+  object in a way which is convenient for \texttt{glmnet::glmnet()}.
+  \footnote{In the case of families Gaussian, binomial and Poisson with canonical link, the family object is replaced by a string containing the name of the family. This leads to [glmnet]{.pkg} using the specialized algorithm rather than the general algorithm implemented for all [family]{.class} objects.}
+\end{itemize}
+
 \subsection{Methods}\label{methods}
 
 Methods \texttt{print}, \texttt{plot}, \texttt{coef}, \texttt{predict}
@@ -1120,29 +1164,29 @@ R> spar_cv <- spar.cv(example_data$x, example_data$y,
 \begin{verbatim}
 R> spar_res
 #> spar object:
-#> Smallest Validation Measure reached for nummod=30,
-#>               nu=1.19e-02 leading to 1221 / 2000 active predictors.
+#> Smallest Validation Measure reached for nummod=25,
+#>               nu=1.49e-02 leading to 954 / 2000 active predictors.
 #> Summary of those non-zero coefficients:
 #>     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
-#> -0.92656 -0.06539  0.01459  0.02511  0.11577  0.91145
+#> -0.85729 -0.07600  0.02181  0.03087  0.13521  1.10971
 \end{verbatim}
 
 \begin{verbatim}
 R> spar_cv
 #> spar.cv object:
-#> Smallest CV-Meas 2012.0 reached for nummod=30,
-#>               nu=0.00e+00 leading to 1846 / 2000 active predictors.
-#> Summary of those non-zero coefficients:
-#>      Min.   1st Qu.    Median      Mean   3rd Qu.      Max. 
-#> -0.956826 -0.039713  0.004615  0.018395  0.075348  1.006465 
-#> 
-#> Sparsest coefficient within one standard error of best CV-Meas
-#>               reached for nummod=5, nu=5.27e-03 
-#> leading to 1014 / 2000 active
-#>               predictors with CV-Meas 2632.4.
+#> Smallest CV-Meas 2232.3 reached for nummod=30,
+#>               nu=0.00e+00 leading to 1844 / 2000 active predictors.
 #> Summary of those non-zero coefficients:
 #>     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
-#> -1.04220 -0.10541  0.04620  0.03292  0.14074  1.39401
+#> -0.76194 -0.04291  0.00449  0.01826  0.06695  1.10527 
+#> 
+#> Sparsest coefficient within one standard error of best CV-Meas
+#>               reached for nummod=5, nu=9.44e-03 
+#> leading to 829 / 2000 active
+#>               predictors with CV-Meas 2928.9.
+#> Summary of those non-zero coefficients:
+#>     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
+#> -0.88271 -0.13288  0.07046  0.03900  0.16816  1.65839
 \end{verbatim}
 
 \subsubsection{coef}\label{coef}
@@ -1164,10 +1208,10 @@ object, together with further arguments:
 \begin{verbatim}
 R> str(coef(spar_res))
 #> List of 4
-#>  $ intercept: num 2.55
-#>  $ beta     : num [1:2000] 0 0 0.507 0 0 ...
-#>  $ nummod   : num 30
-#>  $ nu       : num 0.0119
+#>  $ intercept: num 2.75
+#>  $ beta     : num [1:2000] 0 0 0.672 0 0 ...
+#>  $ nummod   : num 25
+#>  $ nu       : num 0.0149
 \end{verbatim}
 
 It returns a list with the intercept, vector of \texttt{beta}
@@ -1291,8 +1335,8 @@ For class \class{spar.cv} there is the extra argument
 \texttt{opt\_par\ =\ c("best",\ "1se")} which, for
 \texttt{plot\_type\ =\ "res-vs-fitted"} indicates whether the
 predictions should be based on coefficients using the best \((\nu, M)\)
-combination or on the one which delivers the sparsest \(\beta\) having
-validation measure within one standard deviation from the minimum
+combination or on the combination which delivers the sparsest \(\beta\)
+having validation measure within one standard deviation from the minimum
 
 The \texttt{plot} methods return objects of class ``\texttt{ggplot}''
 \citep{ggplotR}.
@@ -1348,10 +1392,10 @@ R> spar_example <- spar(example_data$x, example_data$y,
 R> spar_example
 #> spar object:
 #> Smallest Validation Measure reached for nummod=20,
-#>               nu=1.75e-03 leading to 396 / 2000 active predictors.
+#>               nu=2.26e-03 leading to 390 / 2000 active predictors.
 #> Summary of those non-zero coefficients:
-#>       Min.    1st Qu.     Median       Mean    3rd Qu.       Max. 
-#> -0.6918230 -0.0928444  0.0009116  0.0943062  0.1777889  2.0089709
+#>     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
+#> -0.30413 -0.02831  0.02255  0.09279  0.15522  1.23514
 \end{verbatim}
 
 \subsection{Random projections}\label{random-projections-1}
@@ -1855,13 +1899,23 @@ to GLMs in \citet{parzer2024glms}. This data-driven random projection
 has the advantage of allowing the regression coefficients to be
 recovered after the projection, which is in general not possible with
 conventional random projections \citep{Thanei2017RPforHDR}.
+Methodologically, the SPAR algorithm particularly when paired with the
+data-driven random projection in \citet{parzer2024glms} has been
+demonstrated to perform effectively across different degrees of sparsity
+of the coefficient vector and to offer competitive predictions and
+variable ranking in both sparse and dense settings.
+
+The flexibility and adaptability of the \pkg{spar} package make it an
+attractive choice for practitioners and researchers. It encourages
+exploration of new methods for variable screening and random projections
+or the combination of existing approaches to tailor solutions to
+specific data requirements.
 
 \section*{Computational details}\label{computational-details}
 
 The results in this paper were obtained using \proglang{R} 4.4.0.
 
-\proglang{R} itself and all packages used are available from the
-Comprehensive \proglang{R} Archive Network (CRAN) at
+\proglang{R} itself and all packages used are available from CRAN at
 \url{https://CRAN.R-project.org/}.
 
 \section*{Acknowledgments}\label{acknowledgments}

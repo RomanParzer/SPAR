@@ -3,9 +3,9 @@
 #' Creates an object class screencoef using arguments passed by user.
 #' @param name character
 #' @param generate_fun function for generating the screening coefficient. This
-#' function should  with arguments \code{object}, which is a "\code{screencoef}"
-#' object, and \code{data}, which is a list of x (matrix of predictors used as
-#' input in \code{spar()}) and y (vector of responses used in  \code{spar()}).
+#'    function should have arguments  and   \code{y} (vector of responses -- standardized
+#'    for Gaussian family), \code{x} (the matrix of standardized predictors) and a
+#'    "\code{screencoef}" \code{object}.
 #' @return a function which in turn creates a function which in turn creates an
 # ' object of class \code{"screencoef"}
 #' @description
@@ -18,11 +18,13 @@
 constructor_screencoef <- function(name, generate_fun) {
   ## Checks
   args_generate_fun <- formals(generate_fun)
-  stopifnot("Function generate_fun should contain two arguments: an object
-            of class \"screencoef\" and 'data'." =
-              length(args_generate_fun) == 2)
-  stopifnot("Function generate_fun should contain argument 'data'." =
-              "data" %in% names(args_generate_fun))
+  stopifnot("Function generate_fun should contain three arguments: x, y and an object
+            of class \"screencoef\"." =
+              length(args_generate_fun) == 3)
+  stopifnot("Function generate_fun should contain argument 'y', the vector of responses." =
+              "y" %in% names(args_generate_fun))
+  stopifnot("Function generate_fun should contain argument 'x', the matrix of predictors." =
+              "x" %in% names(args_generate_fun))
   ## Function to return
   function(..., control = list()) {
     out <- list(name = name,
@@ -43,24 +45,23 @@ constructor_screencoef <- function(name, generate_fun) {
   }
 }
 #' Function which generates the screening coefficients
+#' @param y vector of responses
+#' @param x matrix of predictors
 #' @param object an object of class screencoef
-#' @param data list of  \code{x} which is a matrix of covariates and
-#'    \code{y} which is the response vector
 #' @keywords internal
-get_screencoef <- function(object, data) {
-  coef <- object$generate_fun(object, data = data)
+get_screencoef <- function(y, x, object) {
+  coef <- object$generate_fun(y, x, object)
   coef
 }
 
 #'
 #' Generate screening coefficient based  on marginal likelihood in univariate GLMs
+#' @param y vector of responses
+#' @param x matrix of predictors
 #' @param object  "\code{screencoef}" object
-#' @param data list of x and y
 #' @return vector of screening coefficients of length p
 #' @keywords internal
-generate_scrcoef_marglik <- function(object, data) {
-  y <- data$y
-  x <- data$x
+generate_scrcoef_marglik <- function(y, x, object) {
   if (is.null(object$control$family)) {
     object$control$family <- attr(object, "family")
   }
@@ -82,7 +83,10 @@ generate_scrcoef_marglik <- function(object, data) {
 #' \itemize{
 #'  \item \code{name} (character)
 #'  \item \code{control} (list of controls passed as an argument)
-#'  \item \code{generate_fun}  for generating the screening coefficient. This function should have arguments \code{object}, which is a "\code{screencoef}" object, and \code{data}, which is a list of two elements \code{x} and \code{y} containing the matrix of standardized predictors and the vector of (standardized for Gaussian) responses.
+#'  \item \code{generate_fun}  for generating the screening coefficient.
+#'  This function should have arguments  and   \code{y} (vector of (standardized for Gaussian) responses),
+#'  \code{x} (the matrix of standardized predictors) and a "\code{screencoef}" \code{object}.
+#'
 #' }
 #'
 #' @description
@@ -97,13 +101,13 @@ screen_marglik <- constructor_screencoef(
 
 #'
 #' Generate screening coefficient based  on correlation
+#'
+#' @param y vector of responses
+#' @param x matrix of predictors
 #' @param object  "\code{screencoef}" object
-#' @param data list of x and y
 #' @return vector of screening coefficients of length p
 #' @keywords internal
-generate_scrcoef_cor <- function(object, data) {
-  y <- data$y
-  x <- data$x
+generate_scrcoef_cor <- function(y, x, object) {
   coefs <- apply(x, 2, function(xj) {
     do.call(function(...) cor(y, xj, ...),
             object$control)
@@ -121,7 +125,9 @@ generate_scrcoef_cor <- function(object, data) {
 #' \itemize{
 #'  \item \code{name} (character)
 #'  \item \code{control} (list of controls passed as an argument)
-#'  \item \code{generate_fun}  for generating the screening coefficient. This function should have arguments \code{object}, which is a "\code{screencoef}" object, and \code{data}, which is a list of two elements \code{x} and \code{y} containing the matrix of standardized predictors and the vector of (standardized for Gaussian) responses.
+#'  \item \code{generate_fun}  for generating the screening coefficient.
+#'  This function should have arguments  and   \code{y} (vector of (standardized for Gaussian) responses),
+#'  \code{x} (the matrix of standardized predictors) and a "\code{screencoef}" \code{object}.
 #' }
 #'
 #' @description
@@ -135,15 +141,14 @@ screen_cor <- constructor_screencoef(
 
 #'
 #' Screening coefficient based  on glmnet coefficients
+#' @param y vector of responses
+#' @param x matrix of predictors
 #' @param object  "\code{screencoef}" object
-#' @param data list of x and y
 #' @return vector of screening coefficients of length p
 #' @keywords internal
-generate_scrcoef_glmnet <- function(object, data) {
-  z <- data$x
-  yz <- data$y
-  n <- NROW(z)
-  p <- NCOL(z)
+generate_scrcoef_glmnet <- function(y, x, object) {
+  n <- NROW(x)
+  p <- NCOL(x)
   control_glmnet <-
     object$control[names(object$control)  %in% names(formals(glmnet))]
 
@@ -156,15 +161,15 @@ generate_scrcoef_glmnet <- function(object, data) {
   if (is.null(control_glmnet$alpha)) control_glmnet$alpha <- 0
   # Set lambda.min.ration to close to zero unless otherwise specified
   if (is.null(control_glmnet$lambda.min.ratio)) {
-    tmp_sc <- apply(z, 2, function(col) sqrt(var(col)*(n-1)/n))
-    z2 <- scale(z, center = colMeans(z), scale = tmp_sc)
-    ytZ <- crossprod(yz, z2[,tmp_sc > 0])
-    lam_max <- 1000 * max(abs(ytZ))/n * family$mu.eta(family$linkfun(mean(yz)))/
-      family$variance(mean(yz))
+    tmp_sc <- apply(x, 2, function(col) sqrt(var(col)*(n-1)/n))
+    x2 <- scale(x, center = colMeans(x), scale = tmp_sc)
+    ytX <- crossprod(y, x2[,tmp_sc > 0])
+    lam_max <- 1000 * max(abs(ytX))/n * family$mu.eta(family$linkfun(mean(y)))/
+      family$variance(mean(y))
     control_glmnet$lambda.min.ratio <- min(0.01, 1e-4 / lam_max)
   }
   # Obtain Ridge coefs GLMNET
-  glmnet_res <- do.call(function(...) glmnet(x = z, y = yz, ...),
+  glmnet_res <- do.call(function(...) glmnet(x = x, y = y, ...),
                         control_glmnet)
 
   if (family$family == "gaussian") {
@@ -188,7 +193,9 @@ generate_scrcoef_glmnet <- function(object, data) {
 #' \itemize{
 #'  \item \code{name} (character)
 #'  \item \code{control} (list of controls passed as an argument)
-#'  \item \code{generate_fun}  for generating the screening coefficient. This function should have arguments \code{object}, which is a "\code{screencoef}" object, and \code{data}, which is a list of two elements \code{x} and \code{y} containing the matrix of standardized predictors and the vector of (standardized for Gaussian) responses.
+#'  \item \code{generate_fun}  for generating the screening coefficient.
+#'  This function should have arguments  and   \code{y} (vector of (standardized for Gaussian) responses),
+#'  \code{x} (the matrix of standardized predictors) and a "\code{screencoef}" \code{object}.
 #' }
 #'
 #' @description

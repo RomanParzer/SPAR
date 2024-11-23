@@ -8,6 +8,7 @@ spar.cv(
   x,
   y,
   family = gaussian("identity"),
+  model = spar_glmnet(),
   rp = NULL,
   screencoef = NULL,
   nfolds = 10,
@@ -25,6 +26,8 @@ spar.cv(
 
 \item{family}{a "\code{\link[stats]{family}}" object used for the marginal generalized linear model,
 default \code{gaussian("identity")}.}
+
+\item{model}{function creating a "\code{sparmodel}" object; defaults to \code{spar_glmnet()}.}
 
 \item{rp}{function creating a "\code{randomprojection}" object.}
 
