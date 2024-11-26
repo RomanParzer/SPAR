@@ -103,7 +103,8 @@ spar.cv <- function(x, y,
                         yval = y[fold_ind],
                         rp = rp, screencoef = screencoef,
                         nus = SPARres$nus,
-                        inds = SPARres$inds, RPMs = SPARres$RPMs,
+                        inds = SPARres$inds,
+                        RPMs = SPARres$RPMs,
                         nummods = nummods,
                         measure = measure, ...)
     val_res <- rbind(val_res,foldSPARres$val_res)
@@ -136,7 +137,9 @@ spar.cv <- function(x, y,
 #'
 #' Extract coefficients from spar object
 #' @param object result of spar.cv function of class "spar.cv".
-#' @param opt_par one of c("1se","best"), chooses whether to select the best pair of nus and nummods according to CV-Meas, or the sparsest solution within one sd of that optimal CV-Meas;
+#' @param opt_par one of c("1se","best"), chooses whether to select the best
+#' pair of nus and nummods according to CV-Meas, or the sparsest solution within
+#' one sd of that optimal CV-Meas;
 #' ignored when nummod and nu are given
 #' @param nummod optional number of models used to form coefficients
 #' @param nu optional threshold level used to form coefficients
@@ -320,7 +323,9 @@ plot.spar.cv <- function(x,
   plot_along <- match.arg(plot_along)
   opt_par <- match.arg(opt_par)
   mynummod <- nummod
-  my_val_sum <- dplyr::rename(spar_res$val_sum, Meas="mMeas",numAct="mNumAct")
+  my_val_sum <- dplyr::rename(spar_res$val_sum,
+                              Meas="mMeas",
+                              numAct="mNumAct")
 
   if (plot_type=="res-vs-fitted") {
     if (is.null(xfit) | is.null(yfit)) {
@@ -351,10 +356,12 @@ plot.spar.cv <- function(x,
         ggplot2::geom_line() +
         # ggplot2::scale_x_continuous(breaks=seq(1,nrow(my_val_sum),1),labels=round(my_val_sum$nu,3)) +
         ggplot2::scale_x_continuous(
-          breaks=seq(1,nrow(my_val_sum),2),
-          labels=formatC(my_val_sum$nu[seq(1,nrow(my_val_sum),2)], format = "e", digits = digits)) +
+          breaks=seq(1,nrow(tmp_df)),
+          labels=formatC(tmp_df$nu,
+                         format = "e", digits = digits)) +
         ggplot2::labs(x=expression(nu),y=spar_res$measure) +
-        ggplot2::geom_point(data=data.frame(x=tmp_df$nnu[ind_min],y=tmp_df$Meas[ind_min]),
+        ggplot2::geom_point(data=data.frame(x=tmp_df$nnu[ind_min],
+                                            y=tmp_df$Meas[ind_min]),
                             ggplot2::aes(x=.data$x,y=.data$y),col="red") +
         ggplot2::ggtitle(paste0(tmp_title,mynummod)) +
         ggplot2::geom_ribbon(ggplot2::aes(ymin=.data$Meas-.data$sdMeas,
