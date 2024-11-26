@@ -629,8 +629,8 @@ plot.spar <- function(x,
         ggplot2::geom_point() +
         ggplot2::geom_line() +
         # ggplot2::scale_x_continuous(breaks=seq(1,nrow(spar_res$val_res),1),labels=round(spar_res$val_res$nu,3)) +
-        ggplot2::scale_x_continuous(breaks=seq(1,nrow(spar_res$val_res),2),
-                                    labels=formatC(spar_res$val_res$nu[seq(1,nrow(spar_res$val_res),2)],
+        ggplot2::scale_x_continuous(breaks=seq(1,nrow(tmp_df)),
+                                    labels=formatC(tmp_df$nu,
                                                    format = "e", digits = digits)) +
         ggplot2::labs(x=expression(nu),y=spar_res$measure) +
         ggplot2::geom_point(data=data.frame(x=tmp_df$nnu[ind_min],
