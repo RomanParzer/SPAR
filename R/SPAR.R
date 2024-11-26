@@ -246,7 +246,7 @@ spar <- function(x, y,
   if (is.null(attr(rp, "family"))) {
     attr(rp, "family") <- family
   }
-  if (attr(rp, "data")) {
+  if (!is.null(rp$update_data_fun)) {
     rp <- rp$update_data_fun(rp = rp,
                              x = z[scr_inds,],
                              y = yz[scr_inds, ])

@@ -95,6 +95,14 @@ test_that("Columns with zero sd get ceofficient 0", {
   expect_equal(sparcoef$beta[c(1,11,111)],c(0,0,0))
 })
 
+test_that("Thresholding can be avoided ", {
+  x <- example_data$x
+  y <- example_data$y
+  spar_res <- spar(x, y, nus = 0)
+  sparcoef <- coef(spar_res)
+  expect_equal(sparcoef$beta[c(1,10)],c(0,0))
+})
+
 test_that("Data splitting delivers different results", {
   x <- example_data$x
   y <- example_data$y
@@ -157,7 +165,8 @@ test_that("Get errors for to small length of inds and RPMs lists", {
   RP2@p <- 0:nsc
   RP2@x <- (-1)^(1:nsc)
 
-  expect_error(spar(x,y,nummods=c(3),inds = list(1:(2*nrow(x)),500+1:(2*nrow(x))),RPMs = list(RP1,RP2)))
+  expect_error(spar(x,y,nummods=c(3),inds = list(1:(2*nrow(x)),500+1:(2*nrow(x))),
+                    RPMs = list(RP1,RP2)))
 })
 
 test_that("Get errors for prediction when xnew has wrong dimensions", {
