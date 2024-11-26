@@ -73,7 +73,7 @@ Random projection is a computationally-efficient method which linearly maps a
 set of points in high dimensions into a much lower-dimensional space. 
 Several packages in [R]{.proglang} provide functionality for random
 projections. For instance, package [RandPro]{.pkg}
-[@RandProR; @SIDDHARTH2020100629] allows a Gaussian random matrix, a sparse matrix introduced in @ACHLIOPTAS2003JL,@LiHastie2006VerySparseRP
+[@RandProR; @SIDDHARTH2020100629] allows a Gaussian random matrix, a sparse matrix [@ACHLIOPTAS2003JL;@LiHastie2006VerySparseRP]
 or a matrix generated using the equal probability distribution with the 
 elements $\{-1,1\}$ to be applied to the predictor matrix before employing one of $k$ 
 nearest neighbor, support vector machine or naive Bayes classifier on the 
@@ -103,7 +103,7 @@ random forests). The [R]{.proglang} landscape for variable screening techniques
 is very rich. An overview of some notable packages on the Comprehensive [R]{.proglang} Archive Network (CRAN) includes the following packages. 
 Package [SIS]{.pkg} [@SISR], which implements
 the (iterative) sure independence screening procedure and its extensions, as detailed in @Fan2007SISforUHD, @Fan2010sisglms, @fan2010high. This package also provides functionality for estimating a penalized generalized linear model or a cox regression model for the variables selected by the screening procedure.
-Package [VariableScreening]{.pkg} [@pkg:VariableScreening] offers screening methods for iid data, varying-coefficient models, and longitudinal data and includes techniques such as sure independent ranking and screening (SIRS), which ranks the predictors by their correlation with the rank-ordered response, or distance correlation sure independence screening (DC-SIS), a non-parametric extension of the correlation coefficient.
+Package [VariableScreening]{.pkg} [@pkg:VariableScreening] offers screening methods for independent and identically distributed (iid) data, varying-coefficient models, and longitudinal data and includes techniques such as sure independent ranking and screening (SIRS), which ranks the predictors by their correlation with the rank-ordered response, or distance correlation sure independence screening (DC-SIS), a non-parametric extension of the correlation coefficient.
 Package [MFSIS]{.pkg} [@pkg:MFSIS] provides a collection of model-free screening techniques including SIRS, DC-SIS, the fused Kolmogorov filter [@mai2015fusedkolmogorov] the projection correlation method using knock-off features [@liu2020knockoff], among others. Additional packages implement specific procedures but their review is beyond
 the scope of the current paper.
 <!-- Further packages are available which implement specific procedures: @pkg:tilting, @pkg:cdcsis, @pkg:QCSIS, @pkg:LqGm @pkg:fusionclust.  -->
@@ -111,7 +111,7 @@ the scope of the current paper.
 
 Although combining variable screening with random projection effectively
 reduces the predictor set and computational costs, the variability introduced 
-by random sampling -- both in projections and screening indicators -- can be 
+by random sampling -- both in projections and screening indices -- can be 
 mitigated by averaging the results from multiple iterations [@Thanei2017RPforHDR].
 To address these points, [spar]{.pkg} builds an ensemble of GLMs in the spirit 
 of @Dunson2020TargRandProj and @parzer2024glms where, in each model of the 
@@ -119,7 +119,8 @@ ensemble, i) variables are first screened based on a screening coefficient,
 ii) the selected variables are then projected to a lower dimensional space, 
 iii) a GLM is estimated using the projected predictors.
 Finally, additional sparsity in the coefficients of the original variables
-can be introduced through a thresholding parameter, which together with the number of models in the
+can be introduced through a thresholding parameter, which together with the 
+number of models in the
 ensemble can be chosen using a validation set or via cross-validation.
 The final coefficients are then obtained by averaging over the marginal
 models in the ensemble. 
@@ -131,9 +132,10 @@ well in terms of prediction power on a variety of datasets [see @Dunson2020TargR
 data-driven random projection the algorithm performs superiorly in terms of 
 predictions and variable ranking in settings exhibiting different degrees of sparsity in the coefficients.
 
-A variety of screening coefficients and procedures for 
+A variety of screening coefficients are provided as well as several procedures for 
 generating random
-projection matrices (both data-agnostic and data-driven) are provided. 
+projection matrices. These procedures can be classified into 
+data-agnostic and data-driven, where the former, unlike the latter, does not incorporate information from the data in the construction of the matrices. 
 However, the package is designed with flexibility in mind, providing users 
 with a versatile framework to extend the implemented screening and projection
 techniques with their own custom procedures. This is facilitated by 
@@ -142,7 +144,7 @@ techniques with their own custom procedures. This is facilitated by
 Therefore, users can seamlessly integrate various techniques by either
 writing their own procedures or leveraging the existing [R]{.proglang} packages.
 
-The package provides methods such `plot`, `predict`, `coef`,
+The package provides methods such as `plot`, `predict`, `coef`,
 `print`, which allow users to more easily interact with the model output and analyze the results. The GLM framework,
 especially when combined with random projections which 
 preserve information on the original coefficients 
@@ -162,8 +164,6 @@ On the other hand, package [RaSEn]{.pkg} [@pkg:RaSEn] implements the RaSE algori
 
 <!-- Therefore, no other package in [R]{.proglang} -->
 <!-- provides the functionality of [spar]{.pkg} for GLMs.  -->
-
-
 
 
 <!-- Various choices of base classifiers are implemented, for instance, linear discriminant analysis, quadratic discriminant analysis, $k$-nearest neighbor, logistic or linear regression, decision trees, random forest, support vector machines. The selected percentages of variables can be employed for variable screening. -->
@@ -199,7 +199,7 @@ by selecting the variable set $\mathcal{A}_\gamma = \{j\in [p]:|w_j|>\gamma\}$ d
 where $[p]=\{1,\dots,p\}$. Under certain technical conditions,  this screening coefficient has the *sure screening property*
 $\Prob(\mathcal{A} \subset \mathcal{A}_{\gamma_n})\to 1 \text{ for } n\to \infty$,  where $\mathcal{A}=\{j\in[p]:\beta_j\neq 0\}$ is the set of truly active variables.
 Extensions to SIS include modifications for GLMs [@Fan2010sisglms], where screening
-is performed based on the log-likelihood or the slope coefficient of the GLM containing only $X_j$ as a predictor: $\hat\omega_j=: \text{argmin}_{\beta\in\mathbb{R}}\text{min}_{{\beta_0}\in\mathbb{R}}\sum_{i=1}^n -\ell(\beta_j,\beta_0;y_i,x_{ij})$, where $x_{ij}$ is the $j$-th entry of the vector $x_i$.
+is performed based on the log-likelihood $\ell(.)$ or the slope coefficient of the GLM containing only $X_j$ as a predictor: $\hat\omega_j=: \text{argmin}_{\beta\in\mathbb{R}}\text{min}_{{\beta_0}\in\mathbb{R}}\sum_{i=1}^n -\ell(\beta_j,\beta_0;y_i,x_{ij})$, where $x_{ij}$ is the $j$-th entry of the vector $x_i$.
 
 However, both mentioned approaches face limitations related to 
 the required technical conditions which can rule out practically possible
@@ -224,12 +224,15 @@ particularly useful in ensembles, as they enhance the diversity of predictors ac
 
 [spar]{.pkg} has been designed to allow the incorporation of various random projection techniques, enabling users to tailor the procedure to their specific data needs. Below, we provide background information on random projection techniques and an overview of possible choices for building such random projection matrices.
 
-The random projection method relies on the Johnson-Lindenstrauss (JL) lemma [@JohnsonLindenstrauss1984], which asserts that there exists a linear map $\Phi\in \mathbb{R}^{m \times p}$ that embeds any set of points in $p$-dimensional Euclidean space collected in the rows of $X\in \mathbb{R}^{n\times p}$ into an $m$-dimensional Euclidean space where pairwise distances are approximately preserved within a factor of $1\pm\epsilon)$ for $m\leq m_0=\mathcal O(\epsilon^{-2}\log(n))$.
+The random projection method relies on the Johnson-Lindenstrauss (JL) lemma [@JohnsonLindenstrauss1984], which asserts that for each set of
+points in $p$-dimensional Euclidean space collected in the rows of 
+$X\in \mathbb{R}^{n\times p}$ there exists a linear map 
+$\Phi\in \mathbb{R}^{m \times p}$ such that all pairwise distances are approximately preserved within a factor of $(1\pm\epsilon)$ for $m\geq m_0=\mathcal O(\epsilon^{-2}\log(n))$.
 <!-- and it also gives a lower bound on the goal dimension $m$ in order to preserve the distances between all pairs of points within a factor $1\pm \varepsilon$: -->
 <!-- $m>\frac{24\log n}{3\varepsilon^2-2\varepsilon^3}$ for any $0 <\varepsilon< 1$.  -->
 Computationally, an attractive feature of the method for high-dimensional settings is that the bound does not depend on $p$.
 
-The random map $\Phi$ that satisfies the JL lemma with high probability should be chosen such that it fulfills certain conditions [see @JohnsonLindenstrauss1984] and the literature focuses on constructing such matrices either by sampling them from some "appropriate" distribution, 
+The random map $\Phi$ that satisfies the JL lemma with high probability should be chosen such that it fulfills certain technical conditions and the literature focuses on constructing such matrices either by sampling them from some "appropriate" distribution, 
 by inducing sparsity in the matrix and/or by employing specific fast constructs which lead to efficient matrix-vector multiplications.
 It turns out that the conditions are generally satisfied by
 nearly all sub-Gaussian distributions [@matouvsek2008variants]. A common choice is  the standard normal
@@ -337,7 +340,8 @@ implemented in package [spar]{.pkg}.
 
 1.   Choose family with corresponding log-likelihood $\ell(.)$ and link.
 
-2.   Standardize the $(n\times p)$ matrix of predictors $X$ by subtracting the sample column mean and dividing by the sample standard deviation. Additionally, for Gaussian response standardize $y$ by subtracting the sample mean and dividing by the sample standard deviation.
+2.   Standardize the $(n\times p)$ matrix of predictors $X$ for all
+    families and the vector of responses $y$ for the  Gaussian  family by subtracting the sample column mean and dividing by the sample standard deviation. 
 
 3.   Calculate screening coefficients $\hat\omega$.
 
@@ -385,7 +389,8 @@ with 100 non-zero entries, where the non-zero entries are uniformly sampled from
 
 The two main functions for fitting the SPAR algorithm are:
 ```
-spar(x, y, family = gaussian("identity"), model = spar_glmnet(), rp = NULL, screencoef = NULL,
+spar(x, y, family = gaussian("identity"), model = spar_glmnet(), 
+  rp = NULL, screencoef = NULL,
   xval = NULL, yval = NULL, nnu = 20, nus = NULL, nummods = c(20),
   measure = c("deviance", "mse", "mae", "class", "1-auc"),
   inds = NULL, RPMs = NULL, ...)
@@ -425,7 +430,7 @@ chosen to be equally spaced  on the probability scale .
      `nummods` are considered when choosing the optimal $\nu_\text{best}$ and $M_\text{best}$.
 
 -   `measure` gives the measure based on which the thresholding value $\nu_\text{opt}$ and the number of models `M` should be chosen on the validation set (for `spar()`) or in each of the folds (in `spar.cv()`). 
-Defaults to `"deviance"`, which is available for all families. 
+The default value for `measure` is `"deviance"`, which is available for all families. 
 Other options are mean squared error `"mse"` or mean absolute error `"mae"`
 (between responses and predicted conditional means, for all families), 
 `"class"` (misclassification error) and `"1-auc"` 
@@ -468,11 +473,11 @@ More specifically, the following attributes are relevant for function `spar()`:
   * `nscreen` integer giving the number of variables to be retained after screening; defaults to $2n$.
   
   * `split_data_prop`, double between 0 and 1 which indicates the proportion of the data that should be used for computing the screening coefficient. The remaining data will be used for estimating the marginal models in the SPAR algorithm; defaults to `NULL`. In this case the whole data will be used for estimating the 
-  screening coefficient and the maginal models.
+  screening coefficient and the marginal models.
   
   * `type` character -- either `"prob"` (indicating that probabilistic screening
   should be employed)  or `"fixed"` (indicating that a fixed set of `nscreen`
-  variables should be employed across the ensemble; defaults to `type = "prob"`.
+  variables should be employed across the ensemble); defaults to `type = "prob"`.
   
 The `control` argument, on the other hand, is a list
 containing extra parameters to be passed to the 
@@ -498,7 +503,7 @@ The function
 relies on `glmnet::glmnet()` and, while it assumes by 
 default $\alpha = 0$ and a small penalty, it allows to pass a list of 
 controls through the `control` argument to `glmnet::glmnet()` such 
-as `alpha = 1`. Used as default if `screencoef = NULL` in function call of
+as `alpha = 1`. This screening coefficient is used as a default if `screencoef = NULL` in function call of
 `spar()` or `spar.cv()`.
 
 
@@ -751,10 +756,12 @@ for `plot_type = "Val_Measure"` or `"Val_numAct"`; if `plot_type = "res-vs-fitte
 
 
 * `xfit` -- if `plot_type = "res-vs-fitted"`, it is the matrix of
-predictors used in computing the fitted values. Must provided for this plot, as the `spar` or `spar.cv` objects do not store the original data.
+predictors used in computing the fitted values. This argument must be
+provided for the plot of residuals and fitted values, as the [spar]{.class} or [spar.cv]{.class} objects do not store the original data.
 
 * `yfit` -- if `plot_type = "res-vs-fitted"`, vector of
-responses used in computing the residuals. Must provided for this plot, as the `spar` or `spar.cv` objects do not store the original data.
+responses used in computing the residuals. This argument must be
+provided for the plot of residuals and fitted values, as the [spar]{.class} or [spar.cv]{.class} objects do not store the original data.
 
 * `prange` -- optional vector of length 2 in case `plot_type = "coefs"` which gives the limits of the predictors' plot range; defaults to `c(1, p)`.
 
@@ -896,7 +903,7 @@ generate_cannings <- function(rp, m, included_vector) {
    return(RM)
 }
 ```
-In the cross-validation procedure, we do not generate new matrices for each step to keep computational costs low, so we do not specify a function `update_rpm_w_data`.
+In the cross-validation procedure, we do not generate new matrices for each step to keep computational costs low, so we do not specify a function `update_rpm_w_data()`.
 
 Putting it all together, we get:
 ```{r }

@@ -146,7 +146,7 @@
 \makeatletter
 \makeatother
 \makeatletter
-\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[interior hidden, boxrule=0pt, enhanced, borderline west={3pt}{0pt}{shadecolor}, sharp corners, frame hidden, breakable]}{\end{tcolorbox}}\fi
+\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[sharp corners, borderline west={3pt}{0pt}{shadecolor}, interior hidden, enhanced, boxrule=0pt, frame hidden, breakable]}{\end{tcolorbox}}\fi
 \makeatother
 
 \ifLuaTeX
@@ -248,29 +248,20 @@ functionality for estimating generalized linear models (GLMs) in
 high-dimensional settings, where the number of predictors \(p\)
 significantly exceeds the number of observations \(n\) i.e., \(p>n\) or
 even \(p\gg n\). To address the challenges of high dimensionality, the
-package integrates variable screening methods with random projection
-techniques to effectively reduce the predictor space. These techniques
-are applied repeatedly in order to build an ensemble of GLMs, in order
-to mitigate the variability introduced by the inherent randomness of the
-procedure. Additional sparsity in the coefficients can be introduced
-through a thresholding parameter, which together with the number of
-models in the ensemble can be chosen using a validation set or via
-cross-validation. The final coefficients are then obtained by averaging
-over the marginal models in the ensemble. This approach gives rise to a
-method which performs sparse projected averaged regression (SPAR) for
-both discrete and continuous data in the GLM framework.
+package implements an algorithm which integrates variable screening
+methods with random projection techniques to effectively reduce the
+predictor space.
 
 Random projection is a computationally-efficient method which linearly
 maps a set of points in high dimensions into a much lower-dimensional
 space. Several packages in \proglang{R} provide functionality for random
 projections. For instance, package \pkg{RandPro}
 \citep{RandProR, SIDDHARTH2020100629} allows a Gaussian random matrix, a
-sparse matrix introduced in
-\citet{ACHLIOPTAS2003JL},\citet{LiHastie2006VerySparseRP} or a matrix
-generated using the equal probability distribution with the elements
-\(\{-1,1\}\) to be applied to the predictor matrix before employing one
-of \(k\) nearest neighbor, support vector machine or naive Bayes
-classifier on the projected features. Package \pkg{SPCAvRP}
+sparse matrix \citep{ACHLIOPTAS2003JL, LiHastie2006VerySparseRP} or a
+matrix generated using the equal probability distribution with the
+elements \(\{-1,1\}\) to be applied to the predictor matrix before
+employing one of \(k\) nearest neighbor, support vector machine or naive
+Bayes classifier on the projected features. Package \pkg{SPCAvRP}
 \citep{SPCAvRPR} implements sparse principal component analysis, based
 on the aggregation of eigenvector information from
 ``carefully-selected'' axis-aligned random projections of the sample
@@ -302,44 +293,58 @@ detailed in \citet{Fan2007SISforUHD}, \citet{Fan2010sisglms},
 estimating a penalized generalized linear model or a cox regression
 model for the variables selected by the screening procedure. Package
 \pkg{VariableScreening} \citep{pkg:VariableScreening} offers screening
-methods for iid data, varying-coefficient models, and longitudinal data
-and includes techniques such as sure independent ranking and screening
-(SIRS), which ranks the predictors by their correlation with the
-rank-ordered response, or distance correlation sure independence
-screening (DC-SIS), a non-parametric extension of the correlation
-coefficient. Package \pkg{MFSIS} \citep{pkg:MFSIS} provides a collection
-of model-free screening techniques including SIRS, DC-SIS, the fused
-Kolmogorov filter \citep{mai2015fusedkolmogorov} the projection
-correlation method using knock-off features \citep{liu2020knockoff},
-among others. Additional packages implement specific procedures but
-their review is beyond the scope of the current paper.
+methods for independent and identically distributed (iid) data,
+varying-coefficient models, and longitudinal data and includes
+techniques such as sure independent ranking and screening (SIRS), which
+ranks the predictors by their correlation with the rank-ordered
+response, or distance correlation sure independence screening (DC-SIS),
+a non-parametric extension of the correlation coefficient. Package
+\pkg{MFSIS} \citep{pkg:MFSIS} provides a collection of model-free
+screening techniques including SIRS, DC-SIS, the fused Kolmogorov filter
+\citep{mai2015fusedkolmogorov} the projection correlation method using
+knock-off features \citep{liu2020knockoff}, among others. Additional
+packages implement specific procedures but their review is beyond the
+scope of the current paper.
 
 Although combining variable screening with random projection effectively
 reduces the predictor set and computational costs, the variability
 introduced by random sampling -- both in projections and screening
-indicators -- can be mitigated by averaging the results from multiple
+indices -- can be mitigated by averaging the results from multiple
 iterations \citep{Thanei2017RPforHDR}. To address these points,
 \pkg{spar} builds an ensemble of GLMs in the spirit of
 \citet{Dunson2020TargRandProj} and \citet{parzer2024glms} where, in each
 model of the ensemble, i) variables are first screened based on a
 screening coefficient, ii) the selected variables are then projected to
 a lower dimensional space, iii) a GLM is estimated using the projected
-predictors.
+predictors. Finally, additional sparsity in the coefficients of the
+original variables can be introduced through a thresholding parameter,
+which together with the number of models in the ensemble can be chosen
+using a validation set or via cross-validation. The final coefficients
+are then obtained by averaging over the marginal models in the ensemble.
+This algorithm performs sparse projected averaged regression (SPAR) for
+both discrete and continuous data in the GLM framework in a
+computationally efficient way. Different variants of the algorithm have
+been shown to perform well in terms of prediction power on a variety of
+datasets \citep[see][]{Dunson2020TargRandProj}. In particular,
+\citet{parzer2024glms} show that when paired with a carefully
+constructed data-driven random projection the algorithm performs
+superiorly in terms of predictions and variable ranking in settings
+exhibiting different degrees of sparsity in the coefficients.
 
-The algorithm implemented in \pkg{spar} thus provides a computationally
-efficient procedure for high-dimensional regression which accommodates
-for both discrete and continuous responses. A variety of screening
-coefficients and procedures for generating random projection matrices
-(both data-agnostic and data-driven) are provided. However, the package
-is designed with flexibility in mind, providing users with a versatile
-framework to extend the implemented screening and projection techniques
-with their own custom procedures. This is facilitated by leveraging
-\proglang{R}'s \proglang{S}3 classes, making the process convenient and
-user-friendly. Therefore, users can seamlessly integrate various
-techniques by either writing their own procedures or leveraging the
-existing \proglang{R} packages.
+A variety of screening coefficients are provided as well as several
+procedures for generating random projection matrices. These procedures
+can be classified into data-agnostic and data-driven, where the former,
+unlike the latter, does not incorporate information from the data in the
+construction of the matrices. However, the package is designed with
+flexibility in mind, providing users with a versatile framework to
+extend the implemented screening and projection techniques with their
+own custom procedures. This is facilitated by leveraging \proglang{R}'s
+\proglang{S}3 classes, making the process convenient and user-friendly.
+Therefore, users can seamlessly integrate various techniques by either
+writing their own procedures or leveraging the existing \proglang{R}
+packages.
 
-The package provides methods such \texttt{plot}, \texttt{predict},
+The package provides methods such as \texttt{plot}, \texttt{predict},
 \texttt{coef}, \texttt{print}, which allow users to more easily interact
 with the model output and analyze the results. The GLM framework,
 especially when combined with random projections which preserve
@@ -411,8 +416,8 @@ screening property}
 where \(\mathcal{A}=\{j\in[p]:\beta_j\neq 0\}\) is the set of truly
 active variables. Extensions to SIS include modifications for GLMs
 \citep{Fan2010sisglms}, where screening is performed based on the
-log-likelihood or the slope coefficient of the GLM containing only
-\(X_j\) as a predictor:
+log-likelihood \(\ell(.)\) or the slope coefficient of the GLM
+containing only \(X_j\) as a predictor:
 \(\hat\omega_j=: \text{argmin}_{\beta\in\mathbb{R}}\text{min}_{{\beta_0}\in\mathbb{R}}\sum_{i=1}^n -\ell(\beta_j,\beta_0;y_i,x_{ij})\),
 where \(x_{ij}\) is the \(j\)-th entry of the vector \(x_i\).
 
@@ -469,27 +474,26 @@ random projection techniques and an overview of possible choices for
 building such random projection matrices.
 
 The random projection method relies on the Johnson-Lindenstrauss (JL)
-lemma \citep{JohnsonLindenstrauss1984}, which asserts that there exists
-a linear map \(\Phi\in \mathbb{R}^{m \times p}\) that embeds any set of
-points in \(p\)-dimensional Euclidean space collected in the rows of
-\(X\in \mathbb{R}^{n\times p}\) into an \(m\)-dimensional Euclidean
-space where pairwise distances are approximately preserved within a
-factor of \(1\pm\epsilon)\) for
-\(m\leq m_0=\mathcal O(\epsilon^{-2}\log(n))\). Computationally, an
+lemma \citep{JohnsonLindenstrauss1984}, which asserts that for each set
+of points in \(p\)-dimensional Euclidean space collected in the rows of
+\(X\in \mathbb{R}^{n\times p}\) there exists a linear map
+\(\Phi\in \mathbb{R}^{m \times p}\) such that all pairwise distances are
+approximately preserved within a factor of \((1\pm\epsilon)\) for
+\(m\geq m_0=\mathcal O(\epsilon^{-2}\log(n))\). Computationally, an
 attractive feature of the method for high-dimensional settings is that
 the bound does not depend on \(p\).
 
 The random map \(\Phi\) that satisfies the JL lemma with high
-probability should be chosen such that it fulfills certain conditions
-\citep[see][]{JohnsonLindenstrauss1984} and the literature focuses on
-constructing such matrices either by sampling them from some
-``appropriate'' distribution, by inducing sparsity in the matrix and/or
-by employing specific fast constructs which lead to efficient
-matrix-vector multiplications. It turns out that the conditions are
-generally satisfied by nearly all sub-Gaussian distributions
-\citep{matouvsek2008variants}. A common choice is the standard normal
-distribution \(\Phi_{ij} \overset{iid}{\sim} N(0,1)\)
-\citep{FRANKL1988JLSphere} or a sparser version where
+probability should be chosen such that it fulfills certain technical
+conditions and the literature focuses on constructing such matrices
+either by sampling them from some ``appropriate'' distribution, by
+inducing sparsity in the matrix and/or by employing specific fast
+constructs which lead to efficient matrix-vector multiplications. It
+turns out that the conditions are generally satisfied by nearly all
+sub-Gaussian distributions \citep{matouvsek2008variants}. A common
+choice is the standard normal distribution
+\(\Phi_{ij} \overset{iid}{\sim} N(0,1)\) \citep{FRANKL1988JLSphere} or a
+sparser version where
 \(\Phi_{ij}\overset{iid}{\sim} N(0,1/\sqrt{\psi})\) with probability
 \(\psi\) and \(0\) otherwise \citep{matouvsek2008variants}. Another
 computationally simpler option is the Rademacher distribution where
@@ -584,10 +588,9 @@ regression (SPAR) implemented in package \pkg{spar}.
 \item
   Choose family with corresponding log-likelihood \(\ell(.)\) and link.
 \item
-  Standardize the \((n\times p)\) matrix of predictors \(X\) by
+  Standardize the \((n\times p)\) matrix of predictors \(X\) for all
+  families and the vector of responses \(y\) for the Gaussian family by
   subtracting the sample column mean and dividing by the sample standard
-  deviation. Additionally, for Gaussian response standardize \(y\) by
-  subtracting the sample mean and dividing by the sample standard
   deviation.
 \item
   Calculate screening coefficients \(\hat\omega\).
@@ -671,7 +674,8 @@ arguments}\label{main-functions-and-their-arguments}
 The two main functions for fitting the SPAR algorithm are:
 
 \begin{verbatim}
-spar(x, y, family = gaussian("identity"), model = spar_glmnet(), rp = NULL, screencoef = NULL,
+spar(x, y, family = gaussian("identity"), model = spar_glmnet(), 
+  rp = NULL, screencoef = NULL,
   xval = NULL, yval = NULL, nnu = 20, nus = NULL, nummods = c(20),
   measure = c("deviance", "mse", "mae", "class", "1-auc"),
   inds = NULL, RPMs = NULL, ...)
@@ -728,12 +732,13 @@ The common arguments of these functions are:
   \texttt{measure} gives the measure based on which the thresholding
   value \(\nu_\text{opt}\) and the number of models \texttt{M} should be
   chosen on the validation set (for \texttt{spar()}) or in each of the
-  folds (in \texttt{spar.cv()}). Defaults to \texttt{"deviance"}, which
-  is available for all families. Other options are mean squared error
-  \texttt{"mse"} or mean absolute error \texttt{"mae"} (between
-  responses and predicted conditional means, for all families),
-  \texttt{"class"} (misclassification error) and \texttt{"1-auc"} (one
-  minus area under the ROC curve) both just for binomial family.
+  folds (in \texttt{spar.cv()}). The default value for \texttt{measure}
+  is \texttt{"deviance"}, which is available for all families. Other
+  options are mean squared error \texttt{"mse"} or mean absolute error
+  \texttt{"mae"} (between responses and predicted conditional means, for
+  all families), \texttt{"class"} (misclassification error) and
+  \texttt{"1-auc"} (one minus area under the ROC curve) both just for
+  binomial family.
 \end{itemize}
 
 Furthermore, \texttt{spar()} has the specific arguments:
@@ -798,8 +803,8 @@ R> screen_marglik
 #>     class(out) <- c("screencoef")
 #>     return(out)
 #>   }
-#> <bytecode: 0x11a0c38e8>
-#> <environment: 0x11a0ba608>
+#> <bytecode: 0x11c7acd68>
+#> <environment: 0x11c7a4cf8>
 \end{verbatim}
 
 Arguments related to the screening procedure can be passed through
@@ -817,12 +822,12 @@ function \texttt{spar()}:
   coefficient. The remaining data will be used for estimating the
   marginal models in the SPAR algorithm; defaults to \texttt{NULL}. In
   this case the whole data will be used for estimating the screening
-  coefficient and the maginal models.
+  coefficient and the marginal models.
 \item
   \texttt{type} character -- either \texttt{"prob"} (indicating that
   probabilistic screening should be employed) or \texttt{"fixed"}
   (indicating that a fixed set of \texttt{nscreen} variables should be
-  employed across the ensemble; defaults to \texttt{type\ =\ "prob"}.
+  employed across the ensemble); defaults to \texttt{type\ =\ "prob"}.
 \end{itemize}
 
 The \texttt{control} argument, on the other hand, is a list containing
@@ -852,9 +857,9 @@ The following screening coefficients are implemented in \pkg{spar}:
   \] The function relies on \texttt{glmnet::glmnet()} and, while it
   assumes by default \(\alpha = 0\) and a small penalty, it allows to
   pass a list of controls through the \texttt{control} argument to
-  \texttt{glmnet::glmnet()} such as \texttt{alpha\ =\ 1}. Used as
-  default if \texttt{screencoef\ =\ NULL} in function call of
-  \texttt{spar()} or \texttt{spar.cv()}.
+  \texttt{glmnet::glmnet()} such as \texttt{alpha\ =\ 1}. This screening
+  coefficient is used as a default if \texttt{screencoef\ =\ NULL} in
+  function call of \texttt{spar()} or \texttt{spar.cv()}.
 \end{itemize}
 
 All implemented \texttt{screen\_*} functions return an object of class
@@ -866,10 +871,10 @@ All implemented \texttt{screen\_*} functions return an object of class
 \item
   \texttt{generate\_fun} -- an \proglang{R} function for generating the
   screening coefficient. This function should have as following
-  arguments the \class{screencoef} object itself and \texttt{data},
-  which should be a list of \texttt{x} -- the matrix of standardized
-  predictors -- and \texttt{y} -- the vector of (standardized in the
-  Gaussian case) responses. It returns a vector of screening
+  arguments: \texttt{x} -- the matrix of standardized predictors -- and
+  \texttt{y} -- the vector of (standardized in the Gaussian case)
+  responses, and the argument \texttt{object}, which is a
+  \class{screencoef} object itself. It returns a vector of screening
   coefficients of length \(p\).
 \item
   \texttt{control}, which is the control list passed by the user in
@@ -905,9 +910,7 @@ R> unclass(obj)
 #> [1] "screen_marglik"
 #> 
 #> $generate_fun
-#> function(object, data) {
-#>   y <- data$y
-#>   x <- data$x
+#> function(y, x, object) {
 #>   if (is.null(object$control$family)) {
 #>     object$control$family <- attr(object, "family")
 #>   }
@@ -1016,11 +1019,10 @@ The \texttt{rp\_*} functions return an object of class
   where appropriate attributes are added to the \class{randomprojection}
   object. All relevant quantities are to be used in the
   \texttt{generate\_fun()} function. This function should have arguments
-  \code{rp}, which is a \class{randomprojection} object to be updated
-  and \texttt{data}, which should be a list of \texttt{x} -- the matrix
-  of standardized predictors -- and \texttt{y} -- the vector of
-  (standardized in the Gaussian case) responses. Returns a
-  \texttt{randomprojection} object.
+  \code{rp}, which is a \class{randomprojection} object to be updated,
+  \texttt{x} -- the matrix of standardized predictors -- and \texttt{y}
+  -- the vector of (standardized in the Gaussian case) responses.
+  Returns a \texttt{randomprojection} object.
 \item
   \texttt{update\_rpm\_w\_data} optional function for updating the
   random projection matrices provided in the argument \texttt{RPMs} of
@@ -1164,29 +1166,29 @@ R> spar_cv <- spar.cv(example_data$x, example_data$y,
 \begin{verbatim}
 R> spar_res
 #> spar object:
-#> Smallest Validation Measure reached for nummod=25,
-#>               nu=1.49e-02 leading to 954 / 2000 active predictors.
+#> Smallest Validation Measure reached for nummod=30,
+#>               nu=1.70e-02 leading to 956 / 2000 active predictors.
 #> Summary of those non-zero coefficients:
 #>     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
-#> -0.85729 -0.07600  0.02181  0.03087  0.13521  1.10971
+#> -1.00560 -0.06818  0.02037  0.02954  0.11796  1.15451
 \end{verbatim}
 
 \begin{verbatim}
 R> spar_cv
 #> spar.cv object:
-#> Smallest CV-Meas 2232.3 reached for nummod=30,
-#>               nu=0.00e+00 leading to 1844 / 2000 active predictors.
+#> Smallest CV-Meas 2238.8 reached for nummod=15,
+#>               nu=0.00e+00 leading to 1656 / 2000 active predictors.
 #> Summary of those non-zero coefficients:
 #>     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
-#> -0.76194 -0.04291  0.00449  0.01826  0.06695  1.10527 
+#> -0.66958 -0.04925  0.00890  0.02044  0.07815  0.97138 
 #> 
 #> Sparsest coefficient within one standard error of best CV-Meas
-#>               reached for nummod=5, nu=9.44e-03 
-#> leading to 829 / 2000 active
-#>               predictors with CV-Meas 2928.9.
+#>               reached for nummod=5, nu=8.09e-03 
+#> leading to 882 / 2000 active
+#>               predictors with CV-Meas 2807.5.
 #> Summary of those non-zero coefficients:
 #>     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
-#> -0.88271 -0.13288  0.07046  0.03900  0.16816  1.65839
+#> -0.99769 -0.11765  0.06234  0.03665  0.17299  1.09612
 \end{verbatim}
 
 \subsubsection{coef}\label{coef}
@@ -1208,10 +1210,10 @@ object, together with further arguments:
 \begin{verbatim}
 R> str(coef(spar_res))
 #> List of 4
-#>  $ intercept: num 2.75
-#>  $ beta     : num [1:2000] 0 0 0.672 0 0 ...
-#>  $ nummod   : num 25
-#>  $ nu       : num 0.0149
+#>  $ intercept: num 2.78
+#>  $ beta     : num [1:2000] 0 0 0.418 0 0 ...
+#>  $ nummod   : num 30
+#>  $ nu       : num 0.017
 \end{verbatim}
 
 It returns a list with the intercept, vector of \texttt{beta}
@@ -1313,14 +1315,16 @@ further arguments:
   \texttt{predict} method, as described above.
 \item
   \texttt{xfit} -- if \texttt{plot\_type\ =\ "res-vs-fitted"}, it is the
-  matrix of predictors used in computing the fitted values. Must
-  provided for this plot, as the \texttt{spar} or \texttt{spar.cv}
-  objects do not store the original data.
+  matrix of predictors used in computing the fitted values. This
+  argument must be provided for the plot of residuals and fitted values,
+  as the \class{spar} or \class{spar.cv} objects do not store the
+  original data.
 \item
   \texttt{yfit} -- if \texttt{plot\_type\ =\ "res-vs-fitted"}, vector of
-  responses used in computing the residuals. Must provided for this
-  plot, as the \texttt{spar} or \texttt{spar.cv} objects do not store
-  the original data.
+  responses used in computing the residuals. This argument must be
+  provided for the plot of residuals and fitted values, as the
+  \class{spar} or \class{spar.cv} objects do not store the original
+  data.
 \item
   \texttt{prange} -- optional vector of length 2 in case
   \texttt{plot\_type\ =\ "coefs"} which gives the limits of the
@@ -1354,9 +1358,9 @@ coefficients using the \texttt{screenIID()} function in
 \pkg{VariableScreening}.
 
 \begin{verbatim}
-R> generate_scr_sirs <- function(object, data) {
+R> generate_scr_sirs <- function(y, x, object) {
 +  res_screen <- do.call(function(...) 
-+    VariableScreening::screenIID(data$x, data$y, ...), 
++    VariableScreening::screenIID(x, y, ...), 
 +    object$control)
 +  coefs <- res_screen$measurement
 +  coefs
@@ -1392,10 +1396,10 @@ R> spar_example <- spar(example_data$x, example_data$y,
 R> spar_example
 #> spar object:
 #> Smallest Validation Measure reached for nummod=20,
-#>               nu=2.26e-03 leading to 390 / 2000 active predictors.
+#>               nu=1.75e-03 leading to 396 / 2000 active predictors.
 #> Summary of those non-zero coefficients:
-#>     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
-#> -0.30413 -0.02831  0.02255  0.09279  0.15522  1.23514
+#>       Min.    1st Qu.     Median       Mean    3rd Qu.       Max. 
+#> -0.6918230 -0.0928444  0.0009116  0.0943062  0.1777889  2.0089709
 \end{verbatim}
 
 \subsection{Random projections}\label{random-projections-1}
@@ -1420,8 +1424,8 @@ We can implement such a random projection in \pkg{spar} by the following
 building block:
 
 \begin{verbatim}
-R> update_data_cannings <- function(rp, data) {
-+  attr(rp, "data") <- data
+R> update_data_cannings <- function(rp, x, y) {
++  attr(rp, "data") <- list(x, y)
 +  rp
 +}
 \end{verbatim}
