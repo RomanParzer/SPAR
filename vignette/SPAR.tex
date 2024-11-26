@@ -4,7 +4,8 @@
 \PassOptionsToPackage{dvipsnames,svgnames,x11names}{xcolor}
 %
 \documentclass[
-  article]{jss}
+  article,
+  nojss]{jss}
 
 \usepackage{amsmath,amssymb}
 \usepackage{iftex}
@@ -146,7 +147,7 @@
 \makeatletter
 \makeatother
 \makeatletter
-\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[sharp corners, breakable, frame hidden, borderline west={3pt}{0pt}{shadecolor}, boxrule=0pt, interior hidden, enhanced]}{\end{tcolorbox}}\fi
+\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[sharp corners, boxrule=0pt, enhanced, interior hidden, borderline west={3pt}{0pt}{shadecolor}, breakable, frame hidden]}{\end{tcolorbox}}\fi
 \makeatother
 
 \ifLuaTeX
@@ -813,8 +814,8 @@ R> screen_marglik
 #>     class(out) <- c("screencoef")
 #>     return(out)
 #>   }
-#> <bytecode: 0x138f4a0a8>
-#> <environment: 0x138f40428>
+#> <bytecode: 0x11853e2e8>
+#> <environment: 0x11852ecc0>
 \end{verbatim}
 
 Arguments related to the screening procedure can be passed through
@@ -1171,7 +1172,7 @@ which have at least a nonzero coefficient across the marginal models)
 and a five-point summary of the non-zero coefficients.
 
 \begin{verbatim}
-R> set.seed(123)
+R> set.seed(12)
 R> spar_res <- spar(example_data$x, example_data$y,
 +                 xval = example_data$xtest,
 +                 yval = example_data$ytest,
@@ -1183,11 +1184,11 @@ R> spar_cv <- spar.cv(example_data$x, example_data$y,
 \begin{verbatim}
 R> spar_res
 #> spar object:
-#> Smallest Validation Measure reached for nummod=25,
-#>               nu=1.37e-02 leading to 1073 / 2000 active predictors.
+#> Smallest Validation Measure reached for nummod=30,
+#>               nu=1.72e-02 leading to 1002 / 2000 active predictors.
 #> Summary of those non-zero coefficients:
 #>     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
-#> -0.95409 -0.07506  0.02183  0.02765  0.12467  1.14085
+#> -1.19688 -0.07144  0.02134  0.02814  0.12008  0.99405
 \end{verbatim}
 
 For \class{spar.cv} it also provides the same information for the
@@ -1196,19 +1197,19 @@ For \class{spar.cv} it also provides the same information for the
 \begin{verbatim}
 R> spar_cv
 #> spar.cv object:
-#> Smallest CV-Meas 2216.8 reached for nummod=30,
-#>               nu=0.00e+00 leading to 1846 / 2000 active predictors.
+#> Smallest CV-Meas 2230.9 reached for nummod=30,
+#>               nu=0.00e+00 leading to 1825 / 2000 active predictors.
 #> Summary of those non-zero coefficients:
 #>      Min.   1st Qu.    Median      Mean   3rd Qu.      Max. 
-#> -0.765845 -0.039688  0.004206  0.018347  0.070165  0.988682 
+#> -0.825363 -0.041159  0.004422  0.018693  0.072914  0.953501 
 #> 
 #> Sparsest coefficient within one standard error of best CV-Meas
-#>               reached for nummod=5, nu=8.35e-03 
-#> leading to 859 / 2000 active
-#>               predictors with CV-Meas 2903.4.
+#>               reached for nummod=5, nu=5.40e-03 
+#> leading to 1003 / 2000 active
+#>               predictors with CV-Meas 2748.4.
 #> Summary of those non-zero coefficients:
 #>     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
-#> -0.93949 -0.12273  0.06197  0.03790  0.18753  1.04567
+#> -1.01802 -0.10460  0.04862  0.03436  0.17091  1.32992
 \end{verbatim}
 
 \subsubsection{coef}\label{coef}
@@ -1230,10 +1231,10 @@ object, together with further arguments:
 \begin{verbatim}
 R> str(coef(spar_res))
 #> List of 4
-#>  $ intercept: num 2.8
-#>  $ beta     : num [1:2000] 0.0308 0 0.6535 0 0 ...
-#>  $ nummod   : num 25
-#>  $ nu       : num 0.0137
+#>  $ intercept: num 2.86
+#>  $ beta     : num [1:2000] 0 0 0.746 0 0 ...
+#>  $ nummod   : num 30
+#>  $ nu       : num 0.0172
 \end{verbatim}
 
 It returns a list with the intercept, vector of \texttt{beta}
@@ -1533,19 +1534,19 @@ R> ystar <- (example_data$y > 0) + 0
 R> ystarval <- (example_data$ytest > 0) + 0
 \end{verbatim}
 
-We use \(100\) models (which is in line to recommendations for \(B_1\)
-in \citet{cannings2017random}), and no screening procedure. If no
-screening is desired, \texttt{nscreen} can be set to \texttt{p} in the
-\texttt{screen\_*} function. Moreover, we do not perform any
-thresholding.
+We use \(50\) models (which is in line to recommendations for \(B_1\) in
+\citet{cannings2017random}), and no screening procedure. Note that, if
+screening should not be performed, \texttt{nscreen} can be set to
+\texttt{p} in the \texttt{screen\_*} function. Moreover, we do not
+perform any thresholding.
 
 \begin{verbatim}
-R> set.seed(123)   
+R>   set.seed(12345) 
 R> spar_example_1 <- spar(x = example_data$x, y = ystar,
 +    family = binomial(),
 +    screencoef = screen_marglik(nscreen = ncol(example_data$x)),
 +    rp = rp_cannings(control = list(B2 = 50, lambda.min.ratio = 0.01)),
-+    nus = 0, nummods = 100, 
++    nus = 0, nummods = 50, 
 +    xval = example_data$xtest, yval = ystarval,
 +    measure = "class"
 +  )
@@ -1554,12 +1555,12 @@ R> spar_example_1 <- spar(x = example_data$x, y = ystar,
 Using the data-driven \texttt{rp\_cw()}:
 
 \begin{verbatim}
-R> set.seed(123)   
+R>   set.seed(12345)  
 R> spar_example_2 <- spar(x = example_data$x, y = ystar,
 +    family = binomial(),
 +    screencoef = screen_marglik(nscreen = ncol(example_data$x)),
 +    rp = rp_cw(data = TRUE),
-+    nus = 0, nummods = 100, 
++    nus = 0, nummods = 50, 
 +    xval = example_data$xtest, yval = ystarval,
 +    measure = "class"
 +  )
@@ -1572,10 +1573,10 @@ achieved on the validation set:
 \begin{verbatim}
 R> spar_example_1$val_res[which.min(spar_example_1$val_res$Meas),]
 #>   nnu nu nummod numAct Meas
-#> 1   1  0    100   2000 0.15
+#> 1   1  0     50   2000 0.17
 R> spar_example_2$val_res[which.min(spar_example_2$val_res$Meas),]
 #>   nnu nu nummod numAct Meas
-#> 1   1  0    100   2000 0.18
+#> 1   1  0     50   2000 0.17
 \end{verbatim}
 
 \section{Illustrations}\label{sec-illustrations}

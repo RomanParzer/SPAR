@@ -7,10 +7,8 @@ format:
   jss-pdf:
     keep-tex: true
     journal:
-      type: bookreview
-      cite-shortnames: true
-      suppress: [title]
-      include-jss-default: false
+      type: article
+      include-jss-layout: false
 knitr:
   opts_chunk: 
     collapse: true
@@ -702,7 +700,7 @@ $M_\text{best}$, the number of active predictors
 (i.e., predictors which have at least a nonzero coefficient across the marginal models)
 and a five-point summary of the non-zero coefficients.
 ```{r first_example}
-set.seed(123)
+set.seed(12)
 spar_res <- spar(example_data$x, example_data$y,
                  xval = example_data$xtest,
                  yval = example_data$ytest,
@@ -953,11 +951,12 @@ We can now estimate SPAR for a binomial model, where we transform the response t
 ystar <- (example_data$y > 0) + 0
 ystarval <- (example_data$ytest > 0) + 0
 ```
-
-We use $100$ models (which is in line to recommendations for
+We use $50$ models (which is in line to recommendations for
 $B_1$ in @cannings2017random), and no screening procedure. 
-If no screening is desired, `nscreen` can be set to `p`
-in the `screen_*` function. Moreover, we do not perform any thresholding.
+Note that, if screening should not be performed, 
+`nscreen` can be set to `p`
+in the `screen_*` function. 
+Moreover, we do not perform any thresholding.
 ```{r echo=FALSE}
 file <- "cannings_example.rda"
 if (file.exists(file)) {
@@ -989,7 +988,7 @@ if (file.exists(file)) {
 }
 ```
 ```{r eval=FALSE}
-set.seed(123)   
+  set.seed(12345) 
 spar_example_1 <- spar(x = example_data$x, y = ystar,
     family = binomial(),
     screencoef = screen_marglik(nscreen = ncol(example_data$x)),
@@ -1001,7 +1000,7 @@ spar_example_1 <- spar(x = example_data$x, y = ystar,
 ```
 Using the data-driven `rp_cw()`:
 ```{r eval=FALSE}
-set.seed(123)   
+  set.seed(12345)  
 spar_example_2 <- spar(x = example_data$x, y = ystar,
     family = binomial(),
     screencoef = screen_marglik(nscreen = ncol(example_data$x)),
