@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/articles/special-files.html
 
 library(testthat)
-library(SPAR)
+library(spar)
 
-test_check("SPAR")
+test_check("spar")

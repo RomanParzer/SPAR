@@ -8,15 +8,15 @@ spar.cv(
   x,
   y,
   family = gaussian("identity"),
+  model = spar_glmnet(),
+  rp = NULL,
+  screencoef = NULL,
   nfolds = 10,
   nnu = 20,
   nus = NULL,
   nummods = c(20),
-  type.measure = c("deviance", "mse", "mae", "class", "1-auc"),
-  type.rpm = c("cwdatadriven", "cw", "gaussian", "sparse"),
-  type.screening = c("ridge", "marglik", "corr"),
-  control = list(rpm = list(mslow = ceiling(log(ncol(x))), msup = ceiling(nrow(x)/2)),
-    scr = list(nscreen = 2 * nrow(x), split_data = FALSE))
+  measure = c("deviance", "mse", "mae", "class", "1-auc"),
+  ...
 )
 }
 \arguments{
@@ -24,13 +24,19 @@ spar.cv(
 
 \item{y}{quantitative response vector of length n.}
 
-\item{family}{a \code{\link[stats]{"family"}} object used for the marginal generalized linear model,
+\item{family}{a "\code{\link[stats]{family}}" object used for the marginal generalized linear model,
 default \code{gaussian("identity")}.}
+
+\item{model}{function creating a "\code{sparmodel}" object; defaults to \code{spar_glmnet()}.}
+
+\item{rp}{function creating a "\code{randomprojection}" object.}
+
+\item{screencoef}{function creating a "\code{screeningcoef}" object}
 
 \item{nfolds}{number of folds to use for cross-validation; should be greater than 2, defaults to 10.}
 
 \item{nnu}{number of different threshold values \eqn{\nu} to consider for thresholding;
-ignored when nus are given; defaults to 20.}
+ignored when \code{nus} is provided; defaults to 20.}
 
 \item{nus}{optional vector of \eqn{\nu}'s to consider for thresholding;
 if not provided, \code{nnu} values ranging from 0 to the maximum absolute
@@ -39,51 +45,35 @@ marginal coefficient are used.}
 \item{nummods}{vector of numbers of marginal models to consider for
 validation; defaults to \code{c(20)}.}
 
-\item{type.measure}{loss to use for validation; defaults to \code{"deviance"}
+\item{measure}{loss to use for validation; defaults to \code{"deviance"}
 available for all families. Other options are \code{"mse"} or \code{"mae"}
 (between responses and predicted means, for all families),
 \code{"class"} (misclassification error) and
 \code{"1-auc"} (one minus area under the ROC curve) both just for
 binomial family.}
 
-\item{type.rpm}{type of random projection matrix to be employed;
-one of \code{"cwdatadriven"},
-\code{"cw"} \insertCite{Clarkson2013LowRankApprox}{SPAR},
-\code{"gaussian"}, \code{"sparse"} \insertCite{ACHLIOPTAS2003JL}{SPAR};
-defaults to \code{"cwdatadriven"}.}
-
-\item{type.screening}{type of screening coefficients; one of \code{"ridge"},
-\code{"marglik"}, \code{"corr"}; defaults to \code{"ridge"} which is
-based on the ridge coefficients where the penalty converges to zero.}
-
-\item{control}{a list two elements: \code{rpm} and \code{scr}.
-Element \code{rpm} contains a list of optional arguments to be passed to
-functions creating the random projection matrices. Here \code{mslow} is a
-lower bound for uniform random goal dimensions in
-marginal models; defaults to \eqn{\log(p)};
-\code{msup} is upper bound for uniform random goal dimensions in marginal models;
-defaults to n/2.
-Element \code{scr} contains a list of optional arguments to be passed to
-functions performing screening: \code{nscreen} is the number of variables to keep after screening 2n;
-\code{split_data} logical to indicate whether data for calculation of screening coefficient
-and fitting of mar mods should be split 1/4 to 3/4 to avoid overfitting;
-default \code{FALSE}.}
+\item{...}{further arguments mainly to ensure back-compatibility}
 }
 \value{
 object of class \code{"spar.cv"} with elements
 \itemize{
-\item betas p x  \code{max(nummods)} matrix of standardized coefficients from each marginal model
-\item scr_coef p-vector of coefficients used for screening for standardized predictors
-\item inds list of index-vectors corresponding to variables kept after
+\item \code{betas} p x  \code{max(nummods)} sparse matrix of class
+\code{"\link[=dgCMatrix-class]{dgCMatrix}"} containing the
+standardized coefficients from each marginal model
+\item \code{intercepts} used in each marginal model, vector of length \code{max(nummods)}
+\item \code{scr_coef} p-vector of coefficients used for screening for standardized predictors
+\item \code{inds} list of index-vectors corresponding to variables kept after
 screening in each marginal model of length  \code{max(nummods)}
-\item RPMs list of projection matrices used in each marginal model of length \code{max(nummods)}
-\item val_sum \code{data.frame} with CV results (mean and sd validation measure and mean number of active variables) for each element of nus and nummods
-\item nus vector of \eqn{\nu}'s considered for thresholding
-\item nummods vector of numbers of marginal models considered for validation
-\item ycenter empirical mean of initial response vector
-\item yscale empirical standard deviation of initial response vector
-\item xcenter p-vector of empirical means of initial predictor variables
-\item xscale p-vector of empirical standard deviations of initial predictor variables
+\item \code{RPMs} list of projection matrices used in each marginal model of length \code{max(nummods)}
+\item \code{val_sum} \code{data.frame} with CV results (mean and sd validation measure and mean number of active variables) for each element of nus and nummods
+\item \code{nus} vector of \eqn{\nu}'s considered for thresholding
+\item \code{nummods} vector of numbers of marginal models considered for validation
+\item \code{ycenter} empirical mean of initial response vector
+\item \code{yscale} empirical standard deviation of initial response vector
+. \item \code{xcenter} p-vector of empirical means of initial predictor variables
+\item \code{xscale} p-vector of empirical standard deviations of initial predictor variables
+\item \code{rp} an object of class "\code{randomprojection}"
+\item \code{screencoef} an object of class "\code{screeningcoef}"
 }
 }
 \description{

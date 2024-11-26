@@ -8,18 +8,18 @@ spar(
   x,
   y,
   family = gaussian("identity"),
+  model = NULL,
+  rp = NULL,
+  screencoef = NULL,
   xval = NULL,
   yval = NULL,
   nnu = 20,
   nus = NULL,
   nummods = c(20),
-  type.measure = c("deviance", "mse", "mae", "class", "1-auc"),
-  type.rpm = c("cwdatadriven", "cw", "gaussian", "sparse"),
-  type.screening = c("ridge", "marglik", "corr"),
+  measure = c("deviance", "mse", "mae", "class", "1-auc"),
   inds = NULL,
   RPMs = NULL,
-  control = list(rpm = list(mslow = ceiling(log(ncol(x))), msup = ceiling(nrow(x)/2)),
-    scr = list(nscreen = 2 * nrow(x), split_data = FALSE))
+  ...
 )
 }
 \arguments{
@@ -27,8 +27,14 @@ spar(
 
 \item{y}{quantitative response vector of length n.}
 
-\item{family}{a \code{\link[stats]{"family"}} object used for the marginal generalized linear model,
+\item{family}{a \link[stats]{family}  object used for the marginal generalized linear model,
 default \code{gaussian("identity")}.}
+
+\item{model}{function creating a "\code{sparmodel}" object; defaults to \code{spar_glmnet()}.}
+
+\item{rp}{function creating a "\code{randomprojection}" object.}
+
+\item{screencoef}{function creating a "\code{screeningcoef}" object}
 
 \item{xval}{optional matrix of predictor variables observations used for
 validation of threshold nu and number of models; \code{x} is used
@@ -47,22 +53,12 @@ marginal coefficient are used.}
 \item{nummods}{vector of numbers of marginal models to consider for
 validation; defaults to \code{c(20)}.}
 
-\item{type.measure}{loss to use for validation; defaults to \code{"deviance"}
+\item{measure}{loss to use for validation; defaults to \code{"deviance"}
 available for all families. Other options are \code{"mse"} or \code{"mae"}
 (between responses and predicted means, for all families),
 \code{"class"} (misclassification error) and
 \code{"1-auc"} (one minus area under the ROC curve) both just for
 binomial family.}
-
-\item{type.rpm}{type of random projection matrix to be employed;
-one of \code{"cwdatadriven"},
-\code{"cw"} \insertCite{Clarkson2013LowRankApprox}{SPAR},
-\code{"gaussian"}, \code{"sparse"} \insertCite{ACHLIOPTAS2003JL}{SPAR};
-defaults to \code{"cwdatadriven"}.}
-
-\item{type.screening}{type of screening coefficients; one of \code{"ridge"},
-\code{"marglik"}, \code{"corr"}; defaults to \code{"ridge"} which is
-based on the ridge coefficients where the penalty converges to zero.}
 
 \item{inds}{optional list of index-vectors corresponding to variables kept
 after screening in each marginal model of length \code{max(nummods)};
@@ -72,40 +68,35 @@ dimensions need to fit those of RPMs.}
 marginal model of length \code{max(nummods)}, diagonal elements will be
 overwritten with a coefficient only depending on the given \code{x} and \code{y}.}
 
-\item{control}{a list two elements: \code{rpm} and \code{scr}.
-Element \code{rpm} contains a list of optional arguments to be passed to
-functions creating the random projection matrices. Here \code{mslow} is a
-lower bound for uniform random goal dimensions in
-marginal models; defaults to \eqn{\log(p)};
-\code{msup} is upper bound for uniform random goal dimensions in marginal models;
-defaults to n/2.
-Element \code{scr} contains a list of optional arguments to be passed to
-functions performing screening: \code{nscreen} is the number of variables to keep after screening 2n;
-\code{split_data} logical to indicate whether data for calculation of screening coefficient
-and fitting of mar mods should be split 1/4 to 3/4 to avoid overfitting;
-default \code{FALSE}.}
+\item{...}{further arguments mainly to ensure back-compatibility}
 }
 \value{
 object of class \code{"spar"} with elements
 \itemize{
-\item betas p x \code{max(nummods)} matrix of standardized coefficients from each
-marginal model
-\item scr_coef p-vector of coefficients used for screening for standardized predictors
-\item inds list of index-vectors corresponding to variables kept after screening in each marginal model of length max(nummods)
-\item RPMs list of projection matrices used in each marginal model of length \code{max(nummods)}
-\item val_res \code{data.frame} with validation results (validation measure
+\item \code{betas} p x \code{max(nummods)} sparse matrix of class
+\code{"\link[=dgCMatrix-class]{dgCMatrix}"} containing the
+standardized coefficients from each marginal model
+\item \code{intercepts} used in each marginal model
+\item \code{scr_coef} p-vector of coefficients used for screening for standardized predictors
+\item \code{inds} list of index-vectors corresponding to variables kept after screening in each marginal model of length max(nummods)
+\item \code{RPMs} list of projection matrices used in each marginal model of length \code{max(nummods)}
+\item \code{val_res} \code{data.frame} with validation results (validation measure
 and number of active variables) for each element of \code{nus} and \code{nummods}
-\item val_set logical flag, whether validation data were provided;
+\item \code{val_set} logical flag, whether validation data were provided;
 if \code{FALSE}, training data were used for validation
-\item nus vector of \eqn{\nu}'s considered for thresholding
-\item nummods vector of numbers of marginal models considered for validation
-\item xcenter p-vector of empirical means of initial predictor variables
-\item xscale p-vector of empirical standard deviations of initial predictor variables
+\item \code{nus} vector of \eqn{\nu}'s considered for thresholding
+\item \code{nummods} vector of numbers of marginal models considered for validation
+\item \code{ycenter} empirical mean of initial response vector
+\item \code{yscale} empirical standard deviation of initial response vector
+\item \code{xcenter} p-vector of empirical means of initial predictor variables
+\item \code{xscale} p-vector of empirical standard deviations of initial predictor variables
+\item \code{rp} an object of class "\code{randomprojection}"
+\item \code{screencoef} an object of class "\code{screeningcoef}"
 }
 }
 \description{
 Apply Sparse Projected Averaged Regression to High-dimensional Data
-\insertCite{parzer2024lm}{SPAR} \insertCite{parzer2024glms}{SPAR}.
+\insertCite{parzer2024lm}{spar} \insertCite{parzer2024glms}{spar}.
 This function performs the procedure for given thresholds nu and numbers
 of marginal models, and acts as a help-function for the full cross-validated
 procedure \link{spar.cv}.
@@ -125,13 +116,13 @@ plot(spar_res,"coefs",prange=c(1,400))}
 }
 \references{
 {
-\insertRef{parzer2024lm}{SPAR}
+\insertRef{parzer2024lm}{spar}
 
-\insertRef{parzer2024glms}{SPAR}
+\insertRef{parzer2024glms}{spar}
 
-\insertRef{Clarkson2013LowRankApprox}{SPAR}
+\insertRef{Clarkson2013LowRankApprox}{spar}
 
-\insertRef{ACHLIOPTAS2003JL}{SPAR}
+\insertRef{ACHLIOPTAS2003JL}{spar}
 }
 }
 \seealso{

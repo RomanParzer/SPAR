@@ -2,7 +2,7 @@
 test_that("Results has right class", {
   x <- matrix(rnorm(300), ncol = 30)
   y <- rnorm(10)
-  spar_res <- spar(x,y)
+  spar_res <- spar(x, y)
   expect_equal(class(spar_res),"spar")
 })
 
@@ -42,9 +42,12 @@ test_that("Returned coef and preds are correct for fixed screening and projectio
   RP2@p <- 0:nsc
   RP2@x <- (-1)^(1:nsc)
 
-  spar_res <- spar(x,y,nummods=c(2),inds = list(1:(2*nrow(x)),500+1:(2*nrow(x))),RPMs = list(RP1,RP2))
+  spar_res <- spar(x,y,
+                   nummods=c(2),inds = list(1:(2*nrow(x)),
+                                            500+1:(2*nrow(x))),
+                   RPMs = list(RP1,RP2))
   sparcoef <- coef(spar_res)
-  pred <- predict(spar_res,xnew=xnew)
+  pred     <- predict(spar_res,xnew=xnew)
 
   expect_equal(sparcoef$nu,0.002432288,tolerance = 1e-6)
   expect_equal(sparcoef$beta[53],0)
@@ -70,14 +73,16 @@ test_that("Returned coef and preds are correct for fixed screening and projectio
   RP2@p <- 0:nsc
   RP2@x <- (-1)^(1:nsc)
 
-  spar_res <- spar(x,y,nummods=c(2),inds = list(1:(2*nrow(x)),500+1:(2*nrow(x))),RPMs = list(RP1,RP2),family = binomial(logit))
+  spar_res <- spar(x,y,nummods=c(2),
+                   inds = list(1:(2*nrow(x)),500+1:(2*nrow(x))),
+                   RPMs = list(RP1,RP2),family = binomial(logit))
   sparcoef <- coef(spar_res)
   pred <- predict(spar_res,xnew=xnew)
 
-  expect_equal(sparcoef$nu,0.009446247,tolerance = 1e-6)
+  expect_equal(sparcoef$nu,0.009443021 ,tolerance = 1e-6)
   expect_equal(sparcoef$beta[11],0)
-  expect_equal(sparcoef$beta[1],0.05079038,tolerance = 1e-6)
-  expect_equal(pred[1],0.9738668,tolerance = 1e-5)
+  expect_equal(sparcoef$beta[1],0.05076765,tolerance = 1e-6)
+  expect_equal(pred[1],0.9738588,tolerance = 1e-5)
 })
 
 test_that("Columns with zero sd get ceofficient 0", {
@@ -88,6 +93,33 @@ test_that("Columns with zero sd get ceofficient 0", {
   spar_res <- spar(x,y)
   sparcoef <- coef(spar_res)
   expect_equal(sparcoef$beta[c(1,11,111)],c(0,0,0))
+})
+
+test_that("Thresholding can be avoided ", {
+  x <- example_data$x
+  y <- example_data$y
+  spar_res <- spar(x, y, nus = 0)
+  sparcoef <- coef(spar_res)
+  expect_equal(sparcoef$beta[c(1,10)],c(0,0))
+})
+
+test_that("Data splitting delivers different results", {
+  x <- example_data$x
+  y <- example_data$y
+  set.seed(123)
+  spar_res <- spar(x,y,
+                   screencoef = screen_cor(split_data_prop = 0.25))
+  set.seed(123)
+  spar_res3 <- spar(x,y,
+                    screencoef = screen_cor(split_data = TRUE))
+  set.seed(123)
+  spar_res2 <- spar(x,y,
+                    screencoef = screen_cor())
+  sparcoef <- coef(spar_res)
+  sparcoef2 <- coef(spar_res2)
+  sparcoef3 <- coef(spar_res3)
+  expect_true(any(sparcoef$beta[c(13,38,43)] != sparcoef2$beta[c(13,38,43)]))
+  expect_equal(sparcoef$beta[c(13,38,43)], sparcoef3$beta[c(13,38,43)])
 })
 
 # Tests expecting errors
@@ -113,7 +145,7 @@ test_that("Get errors for mslow > msup", {
 test_that("Get errors for msup > nscreen", {
   x <- matrix(rnorm(300), ncol = 30)
   y <- rnorm(10)
-  expect_error(spar(x,y,nscreen=18,msup = 20))
+  expect_error(spar(x,y,nscreen=18, msup = 20))
 })
 
 test_that("Get errors for to small length of inds and RPMs lists", {
@@ -133,7 +165,8 @@ test_that("Get errors for to small length of inds and RPMs lists", {
   RP2@p <- 0:nsc
   RP2@x <- (-1)^(1:nsc)
 
-  expect_error(spar(x,y,nummods=c(3),inds = list(1:(2*nrow(x)),500+1:(2*nrow(x))),RPMs = list(RP1,RP2)))
+  expect_error(spar(x,y,nummods=c(3),inds = list(1:(2*nrow(x)),500+1:(2*nrow(x))),
+                    RPMs = list(RP1,RP2)))
 })
 
 test_that("Get errors for prediction when xnew has wrong dimensions", {
@@ -147,7 +180,7 @@ test_that("Get errors for prediction when xnew has wrong dimensions", {
 test_that("Get errors for classification validation measure for non-binomial family", {
   x <- example_data$x
   y <- example_data$y
-  expect_error(spar(x,y,type.measure = "1-auc"))
+  expect_error(spar(x,y,measure = "1-auc"))
 })
 
 

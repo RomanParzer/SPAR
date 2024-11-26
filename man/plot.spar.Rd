@@ -14,6 +14,7 @@
   yfit = NULL,
   prange = NULL,
   coef_order = NULL,
+  digits = 2L,
   ...
 )
 }
@@ -24,9 +25,8 @@
 
 \item{plot_along}{one of \code{c("nu","nummod")}; ignored when  \code{plot_type="res-vs-fitted"}.}
 
-\item{nummod}{fixed value for nummod when  \code{plot_along="nu"}
-for  \code{plot_type="Val_Measure"} or  \code{"Val_numAct}";
-same as for \code{\link{predict.spar}} when  \code{plot_type="res-vs-fitted"}.}
+\item{nummod}{fixed value for number of models when  \code{plot_along="nu"}
+for  \code{plot_type="Val_Measure"} or  \code{"Val_numAct"}; same as for \code{\link{predict.spar}} when  \code{plot_type="res-vs-fitted"}.}
 
 \item{nu}{fixed value for \eqn{\nu} when  \code{plot_along="nummod"} for
 \code{plot_type="Val_Measure"} or  \code{"Val_numAct"}; same as for \code{\link{predict.spar}} when  \code{plot_type="res-vs-fitted"}.}
@@ -40,6 +40,8 @@ the limits of the predictors' plot range; defaults to  \code{c(1, p)}.}
 
 \item{coef_order}{optional index vector of length p for "coefs"-plot to give
 the order of the predictors; defaults to  \code{1 : p}.}
+
+\item{digits}{number of significant digits to be displayed in the axis; defaults to 2L.}
 
 \item{...}{further arguments passed to or from other methods}
 }

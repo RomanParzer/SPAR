@@ -7,15 +7,18 @@
 #' Sparse Projected Averaged Regression
 #'
 #' Apply Sparse Projected Averaged Regression to High-dimensional Data
-#' \insertCite{parzer2024lm}{SPAR} \insertCite{parzer2024glms}{SPAR}.
+#' \insertCite{parzer2024lm}{spar} \insertCite{parzer2024glms}{spar}.
 #' This function performs the procedure for given thresholds nu and numbers
 #' of marginal models, and acts as a help-function for the full cross-validated
 #' procedure [spar.cv].
 #'
 #' @param x n x p numeric matrix of predictor variables.
 #' @param y quantitative response vector of length n.
-#' @param family  a \code{\link[stats]{"family"}} object used for the marginal generalized linear model,
+#' @param family  a \link[stats]{family}  object used for the marginal generalized linear model,
 #'        default \code{gaussian("identity")}.
+#' @param model function creating a "\code{sparmodel}" object; defaults to \code{spar_glmnet()}.
+#' @param rp function creating a "\code{randomprojection}" object.
+#' @param screencoef function creating a "\code{screeningcoef}" object
 #' @param xval optional matrix of predictor variables observations used for
 #'        validation of threshold nu and number of models; \code{x} is used
 #'        if not provided.
@@ -28,62 +31,57 @@
 #'         marginal coefficient are used.
 #' @param nummods vector of numbers of marginal models to consider for
 #'        validation; defaults to \code{c(20)}.
-#' @param type.measure loss to use for validation; defaults to \code{"deviance"}
+#' @param measure loss to use for validation; defaults to \code{"deviance"}
 #'        available for all families. Other options are \code{"mse"} or \code{"mae"}
 #'         (between responses and predicted means, for all families),
 #'         \code{"class"} (misclassification error) and
 #'         \code{"1-auc"} (one minus area under the ROC curve) both just for
 #'         binomial family.
-#' @param type.rpm  type of random projection matrix to be employed;
-#'        one of \code{"cwdatadriven"},
-#'        \code{"cw"} \insertCite{Clarkson2013LowRankApprox}{SPAR},
-#'        \code{"gaussian"}, \code{"sparse"} \insertCite{ACHLIOPTAS2003JL}{SPAR};
-#'        defaults to \code{"cwdatadriven"}.
-#' @param type.screening  type of screening coefficients; one of \code{"ridge"},
-#'        \code{"marglik"}, \code{"corr"}; defaults to \code{"ridge"} which is
-#'        based on the ridge coefficients where the penalty converges to zero.
+# #' @param type.rpm  type of random projection matrix to be employed;
+# #'        one of \code{"cwdatadriven"},
+# #'        \code{"cw"} \insertCite{Clarkson2013LowRankApprox}{spar},
+# #'        \code{"gaussian"}, \code{"sparse"} \insertCite{ACHLIOPTAS2003JL}{spar};
+# #'        defaults to \code{"cwdatadriven"}.
+# #' @param type.screening  type of screening coefficients; one of \code{"ridge"},
+# #'        \code{"marglik"}, \code{"corr"}; defaults to \code{"ridge"} which is
+# #'        based on the ridge coefficients where the penalty converges to zero.
 #' @param inds optional list of index-vectors corresponding to variables kept
-#' after screening in each marginal model of length \code{max(nummods)};
-#' dimensions need to fit those of RPMs.
+#'  after screening in each marginal model of length \code{max(nummods)};
+#'  dimensions need to fit those of RPMs.
 #' @param RPMs optional list of projection matrices used in each
 #' marginal model of length \code{max(nummods)}, diagonal elements will be
 #'  overwritten with a coefficient only depending on the given \code{x} and \code{y}.
-#' @param control a list two elements: \code{rpm} and \code{scr}.
-#' Element \code{rpm} contains a list of optional arguments to be passed to
-#' functions creating the random projection matrices. Here \code{mslow} is a
-#' lower bound for uniform random goal dimensions in
-#' marginal models; defaults to \eqn{\log(p)};
-#'  \code{msup} is upper bound for uniform random goal dimensions in marginal models;
-#'  defaults to n/2.
-#'  Element \code{scr} contains a list of optional arguments to be passed to
-#'   functions performing screening: \code{nscreen} is the number of variables to keep after screening 2n;
-#'  \code{split_data} logical to indicate whether data for calculation of screening coefficient
-#'   and fitting of mar mods should be split 1/4 to 3/4 to avoid overfitting;
-#'   default \code{FALSE}.
+#' @param ... further arguments mainly to ensure back-compatibility
 #' @returns object of class \code{"spar"} with elements
 #' \itemize{
-#'  \item betas p x \code{max(nummods)} matrix of standardized coefficients from each
-#'        marginal model
-#'  \item scr_coef p-vector of coefficients used for screening for standardized predictors
-#'  \item inds list of index-vectors corresponding to variables kept after screening in each marginal model of length max(nummods)
-#'  \item RPMs list of projection matrices used in each marginal model of length \code{max(nummods)}
-#'  \item val_res \code{data.frame} with validation results (validation measure
+#'  \item \code{betas} p x \code{max(nummods)} sparse matrix of class
+#'  \code{"\link[=dgCMatrix-class]{dgCMatrix}"} containing the
+#'   standardized coefficients from each marginal model
+#'  \item \code{intercepts} used in each marginal model
+#'  \item \code{scr_coef} p-vector of coefficients used for screening for standardized predictors
+#'  \item \code{inds} list of index-vectors corresponding to variables kept after screening in each marginal model of length max(nummods)
+#'  \item \code{RPMs} list of projection matrices used in each marginal model of length \code{max(nummods)}
+#'  \item \code{val_res} \code{data.frame} with validation results (validation measure
 #'   and number of active variables) for each element of \code{nus} and \code{nummods}
-#'  \item val_set logical flag, whether validation data were provided;
+#'  \item \code{val_set} logical flag, whether validation data were provided;
 #'  if \code{FALSE}, training data were used for validation
-#'  \item nus vector of \eqn{\nu}'s considered for thresholding
-#'  \item nummods vector of numbers of marginal models considered for validation
-#'  \item xcenter p-vector of empirical means of initial predictor variables
-#'  \item xscale p-vector of empirical standard deviations of initial predictor variables
+#'  \item \code{nus} vector of \eqn{\nu}'s considered for thresholding
+#'  \item \code{nummods} vector of numbers of marginal models considered for validation
+#'  \item \code{ycenter} empirical mean of initial response vector
+#'  \item \code{yscale} empirical standard deviation of initial response vector
+#'  \item \code{xcenter} p-vector of empirical means of initial predictor variables
+#'  \item \code{xscale} p-vector of empirical standard deviations of initial predictor variables
+#'  \item \code{rp} an object of class "\code{randomprojection}"
+#'  \item \code{screencoef} an object of class "\code{screeningcoef}"
 #' }
 #' @references{
-#'   \insertRef{parzer2024lm}{SPAR}
+#'   \insertRef{parzer2024lm}{spar}
 #'
-#'   \insertRef{parzer2024glms}{SPAR}
+#'   \insertRef{parzer2024glms}{spar}
 #'
-#'   \insertRef{Clarkson2013LowRankApprox}{SPAR}
+#'   \insertRef{Clarkson2013LowRankApprox}{spar}
 #'
-#'   \insertRef{ACHLIOPTAS2003JL}{SPAR}
+#'   \insertRef{ACHLIOPTAS2003JL}{spar}
 #' }
 #' @examples
 #' \dontrun{
@@ -99,151 +97,214 @@
 #' plot(spar_res,"coefs",prange=c(1,400))}
 #' @seealso [spar.cv],[coef.spar],[predict.spar],[plot.spar],[print.spar]
 #' @export
-#' @importFrom stats coef fitted gaussian predict rnorm quantile residuals sd var cor glm
+#' @importFrom stats glm.fit coef fitted gaussian predict rnorm quantile residuals sd var cor glm
 #' @importFrom Matrix Matrix solve crossprod tcrossprod rowMeans
 #' @importFrom Rdpack reprompt
-spar <- function(x,
-                 y,
+#' @importFrom rlang list2
+#' @importFrom glmnet glmnet
+#' @importFrom ROCR prediction performance
+#'
+spar <- function(x, y,
                  family = gaussian("identity"),
-                 xval = NULL,
-                 yval = NULL,
-                 nnu = 20,
-                 nus = NULL,
+                 model = NULL,
+                 rp = NULL,
+                 screencoef = NULL,
+                 xval = NULL, yval = NULL,
+                 nnu = 20, nus = NULL,
                  nummods = c(20),
-                 type.measure = c("deviance","mse","mae","class","1-auc"),
-                 type.rpm = c("cwdatadriven", "cw", "gaussian", "sparse"),
-                 type.screening = c("ridge", "marglik", "corr"),
-                 inds = NULL,
-                 RPMs = NULL,
-                 control = list(rpm = list(mslow = ceiling(log(ncol(x))),
-                                           msup = ceiling(nrow(x)/2)),
-                                scr = list(nscreen = 2*nrow(x), split_data = FALSE))) {
+                 measure = c("deviance","mse","mae","class","1-auc"),
+                 inds = NULL, RPMs = NULL,
+                 ...) {
 
-  mslow <- control$rpm$mslow
-  if (is.null(mslow)) mslow <- ceiling(log(ncol(x)))
-  msup <- control$rpm$msup
-  if (is.null(msup)) msup <- ceiling(nrow(x)/2)
-  nscreen <- control$scr$nscreen
-  if (is.null(nscreen)) nscreen <- 2*nrow(x)
-  split_data <- control$scr$split_data
-  if (is.null(split_data)) split_data <- FALSE
+  # Ensure back compatibility ----
+  args <- list(...)
 
-  stopifnot(mslow <= msup)
-  stopifnot(msup <= nscreen)
 
-  stopifnot(is.numeric(y))
+  if (is.null(screencoef)) screencoef <- screen_glmnet()
+  if (!is.null(args$nscreen)) attr(screencoef, "nscreen") <- args$nscreen
+  if (!is.null(args$split_data))  attr(screencoef, "split_data") <- args$split_data
+
+
+  ##  Check if the old argument name 'old_arg' is used
+  if (!is.null(args$type.measure)) {
+    if (!is.null(measure)) {
+      warning("Both 'measure' and deprecated 'type.measure' were provided. Using 'measure'.")
+    } else {
+      # Assign the value from 'old_arg' to 'new_arg' if 'new_arg' is not provided
+      measure <- args$type.measure
+      warning("'type.measure' is deprecated. Please use 'measure' instead.")
+    }
+  }
+  if (!is.null(args$type.rpm)) {
+    if (!is.null(rp)) {
+      warning("Both 'rp' and deprecated 'type.rpm' were provided. Using 'rp'.")
+    } else {
+      # Assign the value from 'old_arg' to 'new_arg' if 'new_arg' is not provided
+      rp <- switch(args$type.rpm,
+                   "cw"           = rp_cw(data = FALSE),
+                   "cwdatadriven" = rp_cw(data = TRUE),
+                   "gaussian"     = rp_gaussian(),
+                   "sparse"       = rp_sparse(psi = 0.1),
+                   stop("Provided 'type.rpm' not implemented."))
+      warning("'type.rpm' is deprecated. Please use 'rp' instead.")
+    }
+  }
+  if (!is.null(args$type.screening)) {
+    if (!is.null(screencoef)) {
+      warning("Both 'screencoef' and deprecated 'type.screening' were provided. Using 'screencoef'.")
+    } else {
+      # Assign the value from 'old_arg' to 'new_arg' if 'new_arg' is not provided
+      screencoef <- switch(args$type.screening,
+                           "ridge" = screen_glmnet(),
+                           "marglik" = screen_marglik(),
+                           "corr" = screen_cor(),
+                           stop("Provided 'type.screening' not implemented."))
+      warning("'type.screening' is deprecated. Please use 'screencoef' instead.")
+    }
+  }
+  ## TODO
+  if (is.null(rp)) rp <- rp_cw(data = TRUE)
+  if (!is.null(args$mslow)) attr(rp, "mslow") <- args$mslow
+  if (!is.null(args$msup))  attr(rp, "msup") <- args$msup
+
+  if (is.null(model)) {
+    if (family$family == "gaussian" && family$link == "identity") {
+      model <- spar_glm()
+    } else {
+      model <- spar_glmnet()
+    }
+  }
+
+  # Setup and Checks ----
   p <- ncol(x)
   n <- nrow(x)
-  stopifnot(length(y)==n)
 
-  type.measure <- match.arg(type.measure)
-  type.rpm <- match.arg(type.rpm)
-  type.screening <- match.arg(type.screening)
 
-  if (split_data==TRUE) {
-    scr_inds <- sample(1:n,n%/%4)
-    mar_inds <- (1:n)[-scr_inds]
-  } else {
-    mar_inds <- scr_inds <- 1:n
-  }
+  measure <- match.arg(measure)
+  stopifnot(length(y) == n)
+  stopifnot(is.numeric(y))
 
-  xcenter <- apply(x, 2, mean)
+  # Scaling the x matrix ----
+  xcenter <- colMeans(x)
   xscale  <- apply(x, 2, sd)
 
-  if (is.null(inds) | is.null(RPMs)) {
-    actual_p <- sum(xscale>0)
-    z <- scale(x[,xscale>0],center = xcenter[xscale>0],scale = xscale[xscale>0])
+  if (is.null(inds) || is.null(RPMs)) {
+    actual_p <- sum(xscale > 0)
+    z <- scale(x[, xscale > 0],
+               center = xcenter[xscale > 0],
+               scale  = xscale[xscale > 0])
   } else {
     actual_p <- p
-    xscale[xscale==0] <- 1
-    z <- scale(x,center = xcenter,scale = xscale)
+    xscale[xscale == 0] <- 1
+    z <- scale(x, center = xcenter, scale = xscale)
   }
+
+  # Scaling the y vector ----
   if (family$family=="gaussian" & family$link=="identity") {
-    fit_family <- "gaussian"
     ycenter <- mean(y)
     yscale <- sd(y)
   } else {
-    if (family$family=="binomial" & family$link=="logit") {
-      fit_family <- "binomial"
-    } else if (family$family=="poisson" & family$link=="log") {
-      fit_family <- "poisson"
-    } else {
-      fit_family <- family
-    }
     ycenter <- 0
     yscale  <- 1
   }
-
   yz <- scale(y,center = ycenter,scale = yscale)
+  # Setup model ----
+  if (is.null(model$control$family))  {
+    if (is.null(attr(model, "family"))) {
+      model$control$family <- family
+    } else {
+      model$control$family <- attr(model, "family")
+    }
+  }
+  if (!is.null(model$update_sparmodel)) {
+    model <- model$update_sparmodel(model)
+  }
+  # Setup screening ----
+  if (is.null(attr(screencoef, "family"))) {
+    attr(screencoef, "family") <- family
+  }
+  if (!is.null(attr(screencoef, "split_data")) &
+      is.null(attr(screencoef, "split_data_prop"))) {
+    attr(screencoef, "split_data_prop") <- 0.25
+  }
+  if (!is.null(attr(screencoef, "split_data_prop"))) {
+    attr(screencoef, "split_data") <- TRUE
+    scr_inds <- sample(n,
+                       ceiling(n * attr(screencoef, "split_data_prop")))  # TODO need to parametrize this
+    mar_inds <- seq_len(n)[-scr_inds]
+  } else {
+    mar_inds <- scr_inds <- seq_len(n)
+  }
 
-  scr_coef <- switch(type.screening,
-                     "ridge" = screening_ridge_lambda0(z[scr_inds,], yz = yz[scr_inds, ],
-                                                       family = family),
-                     "marglik" = screening_marglik(z[scr_inds,], yz = yz[scr_inds, ],
-                                                   family = family),
-                     "corr" = screening_corr(z[scr_inds,], yz = yz[scr_inds, ],
-                                             family = family))
-  # if (family$family=="gaussian" & family$link=="identity") {
-  #   fit_family <- "gaussian"  # why??
-  #   ycenter <- mean(y)
-  #   yscale <- sd(y)
-  #   yz <- scale(y,center = ycenter,scale = yscale)
-  #   if (actual_p < n/2) {
-  #     scr_coef <- tryCatch( solve(crossprod(z[scr_inds,]),crossprod(z[scr_inds,],yz[scr_inds])),
-  #                           error=function(error_message) {
-  #                             return(solve(crossprod(z[scr_inds,])+(sqrt(actual_p)+sqrt(n))*diag(actual_p),crossprod(z[scr_inds,],yz[scr_inds])))
-  #                           })
-  #   } else if (actual_p < 2*n) {
-  #     scr_coef <- crossprod(z[scr_inds,],solve(tcrossprod(z[scr_inds,])+(sqrt(actual_p)+sqrt(n))*diag(n),yz[scr_inds]))
-  #   } else {
-  #     solve_res <- tryCatch( solve(tcrossprod(z[scr_inds,]),yz[scr_inds]),
-  #                            error=function(error_message) {
-  #                              return(solve(tcrossprod(z[scr_inds,])+(sqrt(actual_p)+sqrt(n))*diag(n),yz[scr_inds]))
-  #                            })
-  #     scr_coef <- crossprod(z[scr_inds,],solve_res)
-  #   }
-  # } else {
-  #   if (family$family=="binomial" & family$link=="logit") {
-  #     fit_family <- "binomial"
-  #   } else if (family$family=="poisson" & family$link=="log") {
-  #     fit_family <- "poisson"
-  #   } else {
-  #     fit_family <- family
-  #   }
-  #
-  #   ycenter <- 0
-  #   yscale <- 1
-  #   glmnet_res <- glmnet::glmnet(x=z[scr_inds,],y=y[scr_inds],family = fit_family,alpha=0)
-  #   lam <- min(glmnet_res$lambda)
-  #   scr_coef <- coef(glmnet_res,s=lam)[-1]
-  # }
+  if (is.null(attr(screencoef, "nscreen"))) {
+    nscreen <- attr(screencoef, "nscreen") <- 2 * n
+  } else {
+    nscreen <- attr(screencoef, "nscreen")
+  }
 
-  inc_probs <- abs(scr_coef)
-  max_inc_probs <- max(inc_probs)
-  inc_probs <- inc_probs/max_inc_probs
+  ## Update RP with data only at the beginning if possible, not in each RP! ----
+  if (is.null(attr(rp, "family"))) {
+    attr(rp, "family") <- family
+  }
+  if (!is.null(rp$update_data_fun)) {
+    rp <- rp$update_data_fun(rp = rp,
+                             x = z[scr_inds,],
+                             y = yz[scr_inds, ])
+  }
+
+  mslow <- attr(rp, "mslow")
+  if (is.null(mslow)) mslow <- ceiling(log(p))
+  msup <- attr(rp, "msup")
+  if (is.null(msup)) msup <- ceiling(n/2)
+  stopifnot(mslow <= msup)
+  stopifnot(msup <= nscreen)
+
+  # Perform screening ----
+  if (nscreen < p) {
+    scr_coef <- get_screencoef(object = screencoef,
+                               x = z[scr_inds,],
+                               y = yz[scr_inds, ])
+    attr(screencoef, "importance") <- scr_coef
+
+    inc_probs <- abs(scr_coef)
+    max_inc_probs <- max(inc_probs)
+    inc_probs <- inc_probs/max_inc_probs
+  } else {
+    scr_coef <- NULL
+    message("nscreen >= p. No screening performed.")
+  }
 
   max_num_mod <- max(nummods)
   intercepts <- numeric(max_num_mod)
-  betas_std <- Matrix::Matrix(data=c(0),actual_p,max_num_mod,sparse = TRUE)
+  betas_std <- Matrix(data=c(0),actual_p,max_num_mod,sparse = TRUE)
 
   drawRPMs <- FALSE
   if (is.null(RPMs)) {
-    RPMs <- vector("list",length=max_num_mod)
+    RPMs <- vector("list", length = max_num_mod)
     drawRPMs <- TRUE
-    ms <- sample(seq(floor(mslow), ceiling(msup)),max_num_mod, replace=TRUE)
+    ms <- sample(seq(floor(mslow), ceiling(msup)),
+                 max_num_mod, replace=TRUE)
   }
+
   drawinds <- FALSE
   if (is.null(inds)) {
-    inds <- vector("list",length=max_num_mod)
+    inds <- vector("list", length = max_num_mod)
     drawinds <- TRUE
   }
 
-  for (i in 1:max_num_mod) {
+  # SPAR algorithm  ----
+  for (i in seq_len(max_num_mod)) {
+    ## Screening step  ----
     if (drawinds) {
-      if (nscreen<p) {
-        ind_use <- sample(1:actual_p,nscreen,prob=inc_probs)
+      if (nscreen < p) {
+        if (attr(screencoef, "type") == "fixed") {
+          ind_use <- order(inc_probs, decreasing = TRUE)[seq_len(nscreen)]
+        }
+        if (attr(screencoef, "type") == "prob") {
+          ind_use <- sample(actual_p, nscreen, prob=inc_probs)
+        }
       } else {
-        ind_use <- 1:actual_p
+        ind_use <- seq_len(actual_p)
       }
       inds[[i]] <- ind_use
     } else {
@@ -251,58 +312,65 @@ spar <- function(x,
     }
     p_use <- length(ind_use)
 
+    ## RP step  ----
     if (drawRPMs) {
       m <- ms[i]
       if (p_use < m) {
         m <- p_use
-        RPM <- Matrix::Matrix(diag(1,m),sparse=TRUE)
+        RPM <- Matrix::Matrix(diag(1, m),sparse=TRUE)
         RPMs[[i]] <- RPM
       } else {
-        RPM <- switch(
-          type.rpm,
-          "cwdatadriven" = generate_cw_rp(m = m, p = p_use, coef = scr_coef[ind_use]/max_inc_probs),
-          "cw"           = generate_cw_rp(m = m, p = p_use,
-                                          coef = sample(c(-1,1), p_use, replace = TRUE)),
-          "gaussian"     = generate_gaussian_rp(m = m, p = p_use),
-          "sparse"       = generate_sparse_rp(m = m, p = p_use, psi = control$rpm$psi))
-        # RPM <- generate_RPM(m,p_use,coef=scr_coef[ind_use]/max_inc_probs)
+        RPM    <- get_rp(rp, m = m, included_vector = ind_use)
         RPMs[[i]] <- RPM
       }
     } else {
       RPM <- RPMs[[i]]
-      if (type.rpm == "cwdatadriven")  RPM@x <- scr_coef[ind_use]/max_inc_probs
-      ## TODO: think about this
+      if (!is.null(rp$update_rpm_w_data)) {
+        RPM <- rp$update_rpm_w_data(rpm = RPM, rp = rp,
+                                    included_vector = ind_use)
+      }
     }
 
-    znew <- Matrix::tcrossprod(z[mar_inds,ind_use],RPM)
-    if (family$family=="gaussian" & family$link=="identity") {
-      mar_coef <- tryCatch( Matrix::solve(Matrix::crossprod(znew),Matrix::crossprod(znew,yz[mar_inds])),
-                            error=function(error_message) {
-                              return(Matrix::solve(Matrix::crossprod(znew)+0.01*diag(ncol(znew)),
-                                                   Matrix::crossprod(znew,yz[mar_inds])))
-                            })
-      intercepts[i] <- 0
-      betas_std[ind_use,i] <- Matrix::crossprod(RPM,mar_coef)
-    } else {
-      glmnet_res <- glmnet::glmnet(znew,y[mar_inds],family = fit_family,alpha=0)
-      mar_coef <- coef(glmnet_res,s=min(glmnet_res$lambda))
-      intercepts[i] <- mar_coef[1]
-      betas_std[ind_use,i] <- Matrix::crossprod(RPM,mar_coef[-1])
-    }
+    ## Marginal model ----
+    znew <- Matrix::tcrossprod(z[mar_inds, ind_use], RPM)
+
+    # if (family$family=="gaussian" & family$link=="identity") {
+    #   mar_coef <- tryCatch(solve(crossprod(znew),
+    #                              crossprod(znew,yz[mar_inds])),
+    #                        error=function(error_message) {
+    #                          return(solve(crossprod(znew)+0.01*diag(ncol(znew)),
+    #                                       crossprod(znew,yz[mar_inds])))
+    #                        })
+    #   intercepts[i] <- 0
+    #   betas_std[ind_use,i] <- Matrix::crossprod(RPM,mar_coef)
+    # } else {
+    #   glmnet_res <- glmnet(znew,y[mar_inds],
+    #                        family = fit_family, alpha=0)
+    #   mar_coef <- coef(glmnet_res, s = min(glmnet_res$lambda))
+    #   intercepts[i] <- mar_coef[1]
+    #   betas_std[ind_use,i] <- crossprod(RPM,mar_coef[-1])
+    # }
+    res <- model$model_fun(yz[mar_inds], znew, object = model)
+    intercepts[i] <- res$intercept
+    betas_std[ind_use,i] <- crossprod(RPM, res$gammas)
+
   }
 
   if (is.null(nus)) {
     if (nnu>1) {
-      nus <- c(0,quantile(abs(betas_std@x),probs=1:(nnu-1)/(nnu-1)))
+      nus <- c(0, quantile(abs(betas_std@x),
+                           probs=seq_len(nnu-1)/(nnu-1)))
     } else {
-        nus <- c(0)
+      nus <- 0
     }
   } else {
     nnu <- length(nus)
   }
 
-  val_res <- data.frame(nnu=NULL,nu=NULL,nummod=NULL,numAct=NULL,Meas=NULL)
-  if (!is.null(yval) & !is.null(xval)) {
+  ## Validation set
+  val_res <- data.frame(nnu = NULL, nu = NULL,
+                        nummod = NULL,numAct = NULL, Meas = NULL)
+  if (!is.null(yval) && !is.null(xval)) {
     val_set <- TRUE
   } else {
     val_set <- FALSE
@@ -310,31 +378,31 @@ spar <- function(x,
     xval <- x
   }
 
-  if (type.measure=="deviance") {
+  if (measure == "deviance") {
     val.meas <- function(yval,eta_hat) {
       return(sum(family$dev.resids(yval,family$linkinv(eta_hat),1)))
     }
-  } else if (type.measure=="mse") {
+  } else if (measure == "mse") {
     val.meas <- function(yval,eta_hat) {
       return(mean((yval-family$linkinv(eta_hat))^2))
     }
-  } else if (type.measure=="mae") {
+  } else if (measure == "mae") {
     val.meas <- function(yval,eta_hat) {
       return(mean(abs(yval-family$linkinv(eta_hat))))
     }
-  } else if (type.measure=="class") {
+  } else if (measure == "class") {
     stopifnot(family$family=="binomial")
     val.meas <- function(yval,eta_hat) {
       return(mean(yval!=round(family$linkinv(eta_hat))))
     }
-  } else if (type.measure=="1-auc") {
+  } else if (measure=="1-auc") {
     stopifnot(family$family=="binomial")
     val.meas <- function(yval,eta_hat) {
       if (var(yval)==0) {
         res <- NA
       } else {
-
-        res <- 1-ROCR::performance(ROCR::prediction(family$linkinv(eta_hat),yval),measure="auc")@y.values[[1]]
+        phat <- prediction(family$linkinv(eta_hat), yval)
+        res <- 1-performance(phat, measure="auc")@y.values[[1]]
       }
       return(res)
     }
@@ -348,10 +416,11 @@ spar <- function(x,
       tmp_coef <- coef
       tmp_coef[abscoef<thresh] <- 0
 
-      avg_coef <- Matrix::rowMeans(tmp_coef)
+      avg_coef <- rowMeans(tmp_coef)
       tmp_beta <- numeric(p)
       tmp_beta[xscale>0] <- yscale*avg_coef/(xscale[xscale>0])
-      tmp_intercept <- mean(intercepts[1:nummod]) + as.numeric(ycenter - sum(xcenter*tmp_beta) )
+      tmp_intercept <- mean(intercepts[1:nummod]) +
+        as.numeric(ycenter - sum(xcenter*tmp_beta) )
       eta_hat <- xval%*%tmp_beta + tmp_intercept
       c(l,
         thresh,
@@ -363,15 +432,21 @@ spar <- function(x,
     rownames(tabres) <- c("nnu","nu","nummod","numAct","Meas")
     val_res <- rbind(val_res,data.frame(t(tabres)))
   }
-  betas <- Matrix::Matrix(data=c(0),p,max_num_mod,sparse = TRUE)
+  betas <- Matrix(data=c(0),p,max_num_mod,sparse = TRUE)
   betas[xscale>0,] <- betas_std
 
-  res <- list(betas = betas, intercepts = intercepts, scr_coef = scr_coef, inds = inds, RPMs = RPMs,
+  res <- list(betas = betas, intercepts = intercepts,
+              scr_coef = scr_coef,
+              inds = inds, RPMs = RPMs,
               val_res = val_res, val_set = val_set,
               nus = nus, nummods = nummods,
-              ycenter = ycenter, yscale = yscale, xcenter = xcenter, xscale = xscale,
-              family = family, type.measure = type.measure, type.rpm = type.rpm,
-              type.screening = type.screening)
+              ycenter = ycenter, yscale = yscale,
+              xcenter = xcenter, xscale = xscale,
+              family = family,
+              measure = measure,
+              rp = rp,
+              screencoef = screencoef
+  )
   attr(res,"class") <- "spar"
 
   return(res)
@@ -412,7 +487,7 @@ coef.spar <- function(object,
       stop("Number of models needs to be among the previously fitted values when nu is not provided!")
     }
     tmp_val_res <- object$val_res[object$val_res$nummod==nummod,]
-    nu <- tmp_val_res$lam[which.min(tmp_val_res$Meas)]
+    nu <- tmp_val_res$nu[which.min(tmp_val_res$Meas)]
   } else {
     if (length(nummod)!=1 | length(nu)!=1) {
       stop("Length of nummod and nu must be 1!")
@@ -498,9 +573,8 @@ predict.spar <- function(object,
 #' @param x result of spar function of class  \code{"spar"}.
 #' @param plot_type one of  \code{c("Val_Measure","Val_numAct","res-vs-fitted","coefs")}.
 #' @param plot_along one of \code{c("nu","nummod")}; ignored when  \code{plot_type="res-vs-fitted"}.
-#' @param nummod fixed value for nummod when  \code{plot_along="nu"}
-#'  for  \code{plot_type="Val_Measure"} or  \code{"Val_numAct}";
-#'  same as for \code{\link{predict.spar}} when  \code{plot_type="res-vs-fitted"}.
+#' @param nummod fixed value for number of models when  \code{plot_along="nu"}
+#'  for  \code{plot_type="Val_Measure"} or  \code{"Val_numAct"}; same as for \code{\link{predict.spar}} when  \code{plot_type="res-vs-fitted"}.
 #' @param nu fixed value for \eqn{\nu} when  \code{plot_along="nummod"} for
 #'  \code{plot_type="Val_Measure"} or  \code{"Val_numAct"}; same as for \code{\link{predict.spar}} when  \code{plot_type="res-vs-fitted"}.
 #' @param xfit data used for predictions in  \code{"res-vs-fitted"}.
@@ -509,11 +583,11 @@ predict.spar <- function(object,
 #'  the limits of the predictors' plot range; defaults to  \code{c(1, p)}.
 #' @param coef_order optional index vector of length p for "coefs"-plot to give
 #'  the order of the predictors; defaults to  \code{1 : p}.
+#' @param digits number of significant digits to be displayed in the axis; defaults to 2L.
 #' @param ... further arguments passed to or from other methods
 #' @return ggplot2 object
 #' @import ggplot2
 #' @export
-
 plot.spar <- function(x,
                       plot_type = c("Val_Measure","Val_numAct","res-vs-fitted","coefs"),
                       plot_along = c("nu","nummod"),
@@ -522,7 +596,8 @@ plot.spar <- function(x,
                       xfit = NULL,
                       yfit = NULL,
                       prange = NULL,
-                      coef_order = NULL, ...) {
+                      coef_order = NULL,
+                      digits = 2L, ...) {
   spar_res <- x
   plot_type <- match.arg(plot_type)
   plot_along <- match.arg(plot_along)
@@ -531,9 +606,10 @@ plot.spar <- function(x,
     if (is.null(xfit) | is.null(yfit)) {
       stop("xfit and yfit need to be provided for res-vs-fitted plot!")
     }
-    pred <- predict(spar_res, xfit, nummod, nu)
-    res <- ggplot2::ggplot(data = data.frame(fitted=pred,residuals=yfit-pred),
-                           ggplot2::aes(x=fitted,y=residuals)) +
+    pred <- predict(spar_res, xfit, nummod, nu, type = "response")
+    res <- ggplot2::ggplot(data = data.frame(fitted=.data$pred,
+                                             residuals=.data$yfit-.data$pred),
+                           ggplot2::aes(x=.data$fitted,y=.data$residuals)) +
       ggplot2::geom_point() +
       ggplot2::geom_hline(yintercept = 0,linetype=2,linewidth=0.5)
   } else if (plot_type == "Val_Measure") {
@@ -548,30 +624,36 @@ plot.spar <- function(x,
       tmp_df <- subset(spar_res$val_res,nummod==mynummod)
       ind_min <- which.min(tmp_df$Meas)
 
-      res <- ggplot2::ggplot(data = tmp_df, ggplot2::aes(x=tmp_df$nlam,y=tmp_df$Meas)) +
+      res <- ggplot2::ggplot(data = tmp_df,
+                             ggplot2::aes(x=.data$nnu,y=.data$Meas)) +
         ggplot2::geom_point() +
         ggplot2::geom_line() +
-        # ggplot2::scale_x_continuous(breaks=seq(1,nrow(spar_res$val_res),1),labels=round(spar_res$val_res$lam,3)) +
-        ggplot2::scale_x_continuous(breaks=seq(1,nrow(spar_res$val_res),2),labels=formatC(spar_res$val_res$lam[seq(1,nrow(spar_res$val_res),2)], format = "e", digits = 1)) +
-        ggplot2::labs(x=expression(nu),y=spar_res$type.measure) +
-        ggplot2::geom_point(data=data.frame(x=tmp_df$nlam[ind_min],y=tmp_df$Meas[ind_min]),ggplot2::aes(x=x,y=y),col="red") +
+        # ggplot2::scale_x_continuous(breaks=seq(1,nrow(spar_res$val_res),1),labels=round(spar_res$val_res$nu,3)) +
+        ggplot2::scale_x_continuous(breaks=seq(1,nrow(tmp_df)),
+                                    labels=formatC(tmp_df$nu,
+                                                   format = "e", digits = digits)) +
+        ggplot2::labs(x=expression(nu),y=spar_res$measure) +
+        ggplot2::geom_point(data=data.frame(x=tmp_df$nnu[ind_min],
+                                            y=tmp_df$Meas[ind_min]),
+                            ggplot2::aes(x=.data$x,y=.data$y),col="red") +
         ggplot2::ggtitle(paste0(tmp_title,mynummod))
     } else {
       if (is.null(nu)) {
-        nu <- spar_res$val_res$lam[which.min(spar_res$val_res$Meas)]
+        nu <- spar_res$val_res$nu[which.min(spar_res$val_res$Meas)]
         tmp_title <- "Fixed optimal "
       } else {
         tmp_title <- "Fixed given "
       }
-      tmp_df <- subset(spar_res$val_res,lam==nu)
+      tmp_df <- subset(spar_res$val_res,nu==nu)
       ind_min <- which.min(tmp_df$Meas)
 
-      res <- ggplot2::ggplot(data = tmp_df,ggplot2::aes(x=tmp_df$nummod,y=tmp_df$Meas)) +
+      res <- ggplot2::ggplot(data = tmp_df,
+                             ggplot2::aes(x=.data$nummod,y=.data$Meas)) +
         ggplot2::geom_point() +
         ggplot2::geom_line() +
-        ggplot2::labs(y=spar_res$type.measure) +
+        ggplot2::labs(y=spar_res$measure) +
         ggplot2::geom_point(data=data.frame(x=tmp_df$nummod[ind_min],y=tmp_df$Meas[ind_min]),
-                            ggplot2::aes(x=x,y=y),col="red")+
+                            ggplot2::aes(x=.data$x,y=.data$y),col="red")+
         ggplot2::ggtitle(substitute(paste(txt,nu,"=",v),list(txt=tmp_title,v=round(nu,3))))
     }
   } else if (plot_type=="Val_numAct") {
@@ -585,29 +667,36 @@ plot.spar <- function(x,
       tmp_df <- subset(spar_res$val_res,nummod==mynummod)
       ind_min <- which.min(tmp_df$Meas)
 
-      res <- ggplot2::ggplot(data = tmp_df,ggplot2::aes(x=nlam,y=numAct)) +
+      res <- ggplot2::ggplot(data = tmp_df,ggplot2::aes(x=.data$nnu,y=.data$numAct)) +
         ggplot2::geom_point() +
         ggplot2::geom_line() +
-        # ggplot2::scale_x_continuous(breaks=seq(1,nrow(spar_res$val_res),1),labels=round(spar_res$val_res$lam,3)) +
-        ggplot2::scale_x_continuous(breaks=seq(1,nrow(spar_res$val_res),2),labels=formatC(spar_res$val_res$lam[seq(1,nrow(spar_res$val_res),2)], format = "e", digits = 1)) +
+        # ggplot2::scale_x_continuous(breaks=seq(1,nrow(spar_res$val_res),1),labels=round(spar_res$val_res$nu,3)) +
+        ggplot2::scale_x_continuous(breaks=seq(1,nrow(spar_res$val_res),2),
+                                    labels=formatC(spar_res$val_res$nu[seq(1,nrow(spar_res$val_res),2)],
+                                                   format = "e", digits = digits)) +
         ggplot2::labs(x=expression(nu)) +
-        ggplot2::geom_point(data=data.frame(x=tmp_df$nlam[ind_min],y=tmp_df$numAct[ind_min]),ggplot2::aes(x=x,y=y),col="red")+
+        ggplot2::geom_point(data=data.frame(x=tmp_df$nnu[ind_min],y=tmp_df$numAct[ind_min]),
+                            ggplot2::aes(x=.data$x,y=.data$y),col="red")+
         ggplot2::ggtitle(paste0(tmp_title,mynummod))
     } else {
       if (is.null(nu)) {
-        nu <- spar_res$val_res$lam[which.min(spar_res$val_res$Meas)]
+        nu <- spar_res$val_res$nu[which.min(spar_res$val_res$Meas)]
         tmp_title <- "Fixed optimal "
       } else {
         tmp_title <- "Fixed given "
       }
-      tmp_df <- subset(spar_res$val_res,lam==nu)
+      tmp_df <- subset(spar_res$val_res,nu==nu)
       ind_min <- which.min(tmp_df$Meas)
 
-      res <- ggplot2::ggplot(data = tmp_df,ggplot2::aes(x=nummod,y=numAct)) +
+      res <- ggplot2::ggplot(data = tmp_df,ggplot2::aes(x=.data$nummod,y=.data$numAct)) +
         ggplot2::geom_point() +
         ggplot2::geom_line() +
-        ggplot2::geom_point(data=data.frame(x=tmp_df$nummod[ind_min],y=tmp_df$numAct[ind_min]),ggplot2::aes(x=x,y=y),col="red")+
-        ggplot2::ggtitle(substitute(paste(txt,nu,"=",v),list(txt=tmp_title,v=round(nu,3))))
+        ggplot2::geom_point(
+          data=data.frame(x=tmp_df$nummod[ind_min],
+                          y=tmp_df$numAct[ind_min]),
+          ggplot2::aes(x = .data$x,y=.data$y),col="red")+
+        ggplot2::ggtitle(substitute(paste(txt,nu,"=",v),
+                                    list(txt=tmp_title,v=round(nu,3))))
     }
   } else if (plot_type=="coefs") {
     p <- nrow(spar_res$betas)
@@ -619,14 +708,19 @@ plot.spar <- function(x,
       coef_order <- 1:p
     }
 
-    tmp_mat <- data.frame(t(apply(as.matrix(spar_res$betas)[coef_order,],1,function(row)row[order(abs(row),decreasing = TRUE)])),
+    tmp_mat <- data.frame(t(apply(as.matrix(spar_res$betas)[coef_order,],1,
+                                  function(row)row[order(abs(row),decreasing = TRUE)])),
                           predictor=1:p)
     colnames(tmp_mat) <- c(1:nummod,"predictor")
-    tmp_df <- tidyr::pivot_longer(tmp_mat,tidyselect::all_of(1:nummod),names_to = "marginal model",values_to = "value")
+    tmp_df <- tidyr::pivot_longer(tmp_mat,cols = (1:nummod),
+                                  names_to = "marginal model",values_to = "value")
+
     tmp_df$`marginal model` <- as.numeric(tmp_df$`marginal model`)
 
-    mrange <- max(apply(spar_res$betas,1,function(row)sum(row!=0)))
-    res <- ggplot2::ggplot(tmp_df,ggplot2::aes(x=predictor,y=`marginal model`,fill=value)) +
+    mrange <- max(Matrix::rowSums(spar_res$betas != 0))
+    res <- ggplot2::ggplot(tmp_df,ggplot2::aes(x=.data$predictor,
+                                               y=.data$`marginal model`,
+                                               fill=.data$value)) +
       ggplot2::geom_tile() +
       ggplot2::scale_fill_gradient2() +
       ggplot2::coord_cartesian(xlim=prange,ylim=c(1,mrange)) +
@@ -649,7 +743,7 @@ plot.spar <- function(x,
 print.spar <- function(x, ...) {
   mycoef <- coef(x)
   beta <- mycoef$beta
-  cat(sprintf("SPAR object:\nSmallest Validation Measure reached for nummod=%d,
+  cat(sprintf("spar object:\nSmallest Validation Measure reached for nummod=%d,
               nu=%s leading to %d / %d active predictors.\n",
               mycoef$nummod, formatC(mycoef$nu,digits = 2,format = "e"),
               sum(beta!=0),length(beta)))
