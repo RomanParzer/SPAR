@@ -1,7 +1,7 @@
 Type: Package
 Package: spar
 Title: Sparse Projected Averaged Regression in R
-Version: 3.2.0
+Version: 4.0.0
 Authors@R:
     c(person(given = "Roman",
              family = "Parzer",
