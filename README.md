@@ -4,7 +4,7 @@ SPAR
 [![Licence](https://img.shields.io/badge/licence-GPL--3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.en.html)
 
 This R package enables you to apply Data-Driven Random Projection and Screening for High-Dimensional Generalized Linear Models (see [Parzer, Filzmoser and Vana-Guer 2024a](https://doi.org/10.48550/arXiv.2312.00130) for Linear Regression and [Parzer, Filzmoser and Vana-Guer 2024b](https://arxiv.org/abs/2410.00971) for the extension to GLMs).
-The package is presented in more detail in  'spar: Sparse Projected Averaged Regression in R' by Roman Parzer, Laura Vana-Gür and Peter Filzmoser ([2024](https://arxiv.org/abs/2411.17808)).
+The package is presented in more detail in  'spar: Sparse Projected Averaged Regression in R' by Roman Parzer, Laura Vana-Gür and Peter Filzmoser ([2024c](https://arxiv.org/abs/2411.17808)).
 Exported functions are
 
 - `spar`: performs the procedure for given thresholds lambda and numbers of marginal models, and acts as a help-function for the full cross-validated procedure spar.cv.
