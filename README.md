@@ -24,6 +24,7 @@ The method is designed for linear regression using a high-dimensional data set w
 The two main functions return objects, for which `coef`, `predict` and `plot` functions are available.
 
 ```s
+require(spar)
 data("example_data")
 spar_res <- spar.cv(example_data$x,example_data$y,nummods=c(5,10,15,20,25,30))
 spar_res
