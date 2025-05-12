@@ -9,6 +9,8 @@ Exported functions are
 - `spar`: performs the procedure for given thresholds lambda and numbers of marginal models, and acts as a help-function for the full cross-validated procedure spar.cv.
 - `spar.cv`: performs the full procedure as described in the corresponding paper will cross-validation of the optimal threshold and number of models.
 
+This repository includes development versions of CRAN package sparreg (https://github.com/lauravana/spareg), further development is moved to that package.
+
 ## Installation
 
 ```s
