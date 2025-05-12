@@ -5,41 +5,33 @@
 \title{predict.spar.cv}
 \usage{
 \method{predict}{spar.cv}(
-  object,
+  spar_res,
   xnew,
   type = c("response", "link"),
   avg_type = c("link", "response"),
   opt_par = c("best", "1se"),
   nummod = NULL,
-  nu = NULL,
-  coef = NULL,
-  ...
+  lambda = NULL,
+  coef = NULL
 )
 }
 \arguments{
-\item{object}{result of spar function of class "spar".}
+\item{spar_res}{result of spar function of class "spar".}
 
-\item{xnew}{matrix of new predictor variables; must have same number of columns as  \code{x}.}
+\item{xnew}{matrix of new predictor variables; must have same number of columns as x.}
 
 \item{type}{the type of required predictions; either on response level (default) or on link level}
 
 \item{avg_type}{type of averaging the marginal models; either on link (default) or on response level}
 
-\item{opt_par}{one of  \code{c("best","1se")}, chooses whether to select the
-best pair of  \code{nus} and  \code{nummods} according to CV-Meas, or the
-sparsest solution within one sd of that optimal CV-Meas;
-ignored when  \code{nummod} and  \code{nu}, or  \code{coef} are given}
+\item{opt_par}{one of c("best","1se"), chooses whether to select the best pair of lambdas and nummods according to CV-Meas, or the sparsest solution within one sd of that optimal CV-Meas;
+ignored when nummod and lambda, or coef are given}
 
-\item{nummod}{number of models used to form coefficients; value with
-minimal validation  \code{Meas} is used if not provided.}
+\item{nummod}{number of models used to form coefficients; value with minimal validation Meas is used if not provided.}
 
-\item{nu}{threshold level used to form coefficients; value with minimal
-validation  \code{Meas} is used if not provided.}
+\item{lambda}{threshold level used to form coefficients; value with minimal validation Meas is used if not provided.}
 
-\item{coef}{optional; result of \code{\link{coef.spar.cv}}, can be used if
-\code{\link{coef.spar.cv}} has already been called.}
-
-\item{...}{further arguments passed to or from other methods}
+\item{coef}{optional; result of \code{\link{coef.spar.cv}}, can be used if \code{\link{coef.spar.cv}} has already been called.}
 }
 \value{
 Vector of predictions

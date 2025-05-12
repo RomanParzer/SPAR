@@ -5,20 +5,19 @@
 \title{predict.spar}
 \usage{
 \method{predict}{spar}(
-  object,
+  spar_res,
   xnew,
   type = c("response", "link"),
   avg_type = c("link", "response"),
   nummod = NULL,
-  nu = NULL,
-  coef = NULL,
-  ...
+  lambda = NULL,
+  coef = NULL
 )
 }
 \arguments{
-\item{object}{result of spar function of class  \code{"spar"}.}
+\item{spar_res}{result of spar function of class "spar".}
 
-\item{xnew}{matrix of new predictor variables; must have same number of columns as  \code{x}.}
+\item{xnew}{matrix of new predictor variables; must have same number of columns as x.}
 
 \item{type}{the type of required predictions; either on response level (default) or on link level}
 
@@ -26,11 +25,9 @@
 
 \item{nummod}{number of models used to form coefficients; value with minimal validation Meas is used if not provided.}
 
-\item{nu}{threshold level used to form coefficients; value with minimal validation Meas is used if not provided.}
+\item{lambda}{threshold level used to form coefficients; value with minimal validation Meas is used if not provided.}
 
-\item{coef}{optional; result of  \code{coef.spar}, can be used if  \code{coef.spar()} has already been called.}
-
-\item{...}{further arguments passed to or from other methods}
+\item{coef}{optional; result of coef.spar, can be used if coef.spar has already been called.}
 }
 \value{
 Vector of predictions

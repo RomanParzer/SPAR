@@ -26,7 +26,7 @@ screening_marglik <- function(z, yz, family) {
 
 screening_corr <- function(z, yz, family) {
   n <- nrow(z)
-  if (family$family != "gaussian") warning("Screening based on correlation is typically employed for Gaussian variables.")
+  if (family != "gaussian") warning("Screening based on correlation is typically employed for Gaussian variables.")
   scr_coef <- sapply(seq_len(NCOL(z)), function(i) cor(yz, z[,i]))
   scr_coef
 }

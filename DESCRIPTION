@@ -1,30 +1,18 @@
 Type: Package
-Package: spar
-Title: Sparse Projected Averaged Regression in R
-Version: 4.0.0
-Authors@R:
-    c(person(given = "Roman",
-             family = "Parzer",
-             role = c("aut", "cre"),
-             email = "romanparzer1@gmail.com",
-             comment = c(ORCID = "0000-0003-0893-3190")),
-      person(given = "Laura",
-             family = "Vana-Gür",
-             role = "ctb",
-             comment = c(ORCID = "0000-0002-9613-7604")))
+Package: SPAR
+Title: Sparse Projected Averaged Regression
+Version: 3.2.0
+Author: Roman Parzer and Laura Vana-Guer
+Maintainer: Roman Parzer <romanparzer1@gmail.com>
 Description: Apply Sparse Projected Averaged Regression to
-    High-dimensional Data.
-License: GPL-3 + file LICENSE
+    High-dimensional Data (see Parzer, Filzmoser, and Vana-Guer 2024).
+License: GPL-3
 Imports: 
     dplyr,
     Matrix,
     ROCR,
-    Rdpack,
     ggplot2,
-    tidyr,
-    rlang,
     glmnet
-RdMacros: Rdpack
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.2
@@ -32,4 +20,3 @@ Roxygen: list(markdown = TRUE)
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
-Depends: R (>= 3.5.0) 

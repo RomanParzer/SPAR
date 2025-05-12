@@ -4,12 +4,10 @@
 \alias{print.spar}
 \title{print.spar}
 \usage{
-\method{print}{spar}(x, ...)
+\method{print}{spar}(spar_res)
 }
 \arguments{
-\item{x}{result of  \code{spar()} function of class  \code{"spar"}.}
-
-\item{...}{further arguments passed to or from other methods}
+\item{spar_res}{result of spar function of class "spar".}
 }
 \value{
 text summary

@@ -111,7 +111,11 @@ number = {532},
 pages = {1998-2010},
 year  = {2020},
 publisher = {Taylor & Francis},
-doi = {10.1080/01621459.2019.1677240},
+doi = {https://doi.org/10.1080/01621459.2019.1677240},
+URL = {
+        https://doi.org/10.1080/01621459.2019.1677240},
+eprint = {
+        https://doi.org/10.1080/01621459.2019.1677240}
 }
 
 @article{CookNi2005IRforDR,
@@ -479,8 +483,7 @@ month = {01},
 pages = {},
 title = {Sure Independence Screening for Ultra-High Dimensional Feature Space},
 volume = {B 70},
-doi={10.1111/j.1467-9868.2008.00674.x},
-journal = {Journal of the Royal Statistical Society Series B: Statistical Methodology}
+journal = {J Roy Stat Soc}
 }
 
 @Article{BRMS2017Buerkner,
@@ -972,7 +975,8 @@ year = {2006},
 isbn = {1595933395},
 publisher = {Association for Computing Machinery},
 address = {New York, NY, USA},
-doi = {10.1145/1150402.1150436},
+url = {https://doi.org/10.1145/1150402.1150436},
+doi = {https://doi.org/10.1145/1150402.1150436},
 booktitle = {Proceedings of the 12th ACM SIGKDD International Conference on Knowledge Discovery
 and Data Mining},
 pages = {287–296},
@@ -1140,7 +1144,6 @@ year = {2021}
   author={Cho, Haeran and Fryzlewicz, Piotr},
   journal={Journal of the Royal Statistical Society Series B: Statistical Methodology},
   volume={74},
-  doi={10.1111/j.1467-9868.2011.01023.x},
   number={3},
   pages={593--622},
   year={2012},
@@ -1148,16 +1151,24 @@ year = {2021}
 }
 
 @article{ma2016robust,
-  title={Robust Model-Free Feature Screening via Quantile Correlation},
+  title={Robust model-free feature screening via quantile correlation},
   author={Ma, Xuejun and Zhang, Jingxiao},
   journal={Journal of Multivariate Analysis},
   volume={143},
   pages={472--480},
-  doi={10.1016/j.jmva.2015.10.010},
   year={2016},
   publisher={Elsevier}
 }
-
+@article{Wang2015HOLP,
+author = {Wang, Xiangyu and Leng, Chenlei},
+year = {2016},
+month = {06},
+pages = {589–611},
+title = {High-dimensional Ordinary Least-squares Projection for Screening Variables},
+volume = {78},
+journal = {Journal of the Royal Statistical Society: Series B (Statistical Methodology)},
+doi = {https://doi.org/10.1111/rssb.12127}
+}
 
 @misc{Wessel2015Ridge,
   doi = {https://doi.org/10.48550/ARXIV.1509.09169},
@@ -1340,6 +1351,14 @@ eprint = {
   }
 }
 
+@Manual{RLanguage,
+    title = {R: A Language and Environment for Statistical Computing},
+    author = {{R Core Team}},
+    organization = {R Foundation for Statistical Computing},
+    address = {Vienna, Austria},
+    year = {2024},
+    url = {https://www.R-project.org/},
+  }
 @Manual{Python,
   author =	 {Guido van Rossum and others},
   title =	 {\proglang{Python} Programming Language},
@@ -1366,6 +1385,29 @@ This paper proposes an algorithm for regression analysis that addresses these fe
  of the method is its robustness with respect to outliers in the cells of the data matrix. The excellent performance of this robust variable selection and prediction method is shown in a simulation study.
  A real data application on car fuel consumption demonstrates its usefulness.}
 }
+
+@inproceedings{Clarkson2013LowRankApprox,
+author = {Clarkson, Kenneth L. and Woodruff, David P.},
+title = {Low Rank Approximation and Regression in Input Sparsity Time},
+year = {2013},
+isbn = {9781450320290},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/2488608.2488620},
+doi = {https://doi.org/10.1145/2488608.2488620},
+  booktitle = {Proceedings of the Forty-Fifth Annual ACM Symposium on Theory of Computing},
+  pages = {81–90},
+  numpages = {10},
+  keywords = {regression, low-rank approximation, leverage scores, sketching, randomized},
+  series = {STOC '13}
+  }
+@inproceedings{Clarkson2013LowRankApproxShort,
+author = {Clarkson, Kenneth L. and Woodruff, David P.},
+title = {Low Rank Approximation and Regression in Input Sparsity Time},
+year = {2013},
+  booktitle = {Proceedings of the Forty-Fifth Annual ACM Symposium on Theory of Computing},
+  pages = {81–90},
+  }
 
 @inproceedings{wojnowicz2016projecting,
   title={Projecting" better than randomly": How to reduce the dimensionality of very large datasets in a way that outperforms random projections},
@@ -1437,7 +1479,10 @@ year="2017",
 publisher="Springer International Publishing",
 address="Cham",
 pages={51-68},
-doi="10.1007/978-3-319-41573-4_3",
+abstract="Fitting linear regression models can be computationally very expensive in large-scale data analysis tasks if the sample size and the number of variables are very large. Random projections are extensively used as a dimension reduction tool in machine learning and statistics. We discuss the applications of random projections in linear regression problems, developed to decrease computational costs, and give an overview of the theoretical guarantees of the generalization error. It can be shown that the combination of random projections with least squares regression leads to similar recovery as ridge regression and principal component regression. We also discuss possible improvements when averaging over multiple random projections, an approach that lends itself easily to parallel implementation.",
+isbn="978-3-319-41573-4",
+doi="https://doi.org/10.1007/978-3-319-41573-4_3",
+url="https://doi.org/10.1007/978-3-319-41573-4_3"
 }
 
 @article{Cook2019PLSPredinHDR,
@@ -1448,7 +1493,7 @@ pages = {884-908},
 title = {Partial least squares prediction in high-dimensional regression},
 volume = {47},
 journal = {Annals of Statistics},
-doi = {10.1214/18-AOS1681}
+doi = {https://doi.org/10.1214/18-AOS1681}
 }
 
 @article{Hoerl1970Ridge,
@@ -1692,21 +1737,35 @@ year = {2003},
 note = {Special Issue on PODS 2001},
 issn = {0022-0000},
 doi = {10.1016/S0022-0000(03)00025-4},
+url = {https://www.sciencedirect.com/science/article/pii/S0022000003000254},
 author = {Dimitris Achlioptas},
 abstract = {A classic result of Johnson and Lindenstrauss asserts that any set of n points in d-dimensional Euclidean space can be embedded into k-dimensional Euclidean space—where k is logarithmic in n and independent of d—so that all pairwise distances are maintained within an arbitrarily small factor. All known constructions of such embeddings involve projecting the n points onto a spherically random k-dimensional hyperplane through the origin. We give two constructions of such embeddings with the property that all elements of the projection matrix belong in {−1,0,+1}. Such constructions are particularly well suited for database environments, as the computation of the embedding reduces to evaluating a single aggregate over k random partitions of the attributes.}
 }
 
+@article{JohnsonLindenstrauss1984,
+author = {Johnson, William and Lindenstrauss, Joram},
+year = {1984},
+month = {01},
+pages = {189-206},
+title = {Extensions of Lipschitz maps into a Hilbert space},
+volume = {26},
+isbn = {9780821850305},
+journal = {Contemporary Mathematics},
+doi = {https://doi.org/10.1090/conm/026/737400}
+}
 
 @article{FRANKL1988JLSphere,
-title = {The Johnson-Lindenstrauss Lemma and the Sphericity of Some Graphs},
+title = {The Johnson-Lindenstrauss lemma and the sphericity of some graphs},
 journal = {Journal of Combinatorial Theory, Series B},
 volume = {44},
 number = {3},
 pages = {355-362},
 year = {1988},
 issn = {0095-8956},
-doi = {10.1016/0095-8956(88)90043-3},
+doi = {https://doi.org/10.1016/0095-8956(88)90043-3},
+url = {https://www.sciencedirect.com/science/article/pii/0095895688900433},
 author = {P Frankl and H Maehara},
+abstract = {A simple short proof of the Johnson-Lindenstrauss lemma (concerning nearly isometric embeddings of finite point sets in lower-dimensional spaces) is given. This result is applied to show that if G is a graph on n vertices and with smallest eigenvalue λ then its sphericity sph(G) is less than cλ2 log n. It is also proved that if G or its complement is a forest then sph(G) ≤ c log n holds.}
 }
 @article{fan2001variable,
   title={Variable selection via nonconcave penalized likelihood and its oracle properties},
@@ -1938,6 +1997,14 @@ eprint = {
     url = {https://CRAN.R-project.org/package=SplitReg},
   }
 
+  @Book{ggplotR,
+    author = {Hadley Wickham},
+    title = {ggplot2: Elegant Graphics for Data Analysis},
+    publisher = {Springer-Verlag New York},
+    year = {2016},
+    isbn = {978-3-319-24277-4},
+    url = {https://ggplot2.tidyverse.org},
+  }
 
   @article{Tenenbaum2000ISOMAPFaceData,
 author = {Joshua B. Tenenbaum  and Vin de Silva  and John C. Langford },
@@ -1991,6 +2058,25 @@ abstract = {Scientists working with large volumes of high-dimensional data, such
   journal = {Statistics and Computing}
 }
 
+@misc{parzer2024sparse,
+      title={Sparse Data-Driven Random Projection in Regression for High-Dimensional Data},
+      author={Roman Parzer and Peter Filzmoser and Laura Vana-Gür},
+      year={2024},
+      eprint={2312.00130},
+      archivePrefix={arXiv},
+      primaryClass={stat.ME},
+      doi = {https://doi.org/10.48550/arXiv.2312.00130}
+}
+
+
+@misc{ryder2019asymmetric,
+      title={Asymmetric Random Projections},
+      author={Nick Ryder and Zohar Karnin and Edo Liberty},
+      year={2019},
+      eprint={1906.09489},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG}
+}
 
 @article{HOU2011PPWentzell,
 title = {Fast and simple methods for the optimization of kurtosis used as a projection pursuit index},
@@ -2047,7 +2133,7 @@ url="https://doi.org/10.1007/978-1-4939-0742-7_8"
   author={Cannings, Timothy I and Samworth, Richard J},
   journal={Journal of the Royal Statistical Society Series B: Statistical Methodology},
   volume={79},
-  doi = {10.1111/rssb.12228},
+  doi = {https://doi.org/10.1111/rssb.12228},
   number={4},
   pages={959--1035},
   year={2017},
@@ -2173,14 +2259,13 @@ URL = {https://doi.org/10.1214/17-AOS1538}
 
 %% Screening for GLMs
 @article{zhu2011model,
-  title={Model-Free Feature Screening for Ultrahigh-Dimensional Data},
+  title={Model-free feature screening for ultrahigh-dimensional data},
   author={Zhu, Li-Ping and Li, Lexin and Li, Runze and Zhu, Li-Xing},
   journal={Journal of the American Statistical Association},
   volume={106},
   number={496},
   pages={1464--1475},
   year={2011},
-  doi={10.1198/jasa.2011.tm10563},
   publisher={Taylor \& Francis}
 }
 @article{Fan2010sisglms,
@@ -2192,9 +2277,10 @@ URL = {https://doi.org/10.1214/17-AOS1538}
 	pages = {3567 -- 3604},
 	publisher = {Institute of Mathematical Statistics},
 	title = {Sure independence screening in generalized linear models with {NP}-dimensionality},
+	url = {https://doi.org/10.1214/10-AOS798},
 	volume = {38},
 	year = {2010},
-	}
+	bdsk-url-1 = {https://doi.org/10.1214/10-AOS798}}
 
 @incollection{fan2010high,
   title={High-dimensional variable selection for Cox’s proportional hazards model},
@@ -2203,7 +2289,6 @@ URL = {https://doi.org/10.1214/17-AOS1538}
   volume={6},
   pages={70--87},
   year={2010},
-  doi={10.1214/10-IMSCOLL606},
   publisher={Institute of Mathematical Statistics}
 }
 @article{RaineyMcCaskey2021PMLLogit,
@@ -2223,7 +2308,6 @@ pages={549–564}}
   volume={106},
   number={494},
   pages={544--557},
-  doi={10.1198/jasa.2011.tm09779},
   year={2011},
   publisher={Taylor \& Francis}
 }
@@ -2239,11 +2323,11 @@ pages={549–564}}
 }
 
 @article{mai2013kolmogorov,
-  title={The Kolmogorov Filter for Variable Screening in High-Dimensional Binary Classification},
+  title={The Kolmogorov filter for variable screening in high-dimensional binary classification},
   author={Mai, Qing and Zou, Hui},
   journal={Biometrika},
   volume={100},
-  doi = {10.1093/biomet/ass062},
+  url = {https://doi.org/10.1093/biomet/ass062},
   number={1},
   pages={229--234},
   year={2013},
@@ -2268,10 +2352,11 @@ pages={549–564}}
 	number = {4},
 	pages = {1471 -- 1497},
 	publisher = {Institute of Mathematical Statistics},
-	title = {The Fused Kolmogorov Filter: A Nonparametric Model-Free Screening Method},
+	title = {{The fused Kolmogorov filter: A nonparametric model-free screening method}},
+	url = {https://doi.org/10.1214/14-AOS1303},
 	volume = {43},
 	year = {2015},
-}
+	bdsk-url-1 = {https://doi.org/10.1214/14-AOS1303}}
 
 
 @article{ke2023sufficient,
@@ -2282,7 +2367,8 @@ pages={549–564}}
 	number = {2},
 	pages = {2139 -- 2179},
 	publisher = {Institute of Mathematical Statistics and Bernoulli Society},
-	title = {Sufficient Variable Screening With High-Dimensional Controls},
+	title = {Sufficient variable screening with high-dimensional controls},
+	url = {https://doi.org/10.1214/23-EJS2150},
 	volume = {17},
 	year = {2023},
 	bdsk-url-1 = {https://doi.org/10.1214/23-EJS2150}}
@@ -2302,14 +2388,17 @@ pages={549–564}}
 @article{liu2020knockoff,
 	author = {Wanjun Liu, Yuan Ke, Jingyuan Liu and Runze Li},
 	doi = {10.1080/01621459.2020.1783274},
+	eprint = {https://doi.org/10.1080/01621459.2020.1783274},
 	journal = {Journal of the American Statistical Association},
 	number = {537},
 	pages = {428-443},
 	publisher = {Taylor & Francis},
 	title = {Model-Free Feature Screening and FDR Control With Knockoff Features},
+	url = {https://doi.org/10.1080/01621459.2020.1783274},
 	volume = {117},
 	year = {2022},
-}
+	bdsk-url-1 = {https://doi.org/10.1080/01621459.2020.1783274}}
+
 
 @book{mccullagh1989GLM,
   title={Generalized Linear Models, Second Edition},
@@ -2355,7 +2444,8 @@ volume = {111},
 pages = {104822},
 year = {2022},
 issn = {0952-1976},
-doi = {10.1016/j.engappai.2022.104822},
+doi = {https://doi.org/10.1016/j.engappai.2022.104822},
+url = {https://www.sciencedirect.com/science/article/pii/S0952197622000902},
 author = {Nicole D. Cilia and Giuseppe {De Gregorio} and Claudio {De Stefano} and Francesco Fontanella and Angelo Marcelli and Antonio Parziale},
 keywords = {Neurodegenerative diseases, Health data, Alzheimer’s disease prediction, Handwriting analysis, Classification and combining strategies},
 abstract = {Neurodegenerative diseases are caused by the progressive degeneration of nerve cells that affect motor skills and cognitive abilities with increasing severity. Unfortunately, there is no cure for this type of disease and their impact can only be slowed down with specific pharmacological and rehabilitative therapies. Early diagnosis, therefore, remains the primary means to delay brain damage and improve the quality of life of people affected. Neurodegenerative diseases also affect movement fine control. Consequently, the analysis of handwriting dynamics can represent an effective tool to support an early diagnosis of these diseases. While many methods have been proposed in the literature based on the use of a wide range of handwriting tasks, researchers have not yet defined a universally accepted standard experimental protocol to collect data. Furthermore, although some databases containing handwriting data have been produced, only a few of them were designed specifically for research on neurodegenerative diseases, and, in most cases, they involve a small number of participants performing a few tasks. Here, we introduce the DARWIN (Diagnosis AlzheimeR WIth haNdwriting) dataset to overcome these drawbacks, which contains handwriting samples from people affected by Alzheimer’s and a control group. The dataset includes data from 174 participants, acquired during the execution of handwriting tasks, performed according to a protocol specifically designed for the early detection of Alzheimer’s. We report the results of the experiments performed to evaluate the effectiveness of the proposed tasks and features in capturing the distinctive aspects of handwriting that support the diagnosis of Alzheimer’s disease.}
@@ -2479,19 +2569,16 @@ abstract = {This paper provides a simple, yet reliable, alternative to the (Baye
  volume = {100},
  year = {2005}
 }
-
 @article{wang2015conditional,
-  title={Conditional Distance Correlation},
+  title={Conditional distance correlation},
   author={Wang, Xueqin and Pan, Wenliang and Hu, Wenhao and Tian, Yuan and Zhang, Heping},
   journal={Journal of the American Statistical Association},
   volume={110},
   number={512},
   pages={1726--1734},
-  doi={10.1080/01621459.2014.993081},
   year={2015},
   publisher={Taylor \& Francis}
 }
-
 @article{Huber1985PP,
 author = {Peter J. Huber},
 title = {{Projection Pursuit}},
@@ -2572,7 +2659,7 @@ author = {Andrei Barcaru},
 abstract = {An important step in multivariate analysis is the dimensionality reduction, which allows for a better classification and easier visualization of the class structures in the data. Techniques like PCA, PLS-DA and LDA are most often used to explore the patterns in the data and to reduce the dimensions. Yet the data does not always reveal properly the structures wen these techniques are applied. To this end, a supervised projection pursuit (SuPP) is proposed in this article, based on Jensen-Shannon divergence. The combination of this metric with powerful Monte Carlo based optimization algorithm, yielded a versatile dimensionality reduction technique capable of working with highly dimensional data and missing observations. Combined with Naïve Bayes (NB) classifier, SuPP proved to be a powerful preprocessing tool for classification. Namely, on the Iris data set, the prediction accuracy of SuPP-NB is significantly higher than the prediction accuracy of PCA-NB, (p-value ≤ 4.02E-05 in a 2D latent space, p-value ≤ 3.00E-03 in a 3D latent space) and significantly higher than the prediction accuracy of PLS-DA (p-value ≤ 1.17E-05 in a 2D latent space and p-value ≤ 3.08E-03 in a 3D latent space). The significantly higher accuracy for this particular data set is a strong evidence of a better class separation in the latent spaces obtained with SuPP.}
 }
 @article{matouvsek2008variants,
-  title={On Variants of the Johnson--Lindenstrauss Lemma},
+  title={On variants of the Johnson--Lindenstrauss lemma},
   author={Matou{\v{s}}ek, Ji{\v{r}}{\'\i}},
   journal={Random Structures \& Algorithms},
   volume={33},
@@ -3326,6 +3413,22 @@ URL = {https://doi.org/10.1214/12-AOAS575}
  year = {1996}
 }
 
+@inproceedings{LiHastie2006VerySparseRP,
+author = {Li, Ping and Hastie, Trevor J. and Church, Kenneth W.},
+title = {Very Sparse Random Projections},
+year = {2006},
+isbn = {1595933395},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/1150402.1150436},
+doi = {https://doi.org/10.1145/1150402.1150436},
+booktitle = {Proceedings of the 12th ACM SIGKDD International Conference on Knowledge Discovery
+and Data Mining},
+pages = {287–296},
+numpages = {10},
+keywords = {rates of convergence, random projections, sampling},
+series = {KDD '06}
+}
 
 
 @article{WatsonHolmes2016AppModRobDec,
@@ -3491,7 +3594,7 @@ pages = {589–611},
 title = {High-dimensional Ordinary Least-squares Projection for Screening Variables},
 volume = {78},
 journal = {Journal of the Royal Statistical Society: Series B (Statistical Methodology)},
-doi = {10.1111/rssb.12127}
+doi = {https://doi.org/10.1111/rssb.12127}
 }
 
 @misc{Wessel2015Ridge,
@@ -3676,9 +3779,9 @@ eprint = {
 }
 
 @Manual{RLanguage,
-    title = {\proglang{R}: A Language and Environment for Statistical Computing},
-    author = {{\proglang{R} Core Team}},
-    organization = {\proglang{R} Foundation for Statistical Computing},
+    title = {R: A Language and Environment for Statistical Computing},
+    author = {{R Core Team}},
+    organization = {R Foundation for Statistical Computing},
     address = {Vienna, Austria},
     year = {2024},
     url = {https://www.R-project.org/},
@@ -3709,7 +3812,6 @@ This paper proposes an algorithm for regression analysis that addresses these fe
   journal={Journal of Machine Learning Research},
   volume={8},
   number={Oct},
-  url = {https://jmlr.csail.mit.edu/papers/v8/li07b.html},
   pages={2497--2532},
   year={2007}
 }
@@ -3721,7 +3823,7 @@ year = {2013},
 isbn = {9781450320290},
 publisher = {Association for Computing Machinery},
 address = {New York, NY, USA},
-doi = {10.1145/2488608.2488620},
+doi = {https://doi.org/10.1145/2488608.2488620},
   booktitle = {Proceedings of the Forty-Fifth Annual ACM Symposium on Theory of Computing},
   pages = {81–90},
   numpages = {10},
@@ -4037,11 +4139,11 @@ author = {Johnson, William and Lindenstrauss, Joram},
 year = {1984},
 month = {01},
 pages = {189-206},
-title = {Extensions of Lipschitz Maps into a Hilbert Space},
+title = {Extensions of Lipschitz maps into a Hilbert space},
 volume = {26},
 isbn = {9780821850305},
 journal = {Contemporary Mathematics},
-doi = {10.1090/conm/026/737400}
+doi = {https://doi.org/10.1090/conm/026/737400}
 }
 
 
@@ -4114,6 +4216,7 @@ eprint = {
 @article{Silverstein1985SmEVWish,
  ISSN = {00911798},
  URL = {http://www.jstor.org/stable/2244186},
+ abstract = {For positive integers s, n let Ms = (1/s)VsV T s, where Vs is an n × s matrix composed of i.i.d. N(0, 1) random variables. Assume n = n(s) and n/s → y ∈ (0, 1) as s → ∞. Then it is shown that the smallest eigenvalue of Ms converges almost surely to $(1 - \sqrt y)^2$ as s → ∞.},
  author = {Jack W. Silverstein},
  journal = {The Annals of Probability},
  number = {4},
@@ -4272,7 +4375,7 @@ eprint = {
     volume = {83},
     number = {2},
     pages = {1--25},
-    doi = {10.18637/jss.v083.i02},
+    doi = {https://doi.org/10.18637/jss.v083.i02},
   }
 
   @Manual{SplitRegR,
@@ -4285,7 +4388,7 @@ eprint = {
 
   @Book{ggplotR,
     author = {Hadley Wickham},
-    title = {\pkg{ggplot2}: Elegant Graphics for Data Analysis},
+    title = {ggplot2: Elegant Graphics for Data Analysis},
     publisher = {Springer-Verlag New York},
     year = {2016},
     isbn = {978-3-319-24277-4},
@@ -4344,34 +4447,6 @@ abstract = {Scientists working with large volumes of high-dimensional data, such
   journal = {Statistics and Computing}
 }
 
-@TechReport{parzer2024glms,
-    title = {Data-Driven Random Projection and Screening for High-Dimensional Generalized Linear Models},
-    author = {Roman Parzer and Peter Filzmoser and Laura Vana-Gür},
-    institution = {arXiv.org E-Print Archive},
-    year = {2024},
-    number = {2410.00971},
-    doi = {10.48550/arXiv.2410.00971}
-}
-
-@TechReport{parzer2024sparse,
-    title = {{Sparse Data-Driven Random Projection in Regression for High-Dimensional Data}},
-    author = {Roman Parzer and Peter Filzmoser and Laura Vana-Gür},
-    institution = {arXiv.org E-Print Archive},
-    year = {2024},
-    number = {2312.00130},
-    doi = {10.48550/arXiv.2312.00130},
-}
-
-
-@TechReport{ryder2019asymmetric,
-      title={Asymmetric Random Projections},
-      author={Nick Ryder and Zohar Karnin and Edo Liberty},
-      year={2019},
-      institution = {arXiv.org E-Print Archive},
-    number = {1906.09489},
-    doi = {10.48550/arXiv.1906.09489},
-}
-
 @misc{parzer2023sparse,
       title={Sparse Projected Averaged Regression for High-Dimensional Data},
       author={Roman Parzer and Laura Vana-Gür and Peter Filzmoser},
@@ -4381,6 +4456,14 @@ abstract = {Scientists working with large volumes of high-dimensional data, such
       primaryClass={stat.ME}
 }
 
+@misc{ryder2019asymmetric,
+      title={Asymmetric Random Projections},
+      author={Nick Ryder and Zohar Karnin and Edo Liberty},
+      year={2019},
+      eprint={1906.09489},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG}
+}
 
 @article{HOU2011PPWentzell,
 title = {Fast and simple methods for the optimization of kurtosis used as a projection pursuit index},
@@ -4428,17 +4511,18 @@ url = {https://EconPapers.repec.org/RePEc:spr:spochp:978-1-4939-0742-7_8}
   volume={2017},
   url={https://api.semanticscholar.org/CorpusID:23353660}
 }
-
-@article{fan2009ultrahigh,
-  title={Ultrahigh dimensional feature selection: beyond the linear model},
-  author={Fan, Jianqing and Samworth, Richard and Wu, Yichao},
-  journal={The Journal of Machine Learning Research},
-  volume={10},
-  pages={2013--2038},
-  year={2009},
-url={https://jmlr.csail.mit.edu/papers/v10/fan09a.html},
-  publisher={JMLR. org}
+@article{cannings2017random,
+  title={Random-projection ensemble classification},
+  author={Cannings, Timothy I and Samworth, Richard J},
+  journal={Journal of the Royal Statistical Society Series B: Statistical Methodology},
+  volume={79},
+  doi = {https://doi.org/10.1111/rssb.12228},
+  number={4},
+  pages={959--1035},
+  year={2017},
+  publisher={Oxford University Press}
 }
+
 @article{xie2016comparison,
   title={Comparison among dimensionality reduction techniques based on Random Projection for cancer classification},
   author={Xie, Haozhe and Li, Jie and Zhang, Qiaosheng and Wang, Yadong},
@@ -4503,7 +4587,7 @@ url={https://jmlr.csail.mit.edu/papers/v10/fan09a.html},
     author = {Timothy I. Cannings and Richard J. Samworth},
     year = {2021},
     note = {\proglang{R}~package version 0.5},
-    url = {10.32614/CRAN.package.RPEnsemble},
+    url = {https://CRAN.R-project.org/package=RPEnsemble},
 }
 
   @Manual{SPCAvRPR,
@@ -4512,39 +4596,41 @@ url={https://jmlr.csail.mit.edu/papers/v10/fan09a.html},
     author = {Milana Gataric and Tengyao Wang and Richard J. Samworth},
     year = {2019},
     note = {\proglang{R}~package version 0.4},
-    url = {10.32614/CRAN.package.SPCAvRP},
+    url = {https://CRAN.R-project.org/package=SPCAvRP},
   }
 @Manual{RandProR,
     title = {\pkg{RandPro}: Random Projection with Classification},
     author = {Aghila, G and Siddharth, R},
     year = {2020},
     note = {\proglang{R}~package version 0.2.2},
-    doi = {10.32614/CRAN.package.RandPro},
+    url = {https://CRAN.R-project.org/package=RandPro},
   }
 
 @article{ailon2009fast,
-  title={The Fast Johnson--Lindenstrauss Transform and Approximate Nearest Neighbors},
+  title={The fast Johnson--Lindenstrauss transform and approximate nearest neighbors},
   author={Ailon, Nir and Chazelle, Bernard},
   journal={SIAM Journal on computing},
   volume={39},
   number={1},
   pages={302--322},
   year={2009},
-  publisher={SIAM},
-  doi={10.1137/060673096}
+  publisher={SIAM}
 }
 
 @article{SIDDHARTH2020100629,
+	abstract = {The performance of the high dimensional multivariate data analysis is seriously affected by the curse of dimensionality. Feature extraction acts as an important pre-processing step in data analysis process to avoid the curse of dimensionality. Random projection method is the most underrated feature extraction technique that performs extremely well in the case of high dimensional data analysis. This technique is known for its characteristics like data independent projection, simpler computation and distance preserving property. The Johnson--Lindenstrauss lemma is the idea behind random projection method. It states that the small set of points in the high dimensional space can be embedded into smaller subspace and also approximately preserves the distance with higher probability. This article describes a practical implementation of random projection method in the popular statistical programming language R and it is compared with the other similar implementations. The software package for random projection method has been uploaded in Comprehensive R Archive Network(CRAN) repository as RandPro and the code has been distributed in github. The RandPro package is tested with different types of data including text, image and sensor data. The result shows that the RandPro package preserves the pairwise distance between the data points in the corresponding low dimensional space for further processing.},
 	author = {R. Siddharth and G. Aghila},
 	doi = {10.1016/j.softx.2020.100629},
 	issn = {2352-7110},
 	journal = {SoftwareX},
 	keywords = {Dimension reduction, Johnson--Lindenstrauss lemma, RandPro, R Programming, Software description},
 	pages = {100629},
-	title = {\pkg{RandPro} -- A Practical Implementation of Random Projection-Based Feature Extraction for High Dimensional Multivariate Data Analysis in \proglang{R}},
+	title = {RandPro- A practical implementation of random projection-based feature extraction for high dimensional multivariate data analysis in R},
+	url = {https://www.sciencedirect.com/science/article/pii/S2352711020303423},
 	volume = {12},
 	year = {2020},
-}
+	bdsk-url-1 = {https://www.sciencedirect.com/science/article/pii/S2352711020303423},
+	bdsk-url-2 = {https://doi.org/10.1016/j.softx.2020.100629}}
 
 @Article{pkg:ball,
     title = {\pkg{Ball}: An \proglang{R} Package for Detecting Distribution
@@ -4581,7 +4667,7 @@ Search with Screening (S5)},
     author = {Dongjin Li and Debarshi Chakraborty and Somak Dutta and Vivekananda Roy},
     year = {2024},
     note = {\proglang{R}~package version 3.2.1},
-    url = {10.32614/CRAN.package.bravo},
+    url = {https://CRAN.R-project.org/package=bravo},
   }
 @misc{wang2021bayesianiterativescreeningultrahigh,
       title={Bayesian iterative screening in ultra-high dimensional settings},
@@ -4594,12 +4680,12 @@ Search with Screening (S5)},
 }
 
   @Manual{pkg:VariableScreening,
-    title = {\pkg{VariableScreening}: High-Dimensional Screening for Semiparametric Longitudinal
+    title = {VariableScreening: High-Dimensional Screening for Semiparametric Longitudinal
 Regression},
     author = {Runze Li and Liying Huang and John Dziak},
     year = {2022},
     note = {\proglang{R}~package version 0.2.1},
-    doi = {10.32614/CRAN.package.VariableScreening},
+    url = {https://CRAN.R-project.org/package=VariableScreening},
   }
   @article{cui2015model,
   title={Model-free feature screening for ultrahigh dimensional discriminant analysis},
@@ -4608,19 +4694,17 @@ Regression},
   volume={110},
   number={510},
   pages={630--641},
-  doi={10.1080/01621459.2014.920256},
   year={2015},
   publisher={Taylor \& Francis}
 }
 @article{li2012feature,
-  title={Feature Screening via Distance Correlation Learning},
+  title={Feature screening via distance correlation learning},
   author={Li, Runze and Zhong, Wei and Zhu, Liping},
   journal={Journal of the American Statistical Association},
   volume={107},
   number={499},
   pages={1129--1139},
   year={2012},
-  doi={10.1080/01621459.2012.695654},
   publisher={Taylor \& Francis}
 }
    @Manual{pkg:tilting,
@@ -4628,15 +4712,15 @@ Regression},
     author = {Haeran Cho and Piotr Fryzlewicz},
     year = {2016},
     note = {\proglang{R}~package version 1.1.1},
-    doi = {10.32614/CRAN.package.tilting},
+    url = {https://CRAN.R-project.org/package=tilting},
   }
 
   @Manual{pkg:MFSIS,
-    title = {\pkg{MFSIS}: Model-Free Sure Independent Screening Procedures},
+    title = {MFSIS: Model-Free Sure Independent Screening Procedures},
     author = {Xuewei Cheng and Hong Wang and Liping Zhu and Wei Zhong and Hanpu Zhou},
     year = {2024},
     note = {\proglang{R}~package version 0.2.1},
-    doi = {10.32614/CRAN.package.MFSIS},
+    url = {https://CRAN.R-project.org/package=MFSIS},
   }
    @Manual{pkg:cdcsis,
     title = {cdcsis: Conditional Distance Correlation Based Feature Screening and
@@ -4644,7 +4728,7 @@ Conditional Independence Inference},
     author = {Wenhao Hu and Mian Huang and Wenliang Pan and Xueqin Wang and Canhong Wen and Yuan Tian and Heping Zhang and Jin Zhu},
     year = {2024},
     note = {\proglang{R}~package version 2.0.4},
-    doi = {10.32614/CRAN.package.cdcsis},
+    url = {https://CRAN.R-project.org/package=cdcsis},
   }
   @Manual{pkg:QCSIS,
     title = {QCSIS: Sure Independence Screening via Quantile Correlation and
@@ -4676,14 +4760,13 @@ Estimation},
     year = {2020},
   }
   @Article{SMLE2014,
-    title = {The Sparse MLE for Ultrahigh-Dimensional Feature
-      Screening},
+    title = {The sparse MLE for ultrahigh-dimensional feature
+      screening},
     author = {Chen Xu and Jiahua Chen},
     journal = {Journal of the American Statistical Association},
     volume = {109},
     number = {507},
     pages = {1257-1269},
-    doi={10.1080/01621459.2013.879531},
     year = {2014},
   }
     @Manual{pkg:TSGSIS,
@@ -4691,7 +4774,7 @@ Estimation},
     author = {Yao-Hwei Fang and Jie-Huei Wang and Chao A. Hsiung},
     year = {2017},
     note = {R package version 0.1},
-    doi = {10.32614/CRAN.package.TSGSIS},
+    url = {https://CRAN.R-project.org/package=TSGSIS},
   }
 
 @article{10.1093/bioinformatics/btx409,
@@ -4712,35 +4795,10 @@ Estimation},
 
 
   @Manual{pkg:RaSEn,
-    title = {\pkg{RaSEn}: Random Subspace Ensemble Classification and Variable Screening},
+    title = {RaSEn: Random Subspace Ensemble Classification and Variable Screening},
     author = {Ye Tian and Yang Feng},
     year = {2021},
-    note = {\proglang{R} package version 3.0.0},
-    doi = {10.32614/CRAN.package.RaSEn},
+    note = {R package version 3.0.0},
+    url = {https://CRAN.R-project.org/package=RaSEn},
   }
 
-@Manual{pkg:rmatlab,
-    title = {\pkg{R.matlab}: Read and Write MAT Files and Call \proglang{MATLAB} from Within \proglang{R}},
-    author = {Henrik Bengtsson},
-    year = {2022},
-    note = {R package version 3.7.0},
-    doi = {10.32614/CRAN.package.R.matlab},
-  }
-@Manual{rcellwise,
-    title = {\pkg{cellWise}: Analyzing Data with Cellwise Outliers},
-    author = {Jakob Raymaekers and Peter Rousseeuw},
-    year = {2023},
-    note = {\proglang{R} package version 2.5.3},
-    doi = {10.32614/CRAN.package.cellWise}
-  }
-
-@article{pedregosa2011scikit,
-  title={\pkg{scikit-learn}: Machine Learning in \proglang{Python}},
-  author={Pedregosa, Fabian and Varoquaux, Ga{\"e}l and Gramfort, Alexandre and Michel, Vincent and Thirion, Bertrand and Grisel, Olivier and Blondel, Mathieu and Prettenhofer, Peter and Weiss, Ron and Dubourg, Vincent and others},
-  journal={Journal of Machine Learning Research},
-  volume={12},
-  number={Oct},
-  pages={2825--2830},
-  year={2011},
-  url={https://www.jmlr.org/papers/v12/pedregosa11a.html}
-}
