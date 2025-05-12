@@ -3,7 +3,7 @@ SPAR
 
 [![Licence](https://img.shields.io/badge/licence-GPL--3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.en.html)
 
-This R package enables you to apply Sparse Data-Driven Random Projection in Regression for High-Dimensional Data (see [Parzer, Filzmoser and Vana-Guer 2024](https://doi.org/10.48550/arXiv.2312.00130)).
+This R package enables you to apply Sparse Data-Driven Random Projection in Regression for High-Dimensional Data (see [Parzer, Filzmoser and Vana-Guer 2025](https://jdssv.org/index.php/jdssv/article/view/138)).
 Exported functions are
 
 - `spar`: performs the procedure for given thresholds lambda and numbers of marginal models, and acts as a help-function for the full cross-validated procedure spar.cv.
